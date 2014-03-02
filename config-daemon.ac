@@ -128,12 +128,26 @@ if test "x$guix_build_daemon" = "xyes"; then
   dnl 'restore-file-set', which requires unbuffered custom binary input
   dnl ports from Guile >= 2.0.10.)
   GUIX_CHECK_UNBUFFERED_CBIP
-  guix_build_daemon_offload="$ac_cv_guix_cbips_support_setvbuf"
 
-  if test "x$guix_build_daemon_offload" = "xyes"; then
-    AC_DEFINE([HAVE_DAEMON_OFFLOAD_HOOK], [1],
-      [Define if the daemon's 'offload' build hook is being built.])
-  fi
+  dnl Check for Guile-SSH, which is required by 'guix offload'.
+  GUILE_MODULE_AVAILABLE([have_guile_ssh_session], [(ssh session)])
+  GUILE_MODULE_AVAILABLE([have_guile_ssh_popen], [(ssh popen)])
+  GUILE_MODULE_AVAILABLE([have_guile_ssh_dist], [(ssh dist node)])
+  case "x$have_guile_ssh_session$have_guile_ssh_popen$have_guile_ssh_dist" in
+    xyesyesyes) have_guile_ssh=yes;;
+    *)          have_guile_ssh=no;;
+  esac
+
+  case "x$ac_cv_guix_cbips_support_setvbuf$have_guile_ssh" in
+    xyesyes)
+      guix_build_daemon_offload="yes"
+      AC_DEFINE([HAVE_DAEMON_OFFLOAD_HOOK], [1],
+	[Define if the daemon's 'offload' build hook is being built (requires Guile-SSH).])
+      ;;
+    *)
+      guix_build_daemon_offload="no"
+      ;;
+  esac
 
   dnl Temporary directory used to store the daemon's data.
   GUIX_TEST_ROOT_DIRECTORY

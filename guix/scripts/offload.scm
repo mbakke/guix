@@ -17,6 +17,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix scripts offload)
+  #:use-module (ssh key)
+  #:use-module (ssh auth)
+  #:use-module (ssh session)
+  #:use-module (ssh channel)
   #:use-module (guix config)
   #:use-module (guix records)
   #:use-module (guix store)
@@ -65,14 +69,13 @@
   (system          build-machine-system)          ; string
   (user            build-machine-user)            ; string
   (private-key     build-machine-private-key      ; file name
-                   (default (user-lsh-private-key)))
+                   (default (user-openssh-private-key)))
+  (host-key        build-machine-host-key)        ; string
   (parallel-builds build-machine-parallel-builds  ; number
                    (default 1))
   (speed           build-machine-speed            ; inexact real
                    (default 1.0))
   (features        build-machine-features         ; list of strings
-                   (default '()))
-  (ssh-options     build-machine-ssh-options      ; list of strings
                    (default '())))
 
 (define-record-type* <build-requirements>
@@ -86,19 +89,11 @@
   ;; File that lists machines available as build slaves.
   (string-append %config-directory "/machines.scm"))
 
-(define %lsh-command
-  "lsh")
-
-(define %lshg-command
-  ;; FIXME: 'lshg' fails to pass large amounts of data, see
-  ;; <http://lists.lysator.liu.se/pipermail/lsh-bugs/2014q1/000639.html>.
-  "lsh")
-
-(define (user-lsh-private-key)
-  "Return the user's default lsh private key, or #f if it could not be
+(define (user-openssh-private-key)
+  "Return the user's default SSH private key, or #f if it could not be
 determined."
   (and=> (getenv "HOME")
-         (cut string-append <> "/.lsh/identity")))
+         (cut string-append <> "/.ssh/id_rsa")))
 
 (define %user-module
   ;; Module in which the machine description file is loaded.
@@ -134,60 +129,65 @@ determined."
          (leave (_ "failed to load machine file '~a': ~s~%")
                 file args))))))
 
-;;; FIXME: The idea was to open the connection to MACHINE once for all, but
-;;; lshg is currently non-functional.
-;; (define (open-ssh-gateway machine)
-;;   "Initiate an SSH connection gateway to MACHINE, and return the PID of the
-;; running lsh gateway upon success, or #f on failure."
-;;   (catch 'system-error
-;;     (lambda ()
-;;       (let* ((port   (open-pipe* OPEN_READ %lsh-command
-;;                                  "-l" (build-machine-user machine)
-;;                                  "-i" (build-machine-private-key machine)
-;;                                  ;; XXX: With lsh 2.1, passing '--write-pid'
-;;                                  ;; last causes the PID not to be printed.
-;;                                  "--write-pid" "--gateway" "--background"
-;;                                  (build-machine-name machine)))
-;;              (line   (read-line port))
-;;              (status (close-pipe port)))
-;;        (if (zero? status)
-;;            (let ((pid (string->number line)))
-;;              (if (integer? pid)
-;;                  pid
-;;                  (begin
-;;                    (warning (_ "'~a' did not write its PID on stdout: ~s~%")
-;;                             %lsh-command line)
-;;                    #f)))
-;;            (begin
-;;              (warning (_ "failed to initiate SSH connection to '~a':\
-;;  '~a' exited with ~a~%")
-;;                       (build-machine-name machine)
-;;                       %lsh-command
-;;                       (status:exit-val status))
-;;              #f))))
-;;     (lambda args
-;;       (leave (_ "failed to execute '~a': ~a~%")
-;;              %lsh-command (strerror (system-error-errno args))))))
+(define (host-key->type+key host-key)
+  "Destructure HOST-KEY, an OpenSSH host key string, and return two values:
+its key type as a symbol, and the actual base64-encoded string."
+  (define (type->symbol type)
+    (and (string-prefix? "ssh-" type)
+         (string->symbol (string-drop type 4))))
 
-(define-syntax with-error-to-port
-  (syntax-rules ()
-    ((_ port exp0 exp ...)
-     (let ((new port)
-           (old (current-error-port)))
-       (dynamic-wind
-         (lambda ()
-           (set-current-error-port new))
-         (lambda ()
-           exp0 exp ...)
-         (lambda ()
-           (set-current-error-port old)))))))
+  (match (string-tokenize host-key)
+    ((type key _)
+     (values (type->symbol type) key))
+    ((type key)
+     (values (type->symbol type) key))))
 
-(define* (remote-pipe machine mode command
-                      #:key (error-port (current-error-port)) (quote? #t))
-  "Run COMMAND (a string list) on MACHINE, assuming an lsh gateway has been
-set up.  When QUOTE? is true, perform shell-quotation of all the elements of
-COMMAND.  Return either a pipe opened with MODE, or #f if the lsh client could
-not be started."
+(define (open-ssh-session machine)
+  "Open an SSH session for MACHINE and return it.  Throw an error on failure."
+  (let ((private (private-key-from-file (build-machine-private-key machine)))
+        (public  (public-key-from-file
+                  (string-append (build-machine-private-key machine)
+                                 ".pub")))
+        (session (make-session #:user (build-machine-user machine)
+                               #:host (build-machine-name machine)
+                               #:timeout 5        ;seconds
+                               ;; #:log-verbosity 'protocol
+                               #:identity (build-machine-private-key machine)
+
+                               ;; We need lightweight compression when
+                               ;; exchanging full archives.
+                               #:compression "zlib"
+                               #:compression-level 3)))
+    (connect! session)
+
+    ;; Authenticate the server.  XXX: Guile-SSH 0.10.1 doesn't know about
+    ;; ed25519 keys and 'get-key-type' returns #f in that case.
+    (let-values (((server)   (get-server-public-key session))
+                 ((type key) (host-key->type+key
+                              (build-machine-host-key machine))))
+      (unless (and (or (not (get-key-type server))
+                       (eq? (get-key-type server) type))
+                   (string=? (public-key->string server) key))
+        ;; Key mismatch: something's wrong.  XXX: It could be that the server
+        ;; provided its Ed25519 key when we where expecting its RSA key.
+        (leave (_ "server at '~a' returned host key '~a' of type '~a' \
+instead of '~a' of type '~a'~%")
+               (build-machine-name machine)
+               (public-key->string server) (get-key-type server)
+               key type)))
+
+    (let ((auth (userauth-public-key! session private)))
+      (unless (eq? 'success auth)
+        (leave (_ "SSH public key authentication failed: ~a~%")
+               (get-error session))))
+
+    session))
+
+(define* (remote-pipe machine command
+                      #:key (quote? #t))
+  "Run COMMAND (a list) on MACHINE, and return an open input/output port,
+which is also an SSH channel.  When QUOTE? is true, perform shell-quotation of
+all the elements of COMMAND."
   (define (shell-quote str)
     ;; Sort-of shell-quote STR so it can be passed as an argument to the
     ;; shell.
@@ -195,20 +195,15 @@ not be started."
       (lambda ()
         (write str))))
 
-  ;; Let the child inherit ERROR-PORT.
-  (with-error-to-port error-port
-    (apply open-pipe* mode %lshg-command
-           "-l" (build-machine-user machine)
-           "-p" (number->string (build-machine-port machine))
-
-           ;; XXX: Remove '-i' when %LSHG-COMMAND really is lshg.
-           "-i" (build-machine-private-key machine)
-
-           (append (build-machine-ssh-options machine)
-                   (list (build-machine-name machine))
-                   (if quote?
-                       (map shell-quote command)
-                       command)))))
+  ;; TODO: Use (ssh popen) instead.
+  (let* ((session (open-ssh-session machine))
+         (channel (make-channel session)))
+    (channel-open-session channel)
+    (channel-request-exec channel
+                          (string-join (if quote?
+                                           (map shell-quote command)
+                                           command)))
+    channel))
 
 
 ;;;
@@ -335,10 +330,11 @@ hook."
              (unless (= EEXIST (system-error-errno args))
                (apply throw args)))))))
 
-  (let ((pipe (remote-pipe machine OPEN_READ
+  (let ((pipe (remote-pipe machine
                            `("guile" "-c" ,(object->string script)))))
     (read-string pipe)
-    (let ((status (close-pipe pipe)))
+    (let ((status (channel-get-exit-status pipe)))
+      (close-port pipe)
       (unless (zero? status)
         ;; Better be safe than sorry: if we ignore the error here, then FILE
         ;; may be GC'd just before we start using it.
@@ -367,10 +363,10 @@ hook."
                        (false-if-exception (delete-file file)))
                      roots)))))
 
-  (let ((pipe (remote-pipe machine OPEN_READ
+  (let ((pipe (remote-pipe machine
                            `("guile" "-c" ,(object->string script)))))
     (read-string pipe)
-    (close-pipe pipe)))
+    (close-port pipe)))
 
 (define* (offload drv machine
                   #:key print-build-trace? (max-silent-time 3600)
@@ -384,7 +380,7 @@ there, and write the build log to LOG-PORT.  Return the exit status."
 
   ;; Normally DRV has already been protected from GC when it was transferred.
   ;; The '-r' flag below prevents the build result from being GC'd.
-  (let ((pipe (remote-pipe machine OPEN_READ
+  (let ((pipe (remote-pipe machine
                            `("guix" "build"
                              "-r" ,%gc-root-file
                              ,(format #f "--max-silent-time=~a"
@@ -397,14 +393,20 @@ there, and write the build log to LOG-PORT.  Return the exit status."
 
                            ;; Since 'guix build' writes the build log to its
                            ;; stderr, everything will go directly to LOG-PORT.
-                           #:error-port log-port)))
+                           ;; #:error-port log-port ;; FIXME
+                           )))
+    ;; Make standard error visible.
+    (channel-set-stream! pipe 'stderr)
+
     (let loop ((line (read-line pipe)))
       (unless (eof-object? line)
         (display line log-port)
         (newline log-port)
         (loop (read-line pipe))))
 
-    (close-pipe pipe)))
+    (let loop ((status (channel-get-exit-status pipe)))
+      (close-port pipe)
+      status)))
 
 (define* (transfer-and-offload drv machine
                                #:key
@@ -438,7 +440,7 @@ MACHINE."
 with exit code ~a~%"
                     (derivation-file-name drv)
                     (build-machine-name machine)
-                    (status:exit-val status))
+                    status)
 
             ;; Use exit code 100 for a permanent build failure.  The daemon
             ;; interprets other non-zero codes as transient build failures.
@@ -448,24 +450,14 @@ with exit code ~a~%"
   "Send the subset of FILES that's missing to MACHINE's store.  Return #t on
 success, #f otherwise."
   (define (missing-files files)
-    ;; Return the subset of FILES not already on MACHINE.
-    (let*-values (((files)
-                   (format #f "~{~a~%~}" files))
-                  ((missing pids)
-                   (filtered-port
-                    (append (list (which %lshg-command)
-                                  "-l" (build-machine-user machine)
-                                  "-p" (number->string
-                                        (build-machine-port machine))
-                                  "-i" (build-machine-private-key machine))
-                            (build-machine-ssh-options machine)
-                            (cons (build-machine-name machine)
-                                  '("guix" "archive" "--missing")))
-                    (open-input-string files)))
-                  ((result)
-                   (read-string missing)))
-      (for-each waitpid pids)
-      (string-tokenize result)))
+    ;; Return the subset of FILES not already on MACHINE.  Use 'head' as a
+    ;; hack to make sure the remote end stops reading when we're done.
+    (let* ((pipe (remote-pipe machine
+                              `("guix" "archive" "--missing")
+                              #:quote? #f)))
+      (format pipe "~{~a~%~}" files)
+      (channel-send-eof! pipe)
+      (string-tokenize (read-string pipe))))
 
   (with-store store
     (guard (c ((nix-protocol-error? c)
@@ -476,40 +468,28 @@ success, #f otherwise."
 
       ;; Compute the subset of FILES missing on MACHINE, and send them in
       ;; topologically sorted order so that they can actually be imported.
-      ;;
-      ;; To reduce load on the machine that's offloading (since it's typically
-      ;; already quite busy, see hydra.gnu.org), compress with gzip rather
-      ;; than xz: For a compression ratio 2 times larger, it is 20 times
-      ;; faster.
       (let* ((files (missing-files (topologically-sorted store files)))
-             (pipe  (remote-pipe machine OPEN_WRITE
-                                 '("gzip" "-dc" "|"
-                                   "guix" "archive" "--import")
+             (pipe  (remote-pipe machine
+                                 '("guix" "archive" "--import")
                                  #:quote? #f)))
         (format #t (_ "sending ~a store files to '~a'...~%")
                 (length files) (build-machine-name machine))
-        (call-with-compressed-output-port 'gzip pipe
-          (lambda (compressed)
-            (catch 'system-error
-              (lambda ()
-                (export-paths store files compressed))
-              (lambda args
-                (warning (_ "failed while exporting files to '~a': ~a~%")
-                         (build-machine-name machine)
-                         (strerror (system-error-errno args))))))
-          #:options '("--fast"))
 
-        ;; Wait for the 'lsh' process to complete.
-        (zero? (close-pipe pipe))))))
+        (export-paths store files pipe)
+        (channel-send-eof! pipe)
+
+        ;; Wait for the remote process to complete.
+        (let ((status (channel-get-exit-status pipe)))
+          (close pipe)
+          status)))))
 
 (define (retrieve-files files machine)
   "Retrieve FILES from MACHINE's store, and import them."
   (define host
     (build-machine-name machine))
 
-  (let ((pipe (remote-pipe machine OPEN_READ
-                           `("guix" "archive" "--export" ,@files
-                             "|" "xz" "-c")
+  (let ((pipe (remote-pipe machine
+                           `("guix" "archive" "--export" ,@files)
                            #:quote? #f)))
     (and pipe
          (with-store store
@@ -522,14 +502,11 @@ success, #f otherwise."
 
              ;; We cannot use the 'import-paths' RPC here because we already
              ;; hold the locks for FILES.
-             (call-with-decompressed-port 'xz pipe
-               (lambda (decompressed)
-                 (restore-file-set decompressed
-                                   #:log-port (current-error-port)
-                                   #:lock? #f)))
+             (restore-file-set pipe
+                               #:log-port (current-error-port)
+                               #:lock? #f)
 
-             ;; Wait for the 'lsh' process to complete.
-             (zero? (close-pipe pipe)))))))
+             (close-port pipe))))))
 
 
 ;;;
@@ -547,13 +524,9 @@ success, #f otherwise."
 (define (machine-load machine)
   "Return the load of MACHINE, divided by the number of parallel builds
 allowed on MACHINE."
-  (let* ((pipe   (remote-pipe machine OPEN_READ `("cat" "/proc/loadavg")))
-         (line   (read-line pipe))
-         (status (close-pipe pipe)))
-    (unless (eqv? 0 (status:exit-val status))
-      (warning (_ "failed to obtain load of '~a': SSH client exited with ~a~%")
-               (build-machine-name machine)
-               (status:exit-val status)))
+  (let* ((pipe   (remote-pipe machine '("cat" "/proc/loadavg")))
+         (line   (read-line pipe)))
+    (close-port pipe)
 
     (if (eof-object? line)
         +inf.0    ;MACHINE does not respond, so assume it is infinitely loaded

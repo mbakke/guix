@@ -562,6 +562,10 @@ guix import}).  It is of
 interest primarily for developers and not for casual users.
 
 @item
+Support for build offloading (@pxref{Daemon Offload Setup}) depends on
+@uref{https://github.com/artyom-poptsov/libguile-ssh.git, Guile-SSH}.
+
+@item
 When @url{http://zlib.net, zlib} is available, @command{guix publish}
 can compress build byproducts (@pxref{Invoking guix publish}).
 @end itemize
@@ -823,16 +827,18 @@ The @file{/etc/guix/machines.scm} file typically looks like this:
 (list (build-machine
         (name "eightysix.example.org")
         (system "x86_64-linux")
+        (host-key "ssh-ed25519 AAAAC3Nza@dots{}")
         (user "bob")
-        (speed 2.))    ; incredibly fast!
+        (speed 2.))     ;incredibly fast!
 
       (build-machine
         (name "meeps.example.org")
         (system "mips64el-linux")
+        (host-key "ssh-rsa AAAAB3Nza@dots{}")
         (user "alice")
         (private-key
          (string-append (getenv "HOME")
-                        "/.lsh/identity-for-guix"))))
+                        "/.ssh/identity-for-guix"))))
 @end example
 
 @noindent
@@ -866,31 +872,54 @@ The user account to use when connecting to the remote machine over SSH.
 Note that the SSH key pair must @emph{not} be passphrase-protected, to
 allow non-interactive logins.
 
+@item host-key
+This must be the machine's SSH @dfn{public host key} in OpenSSH format.
+This is used to authenticate the machine when we connect to it.  It is a
+long string that looks like this:
+
+@example
+ssh-ed25519 AAAAC3NzaC@dots{}mde+UhL hint@@example.org
+@end example
+
+If the machine is running the OpenSSH daemon, @command{sshd}, the host
+key can be found in a file such as
+@file{/etc/ssh/ssh_host_ed25519_key.pub}.
+
+If the machine is running the SSH daemon of GNU@tie{}lsh,
+@command{lshd}, the host key is in @file{/etc/lsh/host-key.pub} or a
+similar file.  It can be converted to the OpenSSH format using
+@command{lsh-export-key} (@pxref{Converting keys,,, lsh, LSH Manual}):
+
+@example
+$ lsh-export-key --openssh < /etc/lsh/host-key.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAAEOp8FoQAAAQEAs1eB46LV@dots{}
+@end example
+
 @end table
 
 A number of optional fields may be specified:
 
-@table @code
+@table @asis
 
-@item port
-Port number of SSH server on the machine (default: 22).
+@item @code{port} (default: @code{22})
+Port number of SSH server on the machine.
 
-@item private-key
+@item @code{private-key} (default: @file{~/.ssh/id_rsa})
 The SSH private key file to use when connecting to the machine.
 
-Currently offloading uses GNU@tie{}lsh as its SSH client
-(@pxref{Invoking lsh,,, GNU lsh Manual}).  Thus, the key file here must
-be an lsh key file.  This may change in the future, though.
+Offloading uses
+@uref{https://github.com/artyom-poptsov/libguile-ssh.git, Guile-SSH} to
+communicate with build hosts.  Guile-SSH is compatible with OpenSSH, so
+this key must be an OpenSSH private key file.
 
-@item parallel-builds
-The number of builds that may run in parallel on the machine (1 by
-default.)
+@item @code{parallel-builds} (default: @code{1})
+The number of builds that may run in parallel on the machine.
 
-@item speed
+@item @code{speed} (default: @code{1.0})
 A ``relative speed factor''.  The offload scheduler will tend to prefer
 machines with a higher speed factor.
 
-@item features
+@item @code{features} (default: @code{'()})
 A list of strings denoting specific features supported by the machine.
 An example is @code{"kvm"} for machines that have the KVM Linux modules
 and corresponding hardware support.  Derivations can request features by
@@ -906,7 +935,7 @@ machines, since offloading works by invoking the @code{guix archive} and
 this is the case by running:
 
 @example
-lsh build-machine guile -c "'(use-modules (guix config))'"
+ssh build-machine guile -c "'(use-modules (guix config))'"
 @end example
 
 There is one last thing to do once @file{machines.scm} is in place.  As
