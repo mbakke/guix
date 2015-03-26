@@ -103,22 +103,23 @@ successful, or false to signal an error."
      `(#:guile ,%bootstrap-guile
        #:modules ((guix build utils))
        #:builder
-       (let ((out     (assoc-ref %outputs "out"))
-             (tar     (assoc-ref %build-inputs "tar"))
-             (xz      (assoc-ref %build-inputs "xz"))
-             (tarball (assoc-ref %build-inputs "tarball")))
+       (begin
          (use-modules (guix build utils))
 
-         (mkdir out)
-         (copy-file tarball "binaries.tar.xz")
-         (system* xz "-d" "binaries.tar.xz")
-         (let ((builddir (getcwd)))
-           (with-directory-excursion out
-             (and (zero? (system* tar "xvf"
-                                  (string-append builddir "/binaries.tar")))
-                  ,@(if snippet (list snippet) '())
-                  (zero? (system* (string-append "bin/" ,program-to-test)
-                                  "--version"))))))))
+         (let ((out     (assoc-ref %outputs "out"))
+               (tar     (assoc-ref %build-inputs "tar"))
+               (xz      (assoc-ref %build-inputs "xz"))
+               (tarball (assoc-ref %build-inputs "tarball")))
+           (mkdir out)
+           (copy-file tarball "binaries.tar.xz")
+           (system* xz "-d" "binaries.tar.xz")
+           (let ((builddir (getcwd)))
+             (with-directory-excursion out
+               (and (zero? (system* tar "xvf"
+                                    (string-append builddir "/binaries.tar")))
+                    ,@(if snippet (list snippet) '())
+                    (zero? (system* (string-append "bin/" ,program-to-test)
+                                    "--version")))))))))
     (inputs
      `(("tar" ,(search-bootstrap-binary "tar" (%current-system)))
        ("xz"  ,(search-bootstrap-binary "xz" (%current-system)))
@@ -364,26 +365,28 @@ $out/bin/guile --version~%"
      `(#:guile ,%bootstrap-guile
        #:modules ((guix build utils))
        #:builder
-       (let ((out     (assoc-ref %outputs "out"))
-             (tar     (assoc-ref %build-inputs "tar"))
-             (xz      (assoc-ref %build-inputs "xz"))
-             (tarball (assoc-ref %build-inputs "tarball")))
+       (begin
          (use-modules (guix build utils))
 
-         (mkdir out)
-         (copy-file tarball "binaries.tar.xz")
-         (system* xz "-d" "binaries.tar.xz")
-         (let ((builddir (getcwd)))
-           (with-directory-excursion out
-             (system* tar "xvf"
-                      (string-append builddir
-                                     "/binaries.tar"))
-             (chmod "lib" #o755)
+         (let ((out     (assoc-ref %outputs "out"))
+               (tar     (assoc-ref %build-inputs "tar"))
+               (xz      (assoc-ref %build-inputs "xz"))
+               (tarball (assoc-ref %build-inputs "tarball")))
 
-             ;; Patch libc.so so it refers to the right path.
-             (substitute* "lib/libc.so"
-               (("/[^ ]+/lib/(libc|ld)" _ prefix)
-                (string-append out "/lib/" prefix))))))))
+           (mkdir out)
+           (copy-file tarball "binaries.tar.xz")
+           (system* xz "-d" "binaries.tar.xz")
+           (let ((builddir (getcwd)))
+             (with-directory-excursion out
+               (system* tar "xvf"
+                        (string-append builddir
+                                       "/binaries.tar"))
+               (chmod "lib" #o755)
+
+               ;; Patch libc.so so it refers to the right path.
+               (substitute* "lib/libc.so"
+                 (("/[^ ]+/lib/(libc|ld)" _ prefix)
+                  (string-append out "/lib/" prefix)))))))))
     (inputs
      `(("tar" ,(search-bootstrap-binary "tar" (%current-system)))
        ("xz"  ,(search-bootstrap-binary "xz" (%current-system)))
@@ -428,38 +431,40 @@ $out/bin/guile --version~%"
      `(#:guile ,%bootstrap-guile
        #:modules ((guix build utils))
        #:builder
-       (let ((out     (assoc-ref %outputs "out"))
-             (tar     (assoc-ref %build-inputs "tar"))
-             (xz      (assoc-ref %build-inputs "xz"))
-             (bash    (assoc-ref %build-inputs "bash"))
-             (libc    (assoc-ref %build-inputs "libc"))
-             (tarball (assoc-ref %build-inputs "tarball")))
+       (begin
          (use-modules (guix build utils)
                       (ice-9 popen))
 
-         (mkdir out)
-         (copy-file tarball "binaries.tar.xz")
-         (system* xz "-d" "binaries.tar.xz")
-         (let ((builddir (getcwd))
-               (bindir   (string-append out "/bin")))
-           (with-directory-excursion out
-             (system* tar "xvf"
-                      (string-append builddir "/binaries.tar")))
+         (let ((out     (assoc-ref %outputs "out"))
+               (tar     (assoc-ref %build-inputs "tar"))
+               (xz      (assoc-ref %build-inputs "xz"))
+               (bash    (assoc-ref %build-inputs "bash"))
+               (libc    (assoc-ref %build-inputs "libc"))
+               (tarball (assoc-ref %build-inputs "tarball")))
 
-           (with-directory-excursion bindir
-             (chmod "." #o755)
-             (rename-file "gcc" ".gcc-wrapped")
-             (call-with-output-file "gcc"
-               (lambda (p)
-                 (format p "#!~a
+           (mkdir out)
+           (copy-file tarball "binaries.tar.xz")
+           (system* xz "-d" "binaries.tar.xz")
+           (let ((builddir (getcwd))
+                 (bindir   (string-append out "/bin")))
+             (with-directory-excursion out
+               (system* tar "xvf"
+                        (string-append builddir "/binaries.tar")))
+
+             (with-directory-excursion bindir
+               (chmod "." #o755)
+               (rename-file "gcc" ".gcc-wrapped")
+               (call-with-output-file "gcc"
+                 (lambda (p)
+                   (format p "#!~a
 exec ~a/bin/.gcc-wrapped -B~a/lib \
      -Wl,-rpath -Wl,~a/lib \
      -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
-                         bash
-                         out libc libc libc
-                         ,(glibc-dynamic-linker))))
+                           bash
+                           out libc libc libc
+                           ,(glibc-dynamic-linker))))
 
-             (chmod "gcc" #o555))))))
+               (chmod "gcc" #o555)))))))
     (inputs
      `(("tar" ,(search-bootstrap-binary "tar" (%current-system)))
        ("xz"  ,(search-bootstrap-binary "xz" (%current-system)))
