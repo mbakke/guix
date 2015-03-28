@@ -455,6 +455,15 @@ names and file names suitable for the #:allowed-references argument to
     (lambda (system)
       ((force proc) system))))
 
+(define (sexp->string sexp)
+  "Like 'object->string', but deterministic and slightly faster."
+  ;; Explicitly use UTF-8 for determinism, and also because UTF-8 output is
+  ;; faster.
+  (with-fluids ((%default-port-encoding "UTF-8"))
+    (call-with-output-string
+     (lambda (port)
+       (write sexp port)))))
+
 (define* (gexp->derivation name exp
                            #:key
                            system (target 'current)
@@ -538,7 +547,7 @@ The other arguments are as for 'derivation'."
                                              #:system system
                                              #:target target))
                        (builder  (text-file script-name
-                                            (object->string sexp)))
+                                            (sexp->string sexp)))
                        (modules  (if (pair? %modules)
                                      (imported-modules %modules
                                                        #:system system
