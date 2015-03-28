@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,20 +19,12 @@
 (define-module (guix build-system trivial)
   #:use-module (guix store)
   #:use-module (guix utils)
-  #:use-module (guix derivations)
+  #:use-module (guix gexp)
+  #:use-module (guix monads)
   #:use-module (guix packages)
   #:use-module (guix build-system)
   #:use-module (ice-9 match)
   #:export (trivial-build-system))
-
-(define (guile-for-build store guile system)
-  (match guile
-    ((? package?)
-     (package-derivation store guile system #:graft? #f))
-    (#f                                         ; the default
-     (let* ((distro (resolve-interface '(gnu packages commencement)))
-            (guile  (module-ref distro 'guile-final)))
-       (package-derivation store guile system #:graft? #f)))))
 
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
@@ -53,34 +45,38 @@
                  #:builder ,builder
                  #:modules ,modules))))
 
-(define* (trivial-build store name inputs
+(define* (trivial-build name inputs
                         #:key
-                        outputs guile system builder (modules '())
+                        outputs guile
+                        system builder (modules '())
                         search-paths)
   "Run build expression BUILDER, an expression, for SYSTEM.  SOURCE is
 ignored."
-  (build-expression->derivation store name builder
-                                #:inputs inputs
-                                #:system system
-                                #:outputs outputs
-                                #:modules modules
-                                #:guile-for-build
-                                (guile-for-build store guile system)))
+  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
+                                                  system #:graft? #f)))
+    (gexp->derivation name (with-build-variables inputs outputs builder)
+                      #:system system
+                      #:target #f
+                      #:modules modules
+                      #:guile-for-build guile)))
 
-(define* (trivial-cross-build store name
+(define* (trivial-cross-build name
                               #:key
                               target native-drvs target-drvs
                               outputs guile system builder (modules '())
                               search-paths native-search-paths)
   "Run build expression BUILDER, an expression, for SYSTEM.  SOURCE is
 ignored."
-  (build-expression->derivation store name builder
-                                #:inputs (append native-drvs target-drvs)
-                                #:system system
-                                #:outputs outputs
-                                #:modules modules
-                                #:guile-for-build
-                                (guile-for-build store guile system)))
+  (mlet %store-monad  ((guile (package->derivation (or guile (default-guile))
+                                                   system #:graft? #f)))
+    (gexp->derivation name (with-build-variables
+                               (append native-drvs target-drvs)
+                               outputs
+                             builder)
+                      #:system system
+                      #:target target
+                      #:modules modules
+                      #:guile-for-build guile)))
 
 (define trivial-build-system
   (build-system

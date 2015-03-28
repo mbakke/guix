@@ -760,39 +760,24 @@ Return the cached result when available."
     ((_ package system body ...)
      (cached (=> %derivation-cache) package system body ...))))
 
-(define* (expand-input store package input system #:optional cross-system)
-  "Expand INPUT, an input tuple, such that it contains only references to
-derivation paths or store paths.  PACKAGE is only used to provide contextual
-information in exceptions."
-  (define (intern file)
-    ;; Add FILE to the store.  Set the `recursive?' bit to #t, so that
-    ;; file permissions are preserved.
-    (add-to-store store (basename file) #t "sha256" file))
-
-  (define derivation
-    (if cross-system
-        (cut package-cross-derivation store <> cross-system system
-             #:graft? #f)
-        (cut package-derivation store <> system #:graft? #f)))
+(define* (expand-input package input #:key native?)
+  "Expand INPUT, an input tuple, to a name/<gexp-input> tuple.  PACKAGE is
+only used to provide contextual information in exceptions."
+  (define (valid? x)
+    (or (package? x) (origin? x) (derivation? x)))
 
   (match input
-    (((? string? name) (? package? package))
-     (list name (derivation package)))
-    (((? string? name) (? package? package)
-      (? string? sub-drv))
-     (list name (derivation package)
-           sub-drv))
-    (((? string? name)
-      (and (? string?) (? derivation-path?) drv))
-     (list name drv))
+    (((? string? name) (? valid? thing))
+     (list name (gexp-input thing #:native? native?)))
+    (((? string? name) (? valid? thing) (? string? output))
+     (list name (gexp-input thing output #:native? native?)))
     (((? string? name)
       (and (? string?) (? file-exists? file)))
      ;; Add FILE to the store.  When FILE is in the sub-directory of a
      ;; store path, it needs to be added anyway, so it can be used as a
      ;; source.
-     (list name (intern file)))
-    (((? string? name) (? origin? source))
-     (list name (package-source-derivation store source system)))
+     (list name (gexp-input (local-file file #:recursive? #t)
+                            #:native? native?)))
     (x
      (raise (condition (&package-input-error
                         (package package)
@@ -970,18 +955,19 @@ error reporting."
       (bag->cross-derivation store bag)
       (let* ((system     (bag-system bag))
              (inputs     (bag-transitive-inputs bag))
-             (input-drvs (map (cut expand-input store context <> system)
-                              inputs))
              (paths      (delete-duplicates
                           (append-map (match-lambda
                                        ((_ (? package? p) _ ...)
                                         (package-native-search-paths
                                          p))
                                        (_ '()))
-                                      inputs))))
+                                      inputs)))
+             (inputs     (map (cut expand-input context <>)
+                              inputs)))
 
-        (apply (bag-build bag)
-               store (bag-name bag) input-drvs
+        ;; TODO: Change to monadic style.
+        (apply (store-lower (bag-build bag))
+               store (bag-name bag) inputs
                #:search-paths paths
                #:outputs (bag-outputs bag) #:system system
                (bag-arguments bag)))))
@@ -994,13 +980,13 @@ This is an internal procedure."
   (let* ((system      (bag-system bag))
          (target      (bag-target bag))
          (host        (bag-transitive-host-inputs bag))
-         (host-drvs   (map (cut expand-input store context <> system target)
+         (host-drvs   (map (cut expand-input context <> #:native? #f)
                            host))
          (target*     (bag-transitive-target-inputs bag))
-         (target-drvs (map (cut expand-input store context <> system)
+         (target-drvs (map (cut expand-input context <> #:native? #t)
                            target*))
          (build       (bag-transitive-build-inputs bag))
-         (build-drvs  (map (cut expand-input store context <> system)
+         (build-drvs  (map (cut expand-input context <> #:native? #t)
                            build))
          (all         (append build target* host))
          (paths       (delete-duplicates
@@ -1017,7 +1003,8 @@ This is an internal procedure."
                                     (_ '()))
                                    all))))
 
-    (apply (bag-build bag)
+    ;; TODO: Change to monadic style.
+    (apply (store-lower (bag-build bag))
            store (bag-name bag)
            #:native-drvs build-drvs
            #:target-drvs (append host-drvs target-drvs)

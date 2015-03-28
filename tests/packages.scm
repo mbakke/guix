@@ -481,9 +481,9 @@
                         (system system) (target target)
                         (build-inputs inputs)
                         (build
-                         (lambda* (store name inputs
-                                         #:key outputs system search-paths)
-                           search-paths)))))))
+                         (lambda* (name inputs
+                                        #:key outputs system search-paths)
+                           (abort-to-prompt p search-paths))))))))
          (x (list (search-path-specification
                    (variable "GUILE_LOAD_PATH")
                    (files '("share/guile/site/2.0")))

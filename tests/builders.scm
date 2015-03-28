@@ -102,11 +102,11 @@
                     "0wqd8sjmxfskrflaxywc7gqw7sfawrfvdxd9skxawzfgyy0pzdz6"))
          (tarball  (url-fetch* %store url 'sha256 hash
                                #:guile %bootstrap-guile))
-         (build    (gnu-build %store "hello-2.8"
-                              `(("source" ,tarball)
-                                ,@%bootstrap-inputs)
-                              #:guile %bootstrap-guile
-                              #:search-paths %bootstrap-search-paths))
+         (build    ((store-lower gnu-build) %store "hello-2.8"
+                    %bootstrap-inputs
+                    #:source tarball
+                    #:guile %bootstrap-guile
+                    #:search-paths %bootstrap-search-paths))
          (out      (derivation->output-path build)))
     (and (build-derivations %store (list (pk 'hello-drv build)))
          (valid-path? %store out)

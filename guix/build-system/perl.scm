@@ -19,6 +19,8 @@
 (define-module (guix build-system perl)
   #:use-module (guix store)
   #:use-module (guix utils)
+  #:use-module (guix gexp)
+  #:use-module (guix monads)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
   #:use-module (guix build-system)
@@ -57,7 +59,7 @@
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:source #:target #:perl #:inputs #:native-inputs))
+    '(#:target #:perl #:inputs #:native-inputs))
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -76,8 +78,8 @@
          (build perl-build)
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
-(define* (perl-build store name inputs
-                     #:key
+(define* (perl-build name inputs
+                     #:key source
                      (search-paths '())
                      (tests? #t)
                      (parallel-build? #t)
@@ -95,46 +97,33 @@
                                 (guix build utils))))
   "Build SOURCE using PERL, and with INPUTS.  This assumes that SOURCE
 provides a `Makefile.PL' file as its build system."
-  (define builder
-    `(begin
-       (use-modules ,@modules)
-       (perl-build #:name ,name
-                   #:source ,(match (assoc-ref inputs "source")
-                               (((? derivation? source))
-                                (derivation->output-path source))
-                               ((source)
-                                source)
-                               (source
-                                source))
-                   #:search-paths ',(map search-path-specification->sexp
-                                         search-paths)
-                   #:make-maker? ,make-maker?
-                   #:make-maker-flags ,make-maker-flags
-                   #:module-build-flags ,module-build-flags
-                   #:phases ,phases
-                   #:system ,system
-                   #:test-target "test"
-                   #:tests? ,tests?
-                   #:parallel-build? ,parallel-build?
-                   #:parallel-tests? ,parallel-tests?
-                   #:outputs %outputs
-                   #:inputs %build-inputs)))
+  (define build
+    #~(begin
+        (use-modules #$@modules)
 
-  (define guile-for-build
-    (match guile
-      ((? package?)
-       (package-derivation store guile system #:graft? #f))
-      (#f                                         ; the default
-       (let* ((distro (resolve-interface '(gnu packages commencement)))
-              (guile  (module-ref distro 'guile-final)))
-         (package-derivation store guile system #:graft? #f)))))
+        #$(with-build-variables inputs outputs
+            #~(perl-build #:name #$name
+                          #:source #+source
+                          #:search-paths '#$(map search-path-specification->sexp
+                                                 search-paths)
+                          #:make-maker? #$make-maker?
+                          #:make-maker-flags #$make-maker-flags
+                          #:module-build-flags #$module-build-flags
+                          #:phases #$phases
+                          #:system #$system
+                          #:test-target "test"
+                          #:tests? #$tests?
+                          #:parallel-build? #$parallel-build?
+                          #:parallel-tests? #$parallel-tests?
+                          #:outputs %outputs
+                          #:inputs %build-inputs))))
 
-  (build-expression->derivation store name builder
-                                #:system system
-                                #:inputs inputs
-                                #:modules imported-modules
-                                #:outputs outputs
-                                #:guile-for-build guile-for-build))
+  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
+                                                  system #:graft? #f)))
+    (gexp->derivation name build
+                      #:system system
+                      #:modules imported-modules
+                      #:guile-for-build guile)))
 
 (define perl-build-system
   (build-system

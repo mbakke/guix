@@ -25,8 +25,10 @@
   #:use-module (guix build-system)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
-  #:use-module ((guix store) #:select (add-to-store add-text-to-store))
+  #:use-module ((guix store)
+                #:select (%store-monad interned-file text-file store-lift))
   #:use-module ((guix derivations) #:select (derivation))
+  #:use-module (guix monads)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
@@ -183,56 +185,60 @@ successful, or false to signal an error."
 ;;; Bootstrap packages.
 ;;;
 
-(define* (raw-build store name inputs
+(define raw-derivation                            ;TODO: factorize
+  (store-lift derivation))
+
+(define* (raw-build name inputs
                     #:key outputs system search-paths
                     #:allow-other-keys)
   (define (->store file)
-    (add-to-store store file #t "sha256"
-                  (or (search-bootstrap-binary file
-                                               system)
-                      (error "bootstrap binary not found"
-                             file system))))
+    (interned-file (or (search-bootstrap-binary file system)
+                       (error "bootstrap binary not found"
+                              file system))
+                   file
+                   #:recursive? #t))
 
-  (let* ((tar   (->store "tar"))
-         (xz    (->store "xz"))
-         (mkdir (->store "mkdir"))
-         (bash  (->store "bash"))
-         (guile (->store (match system
-                           ("armhf-linux"
-                            "guile-2.0.11.tar.xz")
-                           (_
-                            "guile-2.0.9.tar.xz"))))
-         ;; The following code, run by the bootstrap guile after it is
-         ;; unpacked, creates a wrapper for itself to set its load path.
-         ;; This replaces the previous non-portable method based on
-         ;; reading the /proc/self/exe symlink.
-         (make-guile-wrapper
-          '(begin
-             (use-modules (ice-9 match))
-             (match (command-line)
-               ((_ out bash)
-                (let ((bin-dir    (string-append out "/bin"))
-                      (guile      (string-append out "/bin/guile"))
-                      (guile-real (string-append out "/bin/.guile-real"))
-                      ;; We must avoid using a bare dollar sign in this code,
-                      ;; because it would be interpreted by the shell.
-                      (dollar     (string (integer->char 36))))
-                  (chmod bin-dir #o755)
-                  (rename-file guile guile-real)
-                  (call-with-output-file guile
-                    (lambda (p)
-                      (format p "\
+  (define (make-guile-wrapper bash guile-real)
+    ;; The following code, run by the bootstrap guile after it is unpacked,
+    ;; creates a wrapper for itself to set its load path.  This replaces the
+    ;; previous non-portable method based on reading the /proc/self/exe
+    ;; symlink.
+    '(begin
+       (use-modules (ice-9 match))
+       (match (command-line)
+         ((_ out bash)
+          (let ((bin-dir    (string-append out "/bin"))
+                (guile      (string-append out "/bin/guile"))
+                (guile-real (string-append out "/bin/.guile-real"))
+                ;; We must avoid using a bare dollar sign in this code,
+                ;; because it would be interpreted by the shell.
+                (dollar     (string (integer->char 36))))
+            (chmod bin-dir #o755)
+            (rename-file guile guile-real)
+            (call-with-output-file guile
+              (lambda (p)
+                (format p "\
 #!~a
 export GUILE_SYSTEM_PATH=~a/share/guile/2.0
 export GUILE_SYSTEM_COMPILED_PATH=~a/lib/guile/2.0/ccache
 exec -a \"~a0\" ~a \"~a@\"\n"
-                              bash out out dollar guile-real dollar)))
-                  (chmod guile   #o555)
-                  (chmod bin-dir #o555))))))
-         (builder
-          (add-text-to-store store
-                             "build-bootstrap-guile.sh"
-                             (format #f "
+                        bash out out dollar guile-real dollar)))
+            (chmod guile   #o555)
+            (chmod bin-dir #o555))))))
+
+  (mlet* %store-monad ((tar   (->store "tar"))
+                       (xz    (->store "xz"))
+                       (mkdir (->store "mkdir"))
+                       (bash  (->store "bash"))
+                       (guile (->store (match system
+                                         ("armhf-linux"
+                                          "guile-2.0.11.tar.xz")
+                                         (_
+                                          "guile-2.0.9.tar.xz"))))
+                       (wrapper -> (make-guile-wrapper bash guile))
+                       (builder
+                        (text-file "build-bootstrap-guile.sh"
+                                   (format #f "
 echo \"unpacking bootstrap Guile to '$out'...\"
 ~a $out
 cd $out
@@ -245,14 +251,14 @@ $out/bin/guile -c ~s $out ~a
 
 # Sanity check.
 $out/bin/guile --version~%"
-                                     mkdir xz guile tar
-                                     (format #f "~s" make-guile-wrapper)
-                                     bash)
-                             (list mkdir xz guile tar bash))))
-    (derivation store name
-                bash `(,builder)
-                #:system system
-                #:inputs `((,bash) (,builder)))))
+                                           mkdir xz guile tar
+                                           (object->string wrapper)
+                                           bash)
+                                   (list mkdir xz guile tar))))
+    (raw-derivation name
+                    bash `(,builder)
+                    #:system system
+                    #:inputs `((,bash) (,builder)))))
 
 (define* (make-raw-bag name
                        #:key source inputs native-inputs outputs

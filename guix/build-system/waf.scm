@@ -19,6 +19,8 @@
 (define-module (guix build-system waf)
   #:use-module (guix store)
   #:use-module (guix utils)
+  #:use-module (guix gexp)
+  #:use-module (guix monads)
   #:use-module (guix packages)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
@@ -52,7 +54,7 @@
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:source #:target #:python #:inputs #:native-inputs))
+    '(#:target #:python #:inputs #:native-inputs))
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -71,58 +73,45 @@
          (build waf-build) ; only change compared to 'lower' in python.scm
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
-(define* (waf-build store name inputs
-                       #:key
-                       (tests? #t)
-                       (test-target "check")
-                       (configure-flags ''())
-                       (phases '(@ (guix build waf-build-system)
-                                   %standard-phases))
-                       (outputs '("out"))
-                       (search-paths '())
-                       (system (%current-system))
-                       (guile #f)
-                       (imported-modules %waf-build-system-modules)
-                       (modules '((guix build waf-build-system)
-                                  (guix build utils))))
+(define* (waf-build name inputs
+                    #:key source
+                    (tests? #t)
+                    (test-target "check")
+                    (configure-flags ''())
+                    (phases '(@ (guix build waf-build-system)
+                                %standard-phases))
+                    (outputs '("out"))
+                    (search-paths '())
+                    (system (%current-system))
+                    (guile #f)
+                    (imported-modules %waf-build-system-modules)
+                    (modules '((guix build waf-build-system)
+                               (guix build utils))))
   "Build SOURCE with INPUTS.  This assumes that SOURCE provides a 'waf' file
 as its build system."
-  (define builder
-    `(begin
-       (use-modules ,@modules)
-       (waf-build #:name ,name
-                  #:source ,(match (assoc-ref inputs "source")
-                              (((? derivation? source))
-                               (derivation->output-path source))
-                              ((source)
-                               source)
-                              (source
-                               source))
-                  #:configure-flags ,configure-flags
-                  #:system ,system
-                  #:test-target ,test-target
-                  #:tests? ,tests?
-                  #:phases ,phases
-                  #:outputs %outputs
-                  #:search-paths ',(map search-path-specification->sexp
-                                        search-paths)
-                  #:inputs %build-inputs)))
+  (define build
+    #~(begin
+        (use-modules #$@modules)
 
-  (define guile-for-build
-    (match guile
-      ((? package?)
-       (package-derivation store guile system #:graft? #f))
-      (#f                                         ; the default
-       (let* ((distro (resolve-interface '(gnu packages commencement)))
-              (guile  (module-ref distro 'guile-final)))
-         (package-derivation store guile system #:graft? #f)))))
+        #$(with-build-variables inputs outputs
+            #~(waf-build #:name #$name
+                         #:source #+source
+                         #:configure-flags #$configure-flags
+                         #:system #$system
+                         #:test-target #$test-target
+                         #:tests? #$tests?
+                         #:phases #$phases
+                         #:outputs %outputs
+                         #:search-paths '#$(map search-path-specification->sexp
+                                                search-paths)
+                         #:inputs %build-inputs))))
 
-  (build-expression->derivation store name builder
-                                #:inputs inputs
-                                #:system system
-                                #:modules imported-modules
-                                #:outputs outputs
-                                #:guile-for-build guile-for-build))
+  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
+                                                  system #:graft? #f)))
+    (gexp->derivation name build
+                      #:system system
+                      #:modules imported-modules
+                      #:guile-for-build guile)))
 
 (define waf-build-system
   (build-system

@@ -20,6 +20,8 @@
 (define-module (guix build-system ruby)
   #:use-module (guix store)
   #:use-module (guix utils)
+  #:use-module (guix gexp)
+  #:use-module (guix monads)
   #:use-module (guix packages)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
@@ -54,7 +56,7 @@ NAME and VERSION."
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:source #:target #:ruby #:inputs #:native-inputs))
+    '(#:target #:ruby #:inputs #:native-inputs))
 
   (and (not target)                    ;XXX: no cross-compilation
        (bag
@@ -73,8 +75,8 @@ NAME and VERSION."
          (build ruby-build)
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
-(define* (ruby-build store name inputs
-                     #:key
+(define* (ruby-build name inputs
+                     #:key source
                      (gem-flags ''())
                      (test-target "test")
                      (tests? #t)
@@ -88,42 +90,29 @@ NAME and VERSION."
                      (modules '((guix build ruby-build-system)
                                 (guix build utils))))
   "Build SOURCE using RUBY and INPUTS."
-  (define builder
-    `(begin
-       (use-modules ,@modules)
-       (ruby-build #:name ,name
-                   #:source ,(match (assoc-ref inputs "source")
-                               (((? derivation? source))
-                                (derivation->output-path source))
-                               ((source)
-                                source)
-                               (source
-                                source))
-                   #:system ,system
-                   #:gem-flags ,gem-flags
-                   #:test-target ,test-target
-                   #:tests? ,tests?
-                   #:phases ,phases
-                   #:outputs %outputs
-                   #:search-paths ',(map search-path-specification->sexp
-                                         search-paths)
-                   #:inputs %build-inputs)))
+  (define build
+    #~(begin
+        (use-modules #$@modules)
 
-  (define guile-for-build
-    (match guile
-      ((? package?)
-       (package-derivation store guile system #:graft? #f))
-      (#f
-       (let* ((distro (resolve-interface '(gnu packages commencement)))
-              (guile  (module-ref distro 'guile-final)))
-         (package-derivation store guile system #:graft? #f)))))
+        #$(with-build-variables inputs outputs
+            #~(ruby-build #:name #$name
+                          #:source #+source
+                          #:system #$system
+                          #:gem-flags #$gem-flags
+                          #:test-target #$test-target
+                          #:tests? #$tests?
+                          #:phases #$phases
+                          #:outputs %outputs
+                          #:search-paths '#$(map search-path-specification->sexp
+                                                 search-paths)
+                          #:inputs %build-inputs))))
 
-  (build-expression->derivation store name builder
-                                #:inputs inputs
-                                #:system system
-                                #:modules imported-modules
-                                #:outputs outputs
-                                #:guile-for-build guile-for-build))
+  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
+                                                  system #:graft? #f)))
+    (gexp->derivation name build
+                      #:system system
+                      #:modules imported-modules
+                      #:guile-for-build guile)))
 
 (define ruby-build-system
   (build-system

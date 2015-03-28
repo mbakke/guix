@@ -19,7 +19,9 @@
 
 (define-module (guix build-system cmake)
   #:use-module (guix store)
+  #:use-module (guix gexp)
   #:use-module (guix utils)
+  #:use-module (guix monads)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
   #:use-module (guix build-system)
@@ -56,7 +58,7 @@
                 #:rest arguments)
   "Return a bag for NAME."
   (define private-keywords
-    '(#:source #:target #:cmake #:inputs #:native-inputs))
+    '(#:target #:cmake #:inputs #:native-inputs))
 
   (and (not target)                               ;XXX: no cross-compilation
        (bag
@@ -75,8 +77,8 @@
          (build cmake-build)
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
-(define* (cmake-build store name inputs
-                      #:key (guile #f)
+(define* (cmake-build name inputs
+                      #:key guile source
                       (outputs '("out")) (configure-flags ''())
                       (search-paths '())
                       (make-flags ''())
@@ -99,51 +101,38 @@
                                  (guix build utils))))
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
 provides a 'CMakeLists.txt' file as its build system."
-  (define builder
-    `(begin
-       (use-modules ,@modules)
-       (cmake-build #:source ,(match (assoc-ref inputs "source")
-                                (((? derivation? source))
-                                 (derivation->output-path source))
-                                ((source)
-                                 source)
-                                (source
-                                 source))
-                    #:system ,system
-                    #:outputs %outputs
-                    #:inputs %build-inputs
-                    #:search-paths ',(map search-path-specification->sexp
-                                          search-paths)
-                    #:phases ,phases
-                    #:configure-flags ,configure-flags
-                    #:make-flags ,make-flags
-                    #:out-of-source? ,out-of-source?
-                    #:build-type ,build-type
-                    #:tests? ,tests?
-                    #:test-target ,test-target
-                    #:parallel-build? ,parallel-build?
-                    #:parallel-tests? ,parallel-tests?
-                    #:validate-runpath? ,validate-runpath?
-                    #:patch-shebangs? ,patch-shebangs?
-                    #:strip-binaries? ,strip-binaries?
-                    #:strip-flags ,strip-flags
-                    #:strip-directories ,strip-directories)))
+  (define build
+    #~(begin
+        (use-modules ,@modules)
 
-  (define guile-for-build
-    (match guile
-      ((? package?)
-       (package-derivation store guile system #:graft? #f))
-      (#f                                         ; the default
-       (let* ((distro (resolve-interface '(gnu packages commencement)))
-              (guile  (module-ref distro 'guile-final)))
-         (package-derivation store guile system #:graft? #f)))))
+        #$(with-build-variables inputs outputs
+            #~(cmake-build #:source #+source
+                           #:system #$system
+                           #:outputs %outputs
+                           #:inputs %build-inputs
+                           #:search-paths '#$(map search-path-specification->sexp
+                                                  search-paths)
+                           #:phases #$phases
+                           #:configure-flags #$configure-flags
+                           #:make-flags #$make-flags
+                           #:out-of-source? #$out-of-source?
+                           #:build-type #$build-type
+                           #:tests? #$tests?
+                           #:test-target #$test-target
+                           #:parallel-build? #$parallel-build?
+                           #:parallel-tests? #$parallel-tests?
+                           #:validate-runpath? #$validate-runpath?
+                           #:patch-shebangs? #$patch-shebangs?
+                           #:strip-binaries? #$strip-binaries?
+                           #:strip-flags #$strip-flags
+                           #:strip-directories #$strip-directories))))
 
-  (build-expression->derivation store name builder
-                                #:system system
-                                #:inputs inputs
-                                #:modules imported-modules
-                                #:outputs outputs
-                                #:guile-for-build guile-for-build))
+  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
+                                                  system #:graft? #f)))
+    (gexp->derivation name build
+                      #:system system
+                      #:modules imported-modules
+                      #:guile-for-build guile)))
 
 (define cmake-build-system
   (build-system

@@ -64,11 +64,13 @@
             scheme-file-name
             scheme-file-gexp
 
+            with-build-variables
             gexp->derivation
             gexp->file
             gexp->script
             text-file*
             mixed-text-file
+
             imported-files
             imported-modules
             compiled-modules
@@ -985,6 +987,30 @@ they can refer to each other."
   ;; modules directly, to avoid circular dependencies, hence this hack.
   (module-ref (resolve-interface '(gnu packages commencement))
               'guile-final))
+
+(define (with-build-variables inputs outputs body)
+  "Return a gexp that surrounds BODY with a definition of the legacy
+'%build-inputs', '%outputs', and '%output' variables based on INPUTS, a list
+of name/gexp-input tuples, and OUTPUTS, a list of strings."
+
+  ;; These two variables are defined for backward compatibility.  They are
+  ;; used by package expressions.  These must be top-level defines so that
+  ;; 'use-modules' form in BODY that are required for macro expansion work as
+  ;; expected.
+  (gexp (begin
+          (define %build-inputs
+            (map (lambda (tuple)
+                   (apply cons tuple))
+                 '(ungexp inputs)))
+          (define %outputs
+            (list (ungexp-splicing
+                   (map (lambda (name)
+                          (gexp (cons (ungexp name)
+                                      (ungexp output name))))
+                        outputs))))
+          (define  %output
+            (assoc-ref %outputs "out"))
+          (ungexp body))))
 
 (define* (gexp->script name exp
                        #:key (modules '()) (guile (default-guile)))
