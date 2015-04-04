@@ -266,7 +266,9 @@ MONAD---i.e., return a monadic function in MONAD."
   (foldm %state-monad (lift2 cons %state-monad) '() '(a b c))
   => '(c b a)  ;monadic
 "
-  (with-monad monad
+  ;; Hoist access to MONAD's 'bind' and 'return' fields outside of the loop.
+  (let ((>>=    (monad-bind monad))
+        (return (monad-return monad)))
     (let loop ((lst    lst)
                (result init))
       (match lst
