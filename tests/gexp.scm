@@ -58,11 +58,6 @@
                                      #:target target)
                   #:guile-for-build (%guile-for-build)))
 
-(define-syntax-rule (test-assertm name exp)
-  (test-assert name
-    (run-with-store %store exp
-                    #:guile-for-build (%guile-for-build))))
-
 
 (test-begin "gexp")
 

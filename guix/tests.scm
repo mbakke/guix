@@ -26,6 +26,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages bootstrap)
   #:use-module (srfi srfi-34)
+  #:use-module (srfi srfi-64)
   #:use-module (rnrs bytevectors)
   #:use-module (rnrs io ports)
   #:use-module (web uri)
@@ -37,6 +38,7 @@
             shebang-too-long?
             mock
             %test-substitute-urls
+            test-assertm
             %substitute-directory
             with-derivation-narinfo
             with-derivation-substitute
@@ -125,6 +127,14 @@ given by REPLACEMENT."
       (lambda () (module-set! m 'proc replacement))
       (lambda () body ...)
       (lambda () (module-set! m 'proc original)))))
+
+(define-syntax-rule (test-assertm name exp)
+  "Like 'test-assert', but EXP has a monadic value.  A new connection to the
+store is opened."
+  (test-assert name
+    (with-store store
+      (run-with-store store exp
+                      #:guile-for-build (%guile-for-build)))))
 
 
 ;;;
