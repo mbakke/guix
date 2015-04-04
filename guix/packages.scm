@@ -946,13 +946,12 @@ TARGET."
          (bag     (package->bag package system target)))
     (bag-grafts store bag)))
 
-(define* (bag->derivation store bag
-                          #:optional context)
+(define* (bag->derivation bag #:optional context)
   "Return the derivation to build BAG for SYSTEM.  Optionally, CONTEXT can be
 a package object describing the context in which the call occurs, for improved
 error reporting."
   (if (bag-target bag)
-      (bag->cross-derivation store bag)
+      (bag->cross-derivation bag)
       (let* ((system     (bag-system bag))
              (inputs     (bag-transitive-inputs bag))
              (paths      (delete-duplicates
@@ -965,15 +964,12 @@ error reporting."
              (inputs     (map (cut expand-input context <>)
                               inputs)))
 
-        ;; TODO: Change to monadic style.
-        (apply (store-lower (bag-build bag))
-               store (bag-name bag) inputs
+        (apply (bag-build bag) (bag-name bag) inputs
                #:search-paths paths
                #:outputs (bag-outputs bag) #:system system
                (bag-arguments bag)))))
 
-(define* (bag->cross-derivation store bag
-                                #:optional context)
+(define* (bag->cross-derivation bag #:optional context)
   "Return the derivation to build BAG, which is actually a cross build.
 Optionally, CONTEXT can be a package object denoting the context of the call.
 This is an internal procedure."
@@ -1003,9 +999,7 @@ This is an internal procedure."
                                     (_ '()))
                                    all))))
 
-    ;; TODO: Change to monadic style.
-    (apply (store-lower (bag-build bag))
-           store (bag-name bag)
+    (apply (bag-build bag) (bag-name bag)
            #:native-drvs build-drvs
            #:target-drvs (append host-drvs target-drvs)
            #:search-paths paths
@@ -1013,6 +1007,9 @@ This is an internal procedure."
            #:outputs (bag-outputs bag)
            #:system system #:target target
            (bag-arguments bag))))
+
+(define bag->derivation*
+  (store-lower bag->derivation))
 
 (define* (package-derivation store package
                              #:optional (system (%current-system))
@@ -1024,7 +1021,7 @@ This is an internal procedure."
   ;; system, will be queried many, many times in a row.
   (cached package (cons system graft?)
           (let* ((bag (package->bag package system #f #:graft? graft?))
-                 (drv (bag->derivation store bag package)))
+                 (drv (bag->derivation* store bag package)))
             (if graft?
                 (match (bag-grafts store bag)
                   (()
@@ -1047,7 +1044,7 @@ This is an internal procedure."
 system identifying string)."
   (cached package (list system target graft?)
           (let* ((bag (package->bag package system target #:graft? graft?))
-                 (drv (bag->derivation store bag package)))
+                 (drv (bag->derivation* store bag package)))
             (if graft?
                 (match (bag-grafts store bag)
                   (()

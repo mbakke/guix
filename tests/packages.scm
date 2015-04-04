@@ -694,12 +694,13 @@
       (("dep" package)
        (eq? package dep)))))
 
-(test-assert "bag->derivation"
+(test-assertm "bag->derivation"
   (parameterize ((%graft? #f))
     (let ((bag (package->bag gnu-make))
           (drv (package-derivation %store gnu-make)))
       (parameterize ((%current-system "foox86-hurd")) ;should have no effect
-        (equal? drv (bag->derivation %store bag))))))
+        (mlet %store-monad ((bag-drv (bag->derivation bag)))
+          (return (equal? drv bag-drv)))))))
 
 (test-assert "bag->derivation, cross-compilation"
   (parameterize ((%graft? #f))
@@ -708,7 +709,8 @@
            (drv    (package-cross-derivation %store gnu-make target)))
       (parameterize ((%current-system "foox86-hurd") ;should have no effect
                      (%current-target-system "foo64-linux-gnu"))
-        (equal? drv (bag->derivation %store bag))))))
+        (mlet %store-monad ((bag-drv (bag->derivation bag)))
+          (return (equal? drv bag-drv)))))))
 
 (when (or (not (network-reachable?)) (shebang-too-long?))
   (test-skip 1))
