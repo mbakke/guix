@@ -205,6 +205,50 @@
                 (= (stat:ino (lstat file1))
                    (stat:ino (lstat file2))))))))
 
+(test-assert "unknown built-in builder"
+  (let ((drv (derivation %store "ohoh" "builtin:does-not-exist" '())))
+    (guard (c ((nix-protocol-error? c)
+               (string-contains (nix-protocol-error-message c) "failed")))
+      (build-derivations %store (list drv))
+      #f)))
+
+(test-assert "'download' built-in builder"
+  (let* ((text   (random-text))
+         (source (add-text-to-store %store "hello" text))
+         (url    (string-append "file://" source))
+         (drv    (derivation %store "world"
+                             "builtin:download" '()
+                             #:env-vars `(("url" . ,url))
+                             #:hash-algo 'sha256
+                             #:hash (sha256 (string->utf8 text)))))
+    (and (build-derivations %store (list drv))
+         (= (stat:ino (stat (derivation->output-path drv)))
+            (stat:ino (stat source))))))
+
+(test-assert "'download' built-in builder, invalid hash"
+  (let* ((source (add-text-to-store %store "hello" "hi!"))
+         (url    (string-append "file://" source))
+         (drv    (derivation %store "world"
+                             "builtin:download" '()
+                             #:env-vars `(("url" . ,url))
+                             #:hash-algo 'sha256
+                             #:hash (sha256 #vu8()))))
+    (guard (c ((nix-protocol-error? c)
+               (string-contains (nix-protocol-error-message c) "failed")))
+      (build-derivations %store (list drv))
+      #f)))
+
+(test-assert "'download' built-in builder, not fixed-output"
+  (let* ((source (add-text-to-store %store "hello" "hi!"))
+         (url    (string-append "file://" source))
+         (drv    (derivation %store "world"
+                             "builtin:download" '()
+                             #:env-vars `(("url" . ,url)))))
+    (guard (c ((nix-protocol-error? c)
+               (string-contains (nix-protocol-error-message c) "failed")))
+      (build-derivations %store (list drv))
+      #f)))
+
 (test-equal "derivation-name"
   "foo-0.0"
   (let ((drv (derivation %store "foo-0.0" %bash '())))

@@ -8,6 +8,7 @@
 #include "util.hh"
 #include "archive.hh"
 #include "affinity.hh"
+#include "builtins.hh"
 
 #include <map>
 #include <sstream>
@@ -2255,6 +2256,28 @@ void DerivationGoal::runChild()
                 throw SysError("setuid failed");
         }
 
+        restoreSIGPIPE();
+
+        /* Indicate that we managed to set up the build environment. */
+        writeFull(STDERR_FILENO, "\n");
+
+        /* Execute the program.  This should not return. */
+        if (isBuiltin(drv)) {
+            try {
+                logType = ltFlat;
+
+		auto buildDrv = lookupBuiltinBuilder(drv.builder);
+                if (buildDrv != NULL)
+                    buildDrv(drv);
+                else
+                    throw Error(format("unsupported builtin function '%1%'") % string(drv.builder, 8));
+                _exit(0);
+            } catch (std::exception & e) {
+                writeFull(STDERR_FILENO, "error: " + string(e.what()) + "\n");
+                _exit(1);
+            }
+        }
+
         /* Fill in the arguments. */
         Strings args;
         string builderBasename = baseNameOf(drv.builder);
@@ -2262,12 +2285,6 @@ void DerivationGoal::runChild()
         foreach (Strings::iterator, i, drv.args)
             args.push_back(rewriteHashes(*i, rewritesToTmp));
 
-        restoreSIGPIPE();
-
-        /* Indicate that we managed to set up the build environment. */
-        writeFull(STDERR_FILENO, "\n");
-
-        /* Execute the program.  This should not return. */
         execve(drv.builder.c_str(), stringsToCharPtrs(args).data(), stringsToCharPtrs(envStrs).data());
 
         throw SysError(format("executing `%1%'") % drv.builder);

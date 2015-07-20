@@ -87,6 +87,7 @@ libstore_a_SOURCES =				\
   %D%/libstore/build.cc				\
   %D%/libstore/pathlocks.cc			\
   %D%/libstore/derivations.cc			\
+  %D%/libstore/builtins.cc			\
   %D%/libstore/sqlite.cc
 
 libstore_headers =				\
@@ -98,6 +99,7 @@ libstore_headers =				\
   %D%/libstore/misc.hh				\
   %D%/libstore/local-store.hh			\
   %D%/libstore/sqlite.hh			\
+  %D%/libstore/builtins.hh			\
   %D%/libstore/store-api.hh
 
 libstore_a_CPPFLAGS =				\
