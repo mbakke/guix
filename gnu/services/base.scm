@@ -364,7 +364,8 @@ stopped before 'kill' is called."
                            ;; Allow empty passwords by default so that
                            ;; first-time users can log in when the 'root'
                            ;; account has just been created.
-                           (allow-empty-passwords? #t))
+                           (allow-empty-passwords? #t)
+                           (additional-session-modules '()))
   "Return a service to run mingetty on @var{tty}.
 
 When @var{allow-empty-passwords?} is true, allow empty log-in password.  When
@@ -416,7 +417,8 @@ the ``message of the day''."
        ;; duplicates are removed.
        (list (unix-pam-service "login"
                                #:allow-empty-passwords? allow-empty-passwords?
-                               #:motd motd)))))))
+                               #:motd motd
+                               #:additional-session-modules additional-session-modules)))))))
 
 (define-record-type* <nscd-configuration> nscd-configuration
   make-nscd-configuration

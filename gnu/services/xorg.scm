@@ -224,7 +224,8 @@ which should be passed to this script as the first argument.  If not, the
                        (xauth xauth) (dmd dmd) (bash bash)
                        (auto-login-session #~(string-append #$windowmaker
                                                             "/bin/wmaker"))
-                       startx)
+                       startx
+                       (additional-session-modules '()))
   "Return a service that spawns the SLiM graphical login manager, which in
 turn starts the X display server with @var{startx}, a command as returned by
 @code{xorg-start-command}.
@@ -305,6 +306,7 @@ reboot_cmd " dmd "/sbin/reboot
        ;; Tell PAM about 'slim'.
        (list (unix-pam-service
               "slim"
-              #:allow-empty-passwords? allow-empty-passwords?)))))))
+              #:allow-empty-passwords? allow-empty-passwords?
+              #:additional-session-modules additional-session-modules)))))))
 
 ;;; xorg.scm ends here

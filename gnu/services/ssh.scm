@@ -86,7 +86,8 @@
                       (tcp/ip-forwarding? #t)
                       (password-authentication? #t)
                       (public-key-authentication? #t)
-                      (initialize? #t))
+                      (initialize? #t)
+                      (additional-session-modules '()))
   "Run the @command{lshd} program from @var{lsh} to listen on port @var{port-number}.
 @var{host-key} must designate a file containing the host key, and readable
 only by root.
@@ -162,7 +163,8 @@ The other options should be self-descriptive."
              (pam-services
               (list (unix-pam-service
                      "lshd"
-                     #:allow-empty-passwords? allow-empty-passwords?)))
+                     #:allow-empty-passwords? allow-empty-passwords?
+                     #:additional-session-modules additional-session-modules)))
              (activate #~(begin
                            (use-modules (guix build utils))
                            (mkdir-p "/var/spool/lsh")

@@ -133,7 +133,8 @@ dumped in /etc/pam.d/NAME, where NAME is the name of SERVICE."
   (let ((unix (pam-entry
                (control "required")
                (module "pam_unix.so"))))
-    (lambda* (name #:key allow-empty-passwords? motd)
+    (lambda* (name #:key allow-empty-passwords? motd
+                   (additional-session-modules '()))
       "Return a standard Unix-style PAM service for NAME.  When
 ALLOW-EMPTY-PASSWORDS? is true, allow empty passwords.  When MOTD is true, it
 should be the name of a file used as the message-of-the-day."
@@ -153,14 +154,16 @@ should be the name of a file used as the message-of-the-day."
                           (module "pam_unix.so")
                           ;; Store SHA-512 encrypted passwords in /etc/shadow.
                           (arguments '("sha512" "shadow")))))
-         (session (if motd
-                      (list unix
-                            (pam-entry
-                             (control "optional")
-                             (module "pam_motd.so")
-                             (arguments
-                              (list #~(string-append "motd=" #$motd)))))
-                      (list unix))))))))
+         (session (append
+                   (if motd
+                       (list unix
+                             (pam-entry
+                              (control "optional")
+                              (module "pam_motd.so")
+                              (arguments
+                               (list #~(string-append "motd=" #$motd)))))
+                       (list unix))
+                   additional-session-modules)))))))
 
 (define (rootok-pam-service command)
   "Return a PAM service for COMMAND such that 'root' does not need to
@@ -177,14 +180,16 @@ authenticate to run COMMAND."
      (password (list unix))
      (session (list unix)))))
 
-(define* (base-pam-services #:key allow-empty-passwords?)
+(define* (base-pam-services #:key allow-empty-passwords?
+                            (additional-session-modules '()))
   "Return the list of basic PAM services everyone would want."
   ;; TODO: Add other Shadow programs?
   (append (list %pam-other-services)
 
           ;; These programs are setuid-root.
           (map (cut unix-pam-service <>
-                    #:allow-empty-passwords? allow-empty-passwords?)
+                    #:allow-empty-passwords? allow-empty-passwords?
+                    #:additional-session-modules additional-session-modules)
                '("su" "passwd" "sudo"
                  "xlock" "xscreensaver"))
 
