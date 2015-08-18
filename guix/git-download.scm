@@ -28,6 +28,7 @@
             git-reference?
             git-reference-url
             git-reference-commit
+            git-reference-tag
             git-reference-recursive?
 
             git-fetch))
@@ -44,7 +45,8 @@
   git-reference make-git-reference
   git-reference?
   (url        git-reference-url)
-  (commit     git-reference-commit)
+  (commit     git-reference-commit (default #f))
+  (tag        git-reference-tag (default #f))
   (recursive? git-reference-recursive?   ; whether to recurse into sub-modules
               (default #f)))
 
@@ -81,8 +83,12 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
                                           dirs)))
 
         (git-fetch '#$(git-reference-url ref)
-                   '#$(git-reference-commit ref)
+                   (or '#$(git-reference-commit ref)
+                       '#$(git-reference-tag ref))
                    #$output
+                   ;; FIXME: Pass #:tag when fixed daemons are widely
+                   ;; deployed.
+                   ;; #:tag '#$(git-reference-tag ref)
                    #:recursive? '#$(git-reference-recursive? ref)
                    #:git-command (string-append #+git "/bin/git"))))
 
