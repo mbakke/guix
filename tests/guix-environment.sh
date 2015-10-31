@@ -34,17 +34,23 @@ mkdir "$tmpdir"
 export SHELL
 
 # Check the environment variables for the bootstrap Guile.
-guix environment --ad-hoc guile-bootstrap --pure --search-paths > "$tmpdir/a"
-guix environment --ad-hoc guile-bootstrap:out --pure --search-paths > "$tmpdir/b"
+guix environment --bootstrap --ad-hoc guile-bootstrap --pure \
+     --search-paths > "$tmpdir/a"
+guix environment --bootstrap --ad-hoc guile-bootstrap:out --pure \
+     --search-paths > "$tmpdir/b"
 
 # $PATH must appear in the search paths, and nothing else.
-grep -E '^export PATH=.*guile-bootstrap-[0-9.]+/bin' "$tmpdir/a"
+grep -E '^export PATH=.*profile/bin' "$tmpdir/a"
 test "`wc -l < "$tmpdir/a"`" = 1
+
+# Guile must be on $PATH.
+test -e $(sed -r 's/^export PATH="(.*)"/\1/' "$tmpdir/a")/guile
 
 cmp "$tmpdir/a" "$tmpdir/b"
 
 # Make sure the exit value is preserved.
-if guix environment --ad-hoc guile-bootstrap --pure -- guile -c '(exit 42)'
+if guix environment --bootstrap --ad-hoc guile-bootstrap --pure \
+        -- guile -c '(exit 42)'
 then
     false
 else
@@ -52,7 +58,8 @@ else
 fi
 
 # Same as above, but with deprecated -E flag.
-if guix environment --ad-hoc guile-bootstrap --pure -E "guile -c '(exit 42)'"
+if guix environment --bootstrap --ad-hoc guile-bootstrap --pure \
+        -E "guile -c '(exit 42)'"
 then
     false
 else
@@ -62,8 +69,25 @@ fi
 if guile -c '(getaddrinfo "www.gnu.org" "80" AI_NUMERICSERV)' 2> /dev/null
 then
     # Compute the build environment for the initial GNU Make.
-    guix environment -e '(@@ (gnu packages commencement) gnu-make-boot0)' \
-	 --no-substitutes --search-paths --pure > "$tmpdir/a"
+    guix environment --bootstrap --no-substitutes --search-paths --pure \
+         -e '(@@ (gnu packages commencement) gnu-make-boot0)' > "$tmpdir/a"
+
+    # Make sure bootstrap binaries are in the profile.
+    ls $(grep "^export PATH" "$tmpdir/a" | sed -r 's/^.*="(.*)"/\1/') \
+       > "$tmpdir/path"
+
+    grep gcc "$tmpdir/path"
+    grep cat "$tmpdir/path"
+    grep readelf "$tmpdir/path"
+
+    # Check for glibc and gcc headers.
+    ls $(grep "^export CPATH" "$tmpdir/a" | sed -r 's/^.*="(.*)"/\1/') \
+       > "$tmpdir/cpath"
+
+    grep "stdio.h" "$tmpdir/cpath" # glibc
+    grep "c++" "$tmpdir/cpath" # gcc c++ Includes directory
+
+    exit 0
 
     # Make sure the bootstrap binaries are all listed where they belong.
     grep -E '^export PATH=.*-bootstrap-binaries-0/bin'      "$tmpdir/a"
@@ -76,8 +100,8 @@ then
 
     # Make sure that the shell spawned with '--exec' sees the same environment
     # as returned by '--search-paths'.
-    guix environment -e '(@@ (gnu packages commencement) gnu-make-boot0)'	\
-	 --no-substitutes --pure						\
+    guix environment --bootstrap --no-substitutes --pure \
+         -e '(@@ (gnu packages commencement) gnu-make-boot0)' \
          -- /bin/sh -c 'echo $PATH $CPATH $LIBRARY_PATH' > "$tmpdir/b"
     ( . "$tmpdir/a" ; echo $PATH $CPATH $LIBRARY_PATH ) > "$tmpdir/c"
     cmp "$tmpdir/b" "$tmpdir/c"
@@ -85,8 +109,8 @@ then
     rm "$tmpdir"/*
 
     # Compute the build environment for the initial GNU Findutils.
-    guix environment -e '(@@ (gnu packages commencement) findutils-boot0)' \
-	 --no-substitutes --search-paths --pure > "$tmpdir/a"
+    guix environment --bootstrap --no-substitutes --search-paths --pure \
+         -e '(@@ (gnu packages commencement) findutils-boot0)' > "$tmpdir/a"
 
     # Make sure the bootstrap binaries are all listed where they belong.
     grep -E '^export PATH=.*-bootstrap-binaries-0/bin'      "$tmpdir/a"
@@ -104,9 +128,9 @@ then
 
     # Compute the build environment for the initial GNU Make, but add in the
     # bootstrap Guile as an ad-hoc addition.
-    guix environment -e '(@@ (gnu packages commencement) gnu-make-boot0)' \
-         --ad-hoc guile-bootstrap --no-substitutes --search-paths \
-         --pure > "$tmpdir/a"
+    guix environment --bootstrap --ad-hoc guile-bootstrap --no-substitutes \
+         --search-paths --pure \
+         -e '(@@ (gnu packages commencement) gnu-make-boot0)' > "$tmpdir/a"
 
     # Make sure the bootstrap binaries are all listed where they belong.
     cat $tmpdir/a
@@ -116,13 +140,14 @@ then
     grep -E '^export CPATH=.*-glibc-bootstrap-0/include'    "$tmpdir/a"
     grep -E '^export LIBRARY_PATH=.*-glibc-bootstrap-0/lib' "$tmpdir/a"
 
-    # Make sure a package list can be used with -e.
+    # Make sure a package list with plain package objects and package+output
+    # tuples can be used with -e.
     expr_list_test_code="
 (list (@@ (gnu packages commencement) gnu-make-boot0)
-      (@ (gnu packages bootstrap) %bootstrap-guile))"
+      (list (@ (gnu packages bootstrap) %bootstrap-guile) \"out\"))"
 
-    guix environment --ad-hoc --no-substitutes --search-paths --pure \
-         -e "$expr_list_test_code" > "$tmpdir/a"
+    guix environment --bootstrap --ad-hoc --no-substitutes --search-paths \
+         --pure -e "$expr_list_test_code" > "$tmpdir/a"
 
     grep -E '^export PATH=.*-make-boot0-4.1/bin'      "$tmpdir/a"
     grep -E '^export PATH=.*-guile-bootstrap-2.0/bin' "$tmpdir/a"

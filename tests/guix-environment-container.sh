@@ -73,7 +73,7 @@ guix environment --container --ad-hoc --bootstrap guile-bootstrap \
      -- guile -c "$mount_test_code" > $tmpdir/mounts
 
 cat "$tmpdir/mounts"
-test `wc -l < $tmpdir/mounts` -eq 3
+test `wc -l < $tmpdir/mounts` -eq 4
 
 current_dir="`cd $PWD; pwd -P`"
 grep -e "$current_dir$" $tmpdir/mounts # current directory

@@ -4891,6 +4891,13 @@ guix environment --ad-hoc -e '(@@ (gnu) %base-packages)'
 
 starts a shell with all the GuixSD base packages available.
 
+The above commands only the use default output of the given packages.
+To select other outputs, two element tuples can be specified:
+
+@example
+guix environment --ad-hoc -e '(list (@ (gnu packages bash) bash) "include")'
+@end example
+
 @item --load=@var{file}
 @itemx -l @var{file}
 Create an environment for the package or list of packages that the code
