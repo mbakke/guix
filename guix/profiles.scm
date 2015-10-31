@@ -694,10 +694,12 @@ creates the GTK+ 'icon-theme.cache' file for each theme."
 
 (define* (profile-derivation manifest
                              #:key
-                             (hooks %default-profile-hooks))
+                             (hooks %default-profile-hooks)
+                             (system (%current-system)))
   "Return a derivation that builds a profile (aka. 'user environment') with
-the given MANIFEST.  The profile includes additional derivations returned by
-the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
+the given MANIFEST for SYSTEM.  The profile includes additional derivations
+returned by the monadic procedures listed in HOOKS--such as an Info 'dir'
+file, etc.  By default, the profile is built for the current system."
   (mlet %store-monad ((extras (if (null? (manifest-entries manifest))
                                   (return '())
                                   (sequence %store-monad
@@ -739,6 +741,8 @@ the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
                                   (guix build utils)
                                   (guix search-paths)
                                   (guix records))
+
+                      #:system system
 
                       ;; Not worth offloading.
                       #:local-build? #t
