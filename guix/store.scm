@@ -21,6 +21,7 @@
   #:use-module (guix config)
   #:use-module (guix serialization)
   #:use-module (guix monads)
+  #:use-module (guix records)
   #:autoload   (guix base32) (bytevector->base32-string)
   #:autoload   (guix build syscalls) (terminal-columns)
   #:use-module (rnrs bytevectors)
@@ -45,6 +46,7 @@
             nix-server-major-version
             nix-server-minor-version
             nix-server-socket
+            mcached
 
             &nix-error nix-error?
             &nix-connection-error nix-connection-error?
@@ -306,9 +308,7 @@
 
 ;; remote-store.cc
 
-(define-record-type <nix-server>
-  (%make-nix-server socket major minor
-                    ats-cache atts-cache)
+(define-record-type* <nix-server> nix-server %make-nix-server
   nix-server?
   (socket nix-server-socket)
   (major  nix-server-major-version)
@@ -318,7 +318,9 @@
   ;; during the session are temporary GC roots kept for the duration of
   ;; the session.
   (ats-cache  nix-server-add-to-store-cache)
-  (atts-cache nix-server-add-text-to-store-cache))
+  (atts-cache nix-server-add-text-to-store-cache)
+  (object-cache nix-server-object-cache
+                (default vlist-null)))            ;vhash
 
 (set-record-type-printer! <nix-server>
                           (lambda (obj port)
@@ -381,7 +383,8 @@ for this connection will be pinned.  Return a server object."
                                                (protocol-major v)
                                                (protocol-minor v)
                                                (make-hash-table 100)
-                                               (make-hash-table 100))))
+                                               (make-hash-table 100)
+                                               vlist-null)))
                       (let loop ((done? (process-stderr s)))
                         (or done? (process-stderr s)))
                       s))))))))
@@ -1074,6 +1077,52 @@ be used internally by the daemon's build hook."
 (define-alias %store-monad %state-monad)
 (define-alias store-return state-return)
 (define-alias store-bind state-bind)
+
+(define* (cache-object-mapping object keys result)
+  "Augment the store's object cache with a mapping from OBJECT/KEYS to RESULT.
+KEYS is a list of additional keys to match against, for instance a (SYSTEM
+TARGET) tuple.
+
+OBJECT is typically a high-level object such as a <package> or an <origin>,
+and RESULT is typically its derivation."
+  (lambda (store)
+    (values result
+            (nix-server
+             (inherit store)
+             (object-cache (vhash-consq object (cons result keys)
+                                        (nix-server-object-cache store)))))))
+
+(define* (lookup-cached-object object #:optional (keys '()))
+  "Return the cached object in the store connection corresponding to OBJECT
+and KEYS.  KEYS is a list of additional keys to match against, and which are
+compared with 'equal?'.  Return #f on failure and the cached result
+otherwise."
+  (lambda (store)
+    (values (vhash-foldq* (lambda (item result)
+                            (match item
+                              ((value . keys*)
+                               (or result
+                                   (and (equal? keys keys*) value)))))
+                          #f object
+                          (nix-server-object-cache store))
+            store)))
+
+(define* (%mcached mthunk object #:optional (keys '()))
+  "Bind the monadic value returned by MTHUNK, which supposedly corresponds to
+OBJECT/KEYS, or return its cached value."
+  (mlet %store-monad ((cached (lookup-cached-object object keys)))
+    (if cached
+        (return cached)
+        (>>= (mthunk)
+             (lambda (result)
+               (cache-object-mapping object keys result))))))
+
+(define-syntax-rule (mcached mvalue object keys ...)
+  "Run MVALUE, which corresponds to OBJECT/KEYS, and cache it; or return the
+value associated with OBJECT/KEYS in the store's object cache if there is
+one."
+  (%mcached (lambda () mvalue)
+            object (list keys ...)))
 
 (define (preserve-documentation original proc)
   "Return PROC with documentation taken from ORIGINAL."

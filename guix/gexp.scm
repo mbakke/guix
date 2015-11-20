@@ -158,8 +158,12 @@ procedure to lower it; otherwise return #f."
 corresponding to OBJ for SYSTEM, cross-compiling for TARGET if TARGET is true.
 OBJ must be an object that has an associated gexp compiler, such as a
 <package>."
-  (let ((lower (lookup-compiler obj)))
-    (lower obj system target)))
+  ;; Cache in STORE the result of lowering OBJ.
+  (mlet %store-monad ((graft? (grafting?)))
+    (mcached (let ((lower (lookup-compiler obj)))
+               (lower obj system target))
+             obj
+             system target graft?)))
 
 (define-syntax-rule (define-gexp-compiler (name (param predicate)
                                                 system target)
