@@ -192,7 +192,7 @@ following the mouse.")
 (define-public pixman
   (package
     (name "pixman")
-    (version "0.32.8")
+    (version "0.34.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -200,7 +200,7 @@ following the mouse.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0pfn0247sjsi95kwjih0wwqpp28wadihqk1bn28x6iqbqhbxwnjp"))))
+                "13m842m9ffac3m9r0b4lvwjhwzg3w4353djkjpf00s0wnm4v5di1"))))
     (build-system gnu-build-system)
     (inputs
      `(("libpng" ,libpng)
