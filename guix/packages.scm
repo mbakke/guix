@@ -30,6 +30,7 @@
   #:use-module (guix build-system)
   #:use-module (guix search-paths)
   #:use-module (guix gexp)
+  #:use-module (guix sets)
   #:use-module (ice-9 match)
   #:use-module (ice-9 vlist)
   #:use-module (srfi srfi-1)
@@ -831,30 +832,25 @@ and return it."
                         (package package))))))))))
 
 (define (input-graft store system)
-  "Return a procedure that, given an input referring to a package with a
-graft, returns a pair with the original derivation and the graft's derivation,
-and returns #f for other inputs."
+  "Return a procedure that, given a package with a graft, returns a graft, and
+#f otherwise."
   (match-lambda
-   ((label (? package? package) sub-drv ...)
-    (let ((replacement (package-replacement package)))
-      (and replacement
-           (let ((orig (package-derivation store package system
-                                           #:graft? #f))
-                 (new  (package-derivation store replacement system)))
-             (graft
-               (origin orig)
-               (replacement new)
-               (origin-output (match sub-drv
-                                (() "out")
-                                ((output) output)))
-               (replacement-output origin-output))))))
-   (x
-    #f)))
+    ((? package? package)
+     (let ((replacement (package-replacement package)))
+       (and replacement
+            (let ((orig (package-derivation store package system
+                                            #:graft? #f))
+                  (new  (package-derivation store replacement system)))
+              (graft
+                (origin orig)
+                (replacement new))))))
+    (x
+     #f)))
 
 (define (input-cross-graft store target system)
   "Same as 'input-graft', but for cross-compilation inputs."
   (match-lambda
-   ((label (? package? package) sub-drv ...)
+    ((? package? package)
     (let ((replacement (package-replacement package)))
       (and replacement
            (let ((orig (package-cross-derivation store package target system
@@ -863,34 +859,75 @@ and returns #f for other inputs."
                                                  target system)))
              (graft
                (origin orig)
-               (replacement new)
-               (origin-output (match sub-drv
-                                (() "out")
-                                ((output) output)))
-               (replacement-output origin-output))))))
+               (replacement new))))))
    (_
     #f)))
 
+(define* (fold-bag-dependencies proc seed bag
+                                #:key (native? #t))
+  "Fold PROC over the packages BAG depends on.  Each package is visited only
+once, in depth-first order.  If NATIVE? is true, restrict to native
+dependencies; otherwise, restrict to target dependencies."
+  (define nodes
+    (match (if native?
+               (append (bag-build-inputs bag)
+                       (bag-target-inputs bag)
+                       (if (bag-target bag)
+                           '()
+                           (bag-host-inputs bag)))
+               (bag-host-inputs bag))
+      (((labels things _ ...) ...)
+       things)))
+
+  (let loop ((nodes nodes)
+             (result seed)
+             (visited (setq)))
+    (match nodes
+      (()
+       result)
+      (((? package? head) . tail)
+       (if (set-contains? visited head)
+           (loop tail result visited)
+           (let ((inputs (bag-direct-inputs (package->bag head))))
+             (loop (match inputs
+                     (((labels things _ ...) ...)
+                      (append things tail)))
+                   (proc head result)
+                   (set-insert head visited)))))
+      ((head . tail)
+       (loop tail result visited)))))
+
 (define* (bag-grafts store bag)
-  "Return the list of grafts applicable to BAG.  Each graft is a <graft>
-record."
-  (let ((target (bag-target bag))
-        (system (bag-system bag)))
-    (define native-grafts
-      (filter-map (input-graft store system)
-                  (append (bag-transitive-build-inputs bag)
-                          (bag-transitive-target-inputs bag)
-                          (if target
-                              '()
-                              (bag-transitive-host-inputs bag)))))
+  "Return the list of grafts potentially applicable to BAG.  Potentially
+applicable grafts are collected by looking at direct or indirect dependencies
+of BAG that have a 'replacement'.  Whether a graft is actually applicable
+depends on whether the outputs of BAG depend on the items the grafts refer
+to (see 'graft-derivation'.)"
+  (define system (bag-system bag))
+  (define target (bag-target bag))
 
-    (define target-grafts
-      (if target
-          (filter-map (input-cross-graft store target system)
-                      (bag-transitive-host-inputs bag))
-          '()))
+  (define native-grafts
+    (let ((->graft (input-graft store system)))
+      (fold-bag-dependencies (lambda (package grafts)
+                               (match (->graft package)
+                                 (#f    grafts)
+                                 (graft (cons graft grafts))))
+                             '()
+                             bag)))
 
-    (append native-grafts target-grafts)))
+  (define target-grafts
+    (if target
+        (let ((->graft (input-cross-graft store target system)))
+          (fold-bag-dependencies (lambda (package grafts)
+                                   (match (->graft package)
+                                     (#f    grafts)
+                                     (graft (cons graft grafts))))
+                                 '()
+                                 bag
+                                 #:native? #f))
+        '()))
+
+  (append native-grafts target-grafts))
 
 (define* (package-grafts store package
                          #:optional (system (%current-system))
@@ -985,6 +1022,9 @@ This is an internal procedure."
                   (grafts
                    (let ((guile (package-derivation store (default-guile)
                                                     system #:graft? #f)))
+                     ;; TODO: As an optimization, we can simply graft the tip
+                     ;; of the derivation graph since 'graft-derivation'
+                     ;; recurses anyway.
                      (graft-derivation store drv grafts
                                        #:system system
                                        #:guile guile))))

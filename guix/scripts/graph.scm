@@ -19,6 +19,7 @@
 (define-module (guix scripts graph)
   #:use-module (guix ui)
   #:use-module (guix graph)
+  #:use-module (guix grafts)
   #:use-module (guix scripts)
   #:use-module (guix utils)
   #:use-module (guix packages)
@@ -352,7 +353,9 @@ Emit a Graphviz (dot) representation of the dependencies of PACKAGE...\n"))
                                  opts)))
       (with-store store
         (run-with-store store
-          (mlet %store-monad ((nodes (mapm %store-monad
+          ;; XXX: Since grafting can trigger unsolicited builds, disable it.
+          (mlet %store-monad ((_     (set-grafting #f))
+                              (nodes (mapm %store-monad
                                            (node-type-convert type)
                                            packages)))
             (export-graph (concatenate nodes)

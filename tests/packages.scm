@@ -605,23 +605,27 @@
                     (origin (package-derivation %store dep))
                     (replacement (package-derivation %store new)))))))
 
-(test-assert "package-derivation, indirect grafts"
-  (let* ((new   (dummy-package "dep"
-                  (arguments '(#:implicit-inputs? #f))))
-         (dep   (package (inherit new) (version "0.0")))
-         (dep*  (package (inherit dep) (replacement new)))
-         (dummy (dummy-package "dummy"
-                  (arguments '(#:implicit-inputs? #f))
-                  (inputs `(("dep" ,dep*)))))
-         (guile (package-derivation %store (canonical-package guile-2.0)
-                                    #:graft? #f)))
-    (equal? (package-derivation %store dummy)
-            (graft-derivation %store
-                              (package-derivation %store dummy #:graft? #f)
-                              (package-grafts %store dummy)
+;;; XXX: Nowadays 'graft-derivation' needs to build derivations beforehand to
+;;; find out about their run-time dependencies, so this test is no longer
+;;; applicable since it would trigger a full rebuild.
+;;
+;; (test-assert "package-derivation, indirect grafts"
+;;   (let* ((new   (dummy-package "dep"
+;;                   (arguments '(#:implicit-inputs? #f))))
+;;          (dep   (package (inherit new) (version "0.0")))
+;;          (dep*  (package (inherit dep) (replacement new)))
+;;          (dummy (dummy-package "dummy"
+;;                   (arguments '(#:implicit-inputs? #f))
+;;                   (inputs `(("dep" ,dep*)))))
+;;          (guile (package-derivation %store (canonical-package guile-2.0)
+;;                                     #:graft? #f)))
+;;     (equal? (package-derivation %store dummy)
+;;             (graft-derivation %store
+;;                               (package-derivation %store dummy #:graft? #f)
+;;                               (package-grafts %store dummy)
 
-                              ;; Use the same Guile as 'package-derivation'.
-                              #:guile guile))))
+;;                               ;; Use the same Guile as 'package-derivation'.
+;;                               #:guile guile))))
 
 (test-equal "package->bag"
   `("foo86-hurd" #f (,(package-source gnu-make))

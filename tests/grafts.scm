@@ -17,12 +17,16 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-grafts)
+  #:use-module (guix gexp)
+  #:use-module (guix monads)
   #:use-module (guix derivations)
   #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix grafts)
   #:use-module (guix tests)
   #:use-module ((gnu packages) #:select (search-bootstrap-binary))
+  #:use-module (gnu packages bootstrap)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-64)
   #:use-module (rnrs io ports))
 
@@ -42,7 +46,7 @@
 
 (test-begin "grafts")
 
-(test-assert "graft-derivation"
+(test-assert "graft-derivation, grafted item is a direct dependency"
   (let* ((build `(begin
                    (mkdir %output)
                    (chdir %output)
@@ -51,7 +55,7 @@
                      (lambda (output)
                        (format output "foo/~a/bar" ,%mkdir)))
                    (symlink ,%bash "sh")))
-         (orig  (build-expression->derivation %store "graft" build
+         (orig  (build-expression->derivation %store "grafted" build
                                               #:inputs `(("a" ,%bash)
                                                          ("b" ,%mkdir))))
          (one   (add-text-to-store %store "bash" "fake bash"))
@@ -59,21 +63,80 @@
                                               '(call-with-output-file %output
                                                  (lambda (port)
                                                    (display "fake mkdir" port)))))
-         (graft (graft-derivation %store orig
-                                  (list (graft
-                                          (origin %bash)
-                                          (replacement one))
-                                        (graft
-                                          (origin %mkdir)
-                                          (replacement two))))))
-    (and (build-derivations %store (list graft))
-         (let ((two   (derivation->output-path two))
-               (graft (derivation->output-path graft)))
+         (grafted (graft-derivation %store orig
+                                    (list (graft
+                                            (origin %bash)
+                                            (replacement one))
+                                          (graft
+                                            (origin %mkdir)
+                                            (replacement two))))))
+    (and (build-derivations %store (list grafted))
+         (let ((two     (derivation->output-path two))
+               (grafted (derivation->output-path grafted)))
            (and (string=? (format #f "foo/~a/bar" two)
-                          (call-with-input-file (string-append graft "/text")
+                          (call-with-input-file (string-append grafted "/text")
                             get-string-all))
-                (string=? (readlink (string-append graft "/sh")) one)
-                (string=? (readlink (string-append graft "/self")) graft))))))
+                (string=? (readlink (string-append grafted "/sh")) one)
+                (string=? (readlink (string-append grafted "/self"))
+                          grafted))))))
+
+;; Make sure 'derivation-file-name' always gets to see an absolute file name.
+(fluid-set! %file-port-name-canonicalization 'absolute)
+
+(test-assert "graft-derivation, grafted item is an indirect dependency"
+  (let* ((build `(begin
+                   (mkdir %output)
+                   (chdir %output)
+                   (symlink %output "self")
+                   (call-with-output-file "text"
+                     (lambda (output)
+                       (format output "foo/~a/bar" ,%mkdir)))
+                   (symlink ,%bash "sh")))
+         (dep   (build-expression->derivation %store "dep" build
+                                              #:inputs `(("a" ,%bash)
+                                                         ("b" ,%mkdir))))
+         (orig  (build-expression->derivation %store "thing"
+                                              '(symlink
+                                                (assoc-ref %build-inputs
+                                                           "dep")
+                                                %output)
+                                              #:inputs `(("dep" ,dep))))
+         (one   (add-text-to-store %store "bash" "fake bash"))
+         (two   (build-expression->derivation %store "mkdir"
+                                              '(call-with-output-file %output
+                                                 (lambda (port)
+                                                   (display "fake mkdir" port)))))
+         (grafted (graft-derivation %store orig
+                                    (list (graft
+                                            (origin %bash)
+                                            (replacement one))
+                                          (graft
+                                            (origin %mkdir)
+                                            (replacement two))))))
+    (and (build-derivations %store (list grafted))
+         (let* ((two     (derivation->output-path two))
+                (grafted (derivation->output-path grafted))
+                (dep     (readlink grafted)))
+           (and (string=? (format #f "foo/~a/bar" two)
+                          (call-with-input-file (string-append dep "/text")
+                            get-string-all))
+                (string=? (readlink (string-append dep "/sh")) one)
+                (string=? (readlink (string-append dep "/self")) dep)
+                (equal? (references %store grafted) (list dep))
+                (lset= string=?
+                       (list one two dep)
+                       (references %store dep)))))))
+
+(test-assert "graft-derivation, no dependencies on grafted output"
+  (run-with-store %store
+    (mlet* %store-monad ((fake    (text-file "bash" "Fake bash."))
+                         (graft -> (graft
+                                     (origin %bash)
+                                     (replacement fake)))
+                         (drv     (gexp->derivation "foo" #~(mkdir #$output)))
+                         (grafted ((store-lift graft-derivation) drv
+                                   (list graft))))
+      (return (eq? grafted drv)))))
 
 (test-assert "graft-derivation, multiple outputs"
   (let* ((build `(begin

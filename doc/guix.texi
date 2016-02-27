@@ -10244,11 +10244,14 @@ Packages}).  Then, the original package definition is augmented with a
     (replacement bash-fixed)))
 @end example
 
-From there on, any package depending directly or indirectly on Bash that
-is installed will automatically be ``rewritten'' to refer to
+From there on, any package depending directly or indirectly on Bash---as
+reported by @command{guix gc --requisites} (@pxref{Invoking guix
+gc})---that is installed is automatically ``rewritten'' to refer to
 @var{bash-fixed} instead of @var{bash}.  This grafting process takes
 time proportional to the size of the package, but expect less than a
-minute for an ``average'' package on a recent machine.
+minute for an ``average'' package on a recent machine.  Grafting is
+recursive: when an indirect dependency requires grafting, then grafting
+``propagates'' up to the package that the user is installing.
 
 Currently, the graft and the package it replaces (@var{bash-fixed} and
 @var{bash} in the example above) must have the exact same @code{name}
