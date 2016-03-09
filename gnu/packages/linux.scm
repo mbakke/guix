@@ -1581,7 +1581,6 @@ from the module-init-tools project.")
 
 (define-public eudev
   ;; The post-systemd fork, maintained by Gentoo.
-  ;; TODO: Merge with 'eudev-with-blkid' below at an opportune time.
   (package
     (name "eudev")
     (version "3.1.5")
@@ -1600,25 +1599,17 @@ from the module-init-tools project.")
        ("perl" ,perl)
        ("gperf" ,gperf)))
     (inputs
-     `(("kmod" ,kmod)))
+     ;; When linked against libblkid, eudev can populate /dev/disk/by-label
+     ;; and similar; it also installs the '60-persistent-storage.rules' file,
+     ;; which contains the rules to do that.
+     `(("util-linux" ,util-linux)                 ;for blkid
+       ("kmod" ,kmod)))
     (home-page "https://wiki.gentoo.org/wiki/Project:Eudev")
     (synopsis "Userspace device management")
     (description "Udev is a daemon which dynamically creates and removes
 device nodes from /dev/, handles hotplug events and loads drivers at boot
 time.")
     (license license:gpl2+)))
-
-(define-public eudev-with-blkid
-  ;; TODO: Merge with 'eudev' above at an opportune time.
-  (package
-    (inherit eudev)
-    (name "eudev-with-blkid")
-    (inputs
-     ;; When linked against libblkid, eudev can populate /dev/disk/by-label
-     ;; and similar; it also installs the '60-persistent-storage.rules' file,
-     ;; which contains the rules to do that.
-     `(("util-linux" ,util-linux)                 ;for blkid
-       ,@(package-inputs eudev)))))
 
 (define-public lvm2
   (package
