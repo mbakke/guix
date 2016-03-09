@@ -651,7 +651,6 @@ dist_patch_DATA =						\
   gnu/packages/patches/openjpeg-CVE-2015-6581.patch		\
   gnu/packages/patches/openjpeg-use-after-free-fix.patch	\
   gnu/packages/patches/openssl-runpath.patch			\
-  gnu/packages/patches/openssl-c-rehash.patch			\
   gnu/packages/patches/openssl-c-rehash-in.patch		\
   gnu/packages/patches/orpheus-cast-errors-and-includes.patch	\
   gnu/packages/patches/ots-no-include-missing-file.patch	\
