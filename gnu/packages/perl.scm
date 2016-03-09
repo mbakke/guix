@@ -37,7 +37,6 @@
 (define-public perl
   ;; Yeah, Perl...  It is required early in the bootstrap process by Linux.
   (package
-    (replacement perl-fixed)
     (name "perl")
     (version "5.22.1")
     (source (origin
@@ -53,7 +52,8 @@
                              "perl-source-date-epoch.patch"
                              "perl-deterministic-ordering.patch"
                              "perl-no-build-time.patch"
-                             "perl-CVE-2015-8607.patch")))))
+                             "perl-CVE-2015-8607.patch"
+                             "perl-CVE-2016-2381.patch")))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f
@@ -114,28 +114,6 @@
 24 years of development.")
     (home-page "http://www.perl.org/")
     (license gpl1+)))                          ; or "Artistic"
-
-(define perl-fixed
-  (package
-    (inherit perl)
-    (replacement #f)
-    (source
-      (let ((name "perl") (version "5.22.1"))
-        (origin
-          (method url-fetch)
-          (uri (string-append "http://www.cpan.org/src/5.0/perl-"
-                              version ".tar.gz"))
-          (sha256
-           (base32
-            "09wg24w5syyafyv87l6z8pxwz4bjgcdj996bx5844k6m9445sirb"))
-          (patches (map search-patch
-                        '("perl-no-sys-dirs.patch"
-                          "perl-autosplit-default-time.patch"
-                          "perl-source-date-epoch.patch"
-                          "perl-deterministic-ordering.patch"
-                          "perl-no-build-time.patch"
-                          "perl-CVE-2015-8607.patch"
-                          "perl-CVE-2016-2381.patch"))))))))
 
 (define-public perl-algorithm-c3
   (package
