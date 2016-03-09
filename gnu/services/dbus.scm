@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -21,7 +21,7 @@
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
-  #:use-module ((gnu packages glib) #:select (dbus/activation))
+  #:use-module ((gnu packages glib) #:select (dbus))
   #:use-module (gnu packages admin)
   #:use-module (guix gexp)
   #:use-module (guix records)
@@ -38,7 +38,7 @@
   dbus-configuration make-dbus-configuration
   dbus-configuration?
   (dbus      dbus-configuration-dbus              ;<package>
-             (default dbus/activation))
+             (default dbus))
   (services  dbus-configuration-services          ;list of <package>
              (default '())))
 
@@ -198,7 +198,7 @@ includes the @code{etc/dbus-1/system.d} directories of each package listed in
                             (append (dbus-configuration-services config)
                                     services)))))))
 
-(define* (dbus-service #:key (dbus dbus/activation) (services '()))
+(define* (dbus-service #:key (dbus dbus) (services '()))
   "Return a service that runs the \"system bus\", using @var{dbus}, with
 support for @var{services}.
 

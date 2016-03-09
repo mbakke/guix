@@ -61,14 +61,15 @@
     (name "dbus")
     (version "1.10.0")
     (source (origin
-              ;; TODO: Apply patch from DBUS/ACTIVATION below.
               (method url-fetch)
               (uri (string-append
                     "https://dbus.freedesktop.org/releases/dbus/dbus-"
                     version ".tar.gz"))
               (sha256
                (base32
-                "0jwj7wlrhq5y0fwfh8k2d9rgdpfax06lj8698g6iqbwrzd2rgyqx"))))
+                "0jwj7wlrhq5y0fwfh8k2d9rgdpfax06lj8698g6iqbwrzd2rgyqx"))
+              (patches
+               (list (search-patch "dbus-helper-search-path.patch")))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
@@ -125,17 +126,6 @@ daemon).  Currently the communicating applications are on one computer,
 or through unencrypted TCP/IP suitable for use behind a firewall with
 shared NFS home directories.")
     (license license:gpl2+)))                     ; or Academic Free License 2.1
-
-(define-public dbus/activation
-  ;; D-Bus with a patch to fix service activation.
-  ;; TODO: Merge with DBUS above.
-  (package
-    (inherit dbus)
-    (version (string-append (package-version dbus) ".a"))
-    (source (origin
-              (inherit (package-source dbus))
-              (patches
-               (list (search-patch "dbus-helper-search-path.patch")))))))
 
 (define glib
   (package
