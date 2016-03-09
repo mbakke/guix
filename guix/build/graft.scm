@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Mark H Weaver <mhw@netris.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,6 +23,9 @@
   #:use-module (rnrs io ports)
   #:use-module (ice-9 match)
   #:use-module (ice-9 threads)
+  #:use-module (ice-9 binary-ports)
+  #:use-module (srfi srfi-1)   ; list library
+  #:use-module (srfi srfi-26)  ; cut and cute
   #:export (replace-store-references
             rewrite-directory))
 
@@ -38,55 +42,105 @@
 ;;;
 ;;; Code:
 
-(define* (replace-store-references input output mapping
+(define hash-length 32)
+
+(define nix-base32-char?
+  (cute char-set-contains?
+        ;; ASCII digits and lower case letters except e o t u
+        (string->char-set "0123456789abcdfghijklmnpqrsvwxyz")
+        <>))
+
+(define* (replace-store-references input output lookup-replacement
                                    #:optional (store (%store-directory)))
-  "Read data from INPUT, replacing store references according to MAPPING, and
-writing the result to OUTPUT."
-  (define pattern
-    (let ((nix-base32-chars
-           '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
-             #\a #\b #\c #\d #\f #\g #\h #\i #\j #\k #\l #\m #\n
-             #\p #\q #\r #\s #\v #\w #\x #\y #\z)))
-      `(,@(map char-set (string->list store))
-        ,(char-set #\/)
-        ,@(make-list 32 (list->char-set nix-base32-chars))
-        ,(char-set #\-))))
+  "Read data from INPUT, replacing store references according to
+LOOKUP-REPLACEMENT, and writing the result to OUTPUT."
 
-  ;; We cannot use `regexp-exec' here because it cannot deal with strings
-  ;; containing NUL characters, hence 'fold-port-matches'.
-  (with-fluids ((%default-port-encoding #f))
-    (when (file-port? input)
-      (setvbuf input _IOFBF 65536))
-    (when (file-port? output)
-      (setvbuf output _IOFBF 65536))
+  (define request-size (expt 2 20))  ; 1 MB
 
-    (let* ((len     (+ 34 (string-length store)))
-           (mapping (map (match-lambda
-                          ((origin . replacement)
-                           (unless (string=? (string-drop origin len)
-                                             (string-drop replacement len))
-                             (error "invalid replacement" origin replacement))
-                           (cons (string-take origin len)
-                                 (string-take replacement len))))
-                         mapping)))
-     (fold-port-matches (lambda (string result)
-                          (match (assoc-ref mapping string)
-                            (#f
-                             (put-bytevector output (string->utf8 string)))
-                            ((= string->utf8 replacement)
-                             (put-bytevector output replacement)))
-                          #t)
-                        #f
-                        pattern
-                        input
-                        (lambda (char result)     ;unmatched
-                          (put-u8 output (char->integer char))
-                          result)))))
+  (define (optimize-u8-predicate pred)
+    (cute vector-ref
+          (list->vector (map pred (iota 256)))
+          <>))
+
+  (define nix-base32-byte?
+    (optimize-u8-predicate
+     (compose nix-base32-char?
+              integer->char)))
+
+  (define (dash? byte) (= byte 45))
+
+  (let ((buffer (make-bytevector request-size)))
+    (let loop ()
+      ;; Note: work around <http://bugs.gnu.org/17466>.
+      (match (get-bytevector-n! input buffer 0 request-size)
+        ((? eof-object?) 'done)
+        (end
+         ;; Scan the buffer for dashes preceded by a valid nix hash.
+         (let scan-from ((i hash-length) (written 0))
+           (if (< i end)
+               (let ((byte (bytevector-u8-ref buffer i)))
+                 (cond ((and (dash? byte)
+                             (lookup-replacement
+                              (string-tabulate (lambda (j)
+                                                 (integer->char
+                                                  (bytevector-u8-ref buffer
+                                                   (+ j (- i hash-length)))))
+                                               hash-length)))
+                        => (lambda (replacement)
+                             (put-bytevector output buffer written
+                                             (- i hash-length written))
+                             (put-bytevector output replacement)
+                             (scan-from (+ i 1 hash-length) i)))
+                       ((nix-base32-byte? byte)
+                        (scan-from (+ i 1) written))
+                       (else
+                        (scan-from (+ i 1 hash-length) written))))
+               (let* ((unwritten   (- end written))
+                      (unget-size  (if (= end request-size)
+                                       (min hash-length unwritten)
+                                       0))
+                      (write-size  (- unwritten unget-size)))
+                 (put-bytevector output buffer written write-size)
+                 (unget-bytevector input buffer (+ written write-size)
+                                   unget-size)
+                 (loop)))))))))
 
 (define* (rewrite-directory directory output mapping
                             #:optional (store (%store-directory)))
   "Copy DIRECTORY to OUTPUT, replacing strings according to MAPPING, a list of
 file name pairs."
+
+  (define lookup-replacement
+    (let* ((prefix (string-append store "/"))
+           (start  (string-length prefix))
+           (end    (+ start hash-length))
+           (table  (make-hash-table)))
+      (define (valid-prefix? p) (string=? p prefix))
+      (define (valid-suffix? s) (string-prefix? "-" s))
+      (define (valid-hash? h)
+        (and (= hash-length (string-length h))
+             (every nix-base32-char?
+                    (string->list h))))
+      (define (components s)
+        (and (< end (string-length s))
+             (list (substring s 0 start)
+                   (substring s start end)
+                   (substring s end))))
+      (for-each (match-lambda
+                  (((= components ((? valid-prefix?)
+                                   (? valid-hash? origin-hash)
+                                   (? valid-suffix? suffix)))
+                    .
+                    (= components ((? valid-prefix?)
+                                   (? valid-hash? replacement-hash)
+                                   (? valid-suffix? suffix))))
+                   (hash-set! table origin-hash
+                              (string->utf8 replacement-hash)))
+                  ((origin . replacement)
+                   (error "invalid replacement" origin replacement)))
+                mapping)
+      (cut hash-ref table <>)))
+
   (define prefix-len
     (string-length directory))
 
@@ -103,18 +157,17 @@ file name pairs."
            (symlink (call-with-output-string
                       (lambda (output)
                         (replace-store-references (open-input-string target)
-                                                  output mapping
+                                                  output lookup-replacement
                                                   store)))
                     dest)))
         ((regular)
-         (with-fluids ((%default-port-encoding #f))
-           (call-with-input-file file
-             (lambda (input)
-               (call-with-output-file dest
-                 (lambda (output)
-                   (replace-store-references input output mapping
-                                             store)
-                   (chmod output (stat:perms stat))))))))
+         (call-with-input-file file
+           (lambda (input)
+             (call-with-output-file dest
+               (lambda (output)
+                 (replace-store-references input output lookup-replacement
+                                           store)
+                 (chmod output (stat:perms stat)))))))
         (else
          (error "unsupported file type" stat)))))
 
