@@ -559,7 +559,7 @@ is part of the GNOME accessibility project.")
    (outputs '("out" "doc"))
    (propagated-inputs
     `(("atk" ,atk)
-      ("gdk-pixbuf" ,gdk-pixbuf)
+      ("gdk-pixbuf" ,gdk-pixbuf+svg)
       ("pango" ,pango)))
    (inputs
     `(("cups" ,cups)
@@ -619,7 +619,7 @@ application suites.")
    (propagated-inputs
     `(("at-spi2-atk" ,at-spi2-atk)
       ("atk" ,atk)
-      ("gdk-pixbuf" ,gdk-pixbuf)
+      ("gdk-pixbuf" ,gdk-pixbuf+svg)
       ("libepoxy" ,libepoxy)
       ("libxcursor" ,libxcursor)
       ("libxi" ,libxi)
@@ -627,8 +627,7 @@ application suites.")
       ("libxdamage" ,libxdamage)
       ("pango" ,pango)))
    (inputs
-    `(("librsvg" ,librsvg)                        ;for gtk-encode-symbolic-svg
-      ("libxml2" ,libxml2)
+    `(("libxml2" ,libxml2)
       ;; XXX: colord depends on mozjs (through polkit), which fails on
       ;;      on non-intel systems now.
       ;;("colord" ,colord)
@@ -663,18 +662,7 @@ application suites.")
            (("SUBDIRS = gdk gtk a11y css reftests")
             "SUBDIRS = gdk"))
          #t)
-       (alist-cons-after
-        'install 'wrap-gtk-encode-symbolic-svg
-        ;; By using GdkPixbuf, gtk-encode-symbolic-svg needs to know
-        ;; librsvg's loaders.cache to handle SVG files.
-        (lambda* (#:key inputs outputs #:allow-other-keys)
-          (let* ((out (assoc-ref outputs "out"))
-                 (prog (string-append out "/bin/gtk-encode-symbolic-svg"))
-                 (librsvg (assoc-ref inputs "librsvg"))
-                 (loaders.cache (find-files librsvg "^loaders\\.cache$")))
-            (wrap-program prog
-              `("GDK_PIXBUF_MODULE_FILE" = ,loaders.cache))))
-        %standard-phases))))
+       %standard-phases)))
    (native-search-paths
     (list (search-path-specification
            (variable "GUIX_GTK3_PATH")
