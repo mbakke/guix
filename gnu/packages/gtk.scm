@@ -606,7 +606,7 @@ application suites.")
 (define-public gtk+
   (package (inherit gtk+-2)
    (name "gtk+")
-   (version "3.18.2")
+   (version "3.18.9")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -614,7 +614,7 @@ application suites.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "0lp1hn0qydxx03bianzzr0a4maqzsvylrkzr7c3p0050qihwbgjx"))
+              "1gdchcz20srwhyf9rmynq88yg63mls2shzadr5625d7r025pygbq"))
             (patches (list (search-patch "gtk3-respect-GUIX_GTK3_PATH.patch")))))
    (propagated-inputs
     `(("at-spi2-atk" ,at-spi2-atk)
