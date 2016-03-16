@@ -240,7 +240,6 @@ dynamic loading, and an object system.")
     (build-system gnu-build-system)
     (inputs
      `(("bison" ,bison)
-       ("cairo" ,cairo)
        ("flex" ,flex)
        ("glib" ,glib)
        ("python-2" ,python-2)))
