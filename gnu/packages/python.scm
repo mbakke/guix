@@ -5868,7 +5868,7 @@ message digests and key derivation functions.")
 (define-public python-pyopenssl
   (package
     (name "python-pyopenssl")
-    (version "0.15.1")
+    (version "16.0.0")
     (source
      (origin
        (method url-fetch)
@@ -5876,29 +5876,8 @@ message digests and key derivation functions.")
                            "pyOpenSSL/pyOpenSSL-" version ".tar.gz"))
        (sha256
         (base32
-         "0wnnq15rhj7fhdcd8ycwiw6r6g3w9f9lcy6cigg8226vsrq618ph"))))
+         "0zfijaxlq4vgi6jz0d4i5xq9ygqnyps6br7lmigjhqnh8gp10g9n"))))
     (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-          (lambda* (#:key inputs #:allow-other-keys)
-            (substitute* "OpenSSL/test/test_ssl.py"
-              (("client\\.connect\\(\\('verisign\\.com', 443\\)\\)")
-               "return True")
-              ;; FIXME: disable broken test
-              (("test_set_tmp_ecdh") "disabled__set_tmp_ecdh"))
-            (substitute* "OpenSSL/test/test_crypto.py"
-              (("command = b\"openssl \"")
-               (string-append "command = b\""
-                              (assoc-ref inputs "openssl")
-                              "/bin/openssl" " \""))
-              ;; FIXME: disable four broken tests
-              (("test_der")             "disabled__der")
-              (("test_digest")          "disabled__digest")
-              (("test_get_extension")   "disabled__get_extension")
-              (("test_extension_count") "disabled__extension_count"))
-            #t)))))
     (propagated-inputs
      `(("python-cryptography" ,python-cryptography)
        ("python-six" ,python-six)))
