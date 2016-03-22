@@ -1530,7 +1530,7 @@ code introspection, and logging.")
 (define-public python-pytest
   (package
     (name "python-pytest")
-    (version "2.6.1")
+    (version "2.7.3")
     (source
      (origin
        (method url-fetch)
@@ -1539,7 +1539,7 @@ code introspection, and logging.")
              version ".tar.gz"))
        (sha256
         (base32
-         "0g2w4p0n42wvz8rq4k6gnzpkakgz3g8sfanxk8jrsra9675snkcr"))
+         "1z4yi986f9n0p8qmzmn21m21m8j1x78hk3505f89baqm6pdw7afm"))
        (modules '((guix build utils)))
        (snippet
         ;; One of the tests involves the /usr directory, so it fails.
