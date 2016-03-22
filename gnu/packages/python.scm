@@ -5791,7 +5791,7 @@ responses, rather than doing any computation.")
 (define-public python-cryptography-vectors
   (package
     (name "python-cryptography-vectors")
-    (version "1.2.3")
+    (version "1.3.1")
     (source
      (origin
        (method url-fetch)
@@ -5800,7 +5800,7 @@ responses, rather than doing any computation.")
                            version ".tar.gz"))
        (sha256
         (base32
-         "0shawgpax79gvjrj0a313sll9gaqys7q1hxngn6j4k24lmz7bwki"))))
+         "1144l3ypz3bngxd59lb4y74xa401w92lhvvjgxzglmvbh8wzkcbb"))))
     (build-system python-build-system)
     (native-inputs
      `(("python-setuptools" ,python-setuptools)))
@@ -5817,14 +5817,14 @@ responses, rather than doing any computation.")
 (define-public python-cryptography
   (package
     (name "python-cryptography")
-    (version "1.2.3")
+    (version "1.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cryptography" version))
        (sha256
         (base32
-         "0kj511z4g21fhcr649pyzpl0zzkkc7hsgxxjys6z8wwfvmvirccf"))))
+         "1qjkrpfvxcyd0kal3zpm5y7f9p3y77ixn9jw8f4dqpgrw1sn3cxl"))))
     (build-system python-build-system)
     (inputs
      `(("openssl" ,openssl)))
