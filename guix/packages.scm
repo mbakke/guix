@@ -508,7 +508,7 @@ IMPORTED-MODULES specify modules to use/import for use by SNIPPET."
                          "source is under '~a'~%" directory)
                  (chdir directory)
 
-                 (and (every apply-patch '#+patches)
+                 (and (every apply-patch '(#+@patches))
                       #+@(if snippet
                              #~((let ((module (make-fresh-user-module)))
                                   (module-use-interfaces! module

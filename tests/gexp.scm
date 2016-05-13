@@ -208,7 +208,8 @@
 
 (test-assert "input list"
   (let ((exp   (gexp (display
-                      '(ungexp (list %bootstrap-guile coreutils)))))
+                      '(ungexp (list (gexp-input %bootstrap-guile)
+                                     (gexp-input coreutils))))))
         (guile (derivation->output-path
                 (package-derivation %store %bootstrap-guile)))
         (cu    (derivation->output-path
@@ -222,8 +223,11 @@
 (test-assert "input list + ungexp-native"
   (let* ((target "mips64el-linux")
          (exp   (gexp (display
-                       (cons '(ungexp-native (list %bootstrap-guile coreutils))
-                             '(ungexp (list glibc binutils))))))
+                       (cons '(ungexp-native (map gexp-input
+                                                  (list %bootstrap-guile
+                                                        coreutils)))
+                             '(ungexp (map gexp-input
+                                           (list glibc binutils)))))))
          (guile (derivation->output-path
                  (package-derivation %store %bootstrap-guile)))
          (cu    (derivation->output-path
