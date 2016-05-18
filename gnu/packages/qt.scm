@@ -400,6 +400,10 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                        "-prefix" out
                        "-opensource"
                        "-confirm-license"
+                       ;; We don't want the examples in the 'out' output, but
+                       ;; the easiest option is to just not build them.
+                       ;; This also saves significant time while building.
+                       "-nomake" "examples"
                        ;; Most "-system-..." are automatic, but some use
                        ;; the bundled copy by default.
                        "-system-sqlite"
