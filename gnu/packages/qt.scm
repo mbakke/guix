@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages qt)
-  #:use-module ((guix licenses) #:select (bsd-3 gpl2 gpl3 lgpl2.1 lgpl2.1+ x11-style))
+  #:use-module ((guix licenses) #:select (bsd-3 gpl2 gpl3 lgpl2.1 lgpl2.1+ lgpl3 x11-style))
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build utils)
@@ -297,6 +297,137 @@ developers using C++ or QML, a CSS & JavaScript like language.")
               (copy-recursively olddoc docdir)
               (delete-file-recursively olddoc)
               #t))))))))
+
+(define-public qtbase
+  (package
+    (name "qtbase")
+    (version "5.6.0")
+    (source (origin
+             (method url-fetch)
+             (uri (string-append "https://download.qt.io/official_releases/qt/"
+                                 (version-major+minor version) "/" version
+                                 "/submodules/" name "-opensource-src-"
+                                 version ".tar.xz"))
+             (sha256
+               (base32
+                 "0ynnvcs5idivzldsq5ciqg9myg82b3l3906l4vjv54lyamf8mykf"))
+             (modules '((guix build utils)))
+             (snippet
+              '(begin
+                ;; Remove one of the two bundled harfbuzz copies in addition
+                ;; to passing "-system-harfbuzz".
+                (delete-file-recursively "src/3rdparty/harfbuzz-ng")
+                ;; Remove the bundled sqlite copy in addition to
+                ;; passing "-system-sqlite".
+                (delete-file-recursively "src/3rdparty/sqlite")))))
+    (build-system gnu-build-system)
+    (propagated-inputs
+     `(("mesa" ,mesa)))
+    (inputs
+     `(("alsa-lib" ,alsa-lib)
+       ("dbus" ,dbus)
+       ("cups" ,cups)
+       ("expat" ,expat)
+       ("fontconfig" ,fontconfig)
+       ("freetype" ,freetype)
+       ("glib" ,glib)
+       ("harfbuzz" ,harfbuzz)
+       ("icu4c" ,icu4c)
+       ("libjpeg" ,libjpeg)
+       ("libmng" ,libmng)
+       ("libpci" ,pciutils)
+       ("libpng" ,libpng)
+       ("libx11" ,libx11)
+       ("libxcomposite" ,libxcomposite)
+       ("libxcursor" ,libxcursor)
+       ("libxfixes" ,libxfixes)
+       ("libxi" ,libxi)
+       ("libxinerama" ,libxinerama)
+       ("libxkbcommon" ,libxkbcommon)
+       ("libxml2" ,libxml2)
+       ("libxrandr" ,libxrandr)
+       ("libxrender" ,libxrender)
+       ("libxslt" ,libxslt)
+       ("libxtst" ,libxtst)
+       ("mtdev" ,mtdev)
+       ("mysql" ,mysql)
+       ("nss" ,nss)
+       ("openssl" ,openssl)
+       ("postgresql" ,postgresql)
+       ("pulseaudio" ,pulseaudio)
+       ("pcre" ,pcre)
+       ("sqlite" ,sqlite)
+       ("udev" ,eudev)
+       ("unixodbc" ,unixodbc)
+       ("xcb-util" ,xcb-util)
+       ("xcb-util-image" ,xcb-util-image)
+       ("xcb-util-keysyms" ,xcb-util-keysyms)
+       ("xcb-util-renderutil" ,xcb-util-renderutil)
+       ("xcb-util-wm" ,xcb-util-wm)
+       ("zlib" ,zlib)))
+    (native-inputs
+     `(("bison" ,bison)
+       ("flex" ,flex)
+       ("gperf" ,gperf)
+       ("perl" ,perl)
+       ("pkg-config" ,pkg-config)
+       ("python" ,python-2)
+       ("ruby" ,ruby)
+       ("which" ,(@ (gnu packages base) which))))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'configure 'patch-bin-sh
+           (lambda _
+             (substitute* '("config.status"
+                            "configure"
+                            "mkspecs/features/qt_functions.prf"
+                            "qmake/library/qmakebuiltins.cpp")
+                          (("/bin/sh") (which "sh")))
+             #t))
+         (replace 'configure
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* "configure"
+                 (("/bin/pwd") (which "pwd")))
+               (substitute* "src/corelib/global/global.pri"
+                 (("/bin/ls") (which "ls")))
+               ;; do not pass "--enable-fast-install", which makes the
+               ;; configure process fail
+               (zero? (system*
+                       "./configure"
+                       "-verbose"
+                       "-prefix" out
+                       "-opensource"
+                       "-confirm-license"
+                       ;; Most "-system-..." are automatic, but some use
+                       ;; the bundled copy by default.
+                       "-system-sqlite"
+                       "-system-harfbuzz"
+                       ;; explicitly link with openssl instead of dlopening it
+                       "-openssl-linked"
+                       ;; explicitly link with dbus instead of dlopening it
+                       "-dbus-linked"
+                       ;; drop special machine instructions not supported
+                       ;; on all instances of the target
+                       ,@(if (string-prefix? "x86_64"
+                                             (or (%current-target-system)
+                                                 (%current-system)))
+                             '()
+                             '("-no-sse2"))
+                       "-no-sse3"
+                       "-no-ssse3"
+                       "-no-sse4.1"
+                       "-no-sse4.2"
+                       "-no-avx"
+                       "-no-avx2"
+                       "-no-mips_dsp"
+                       "-no-mips_dspr2"))))))))
+    (home-page "https://www.qt.io/")
+    (synopsis "Cross-platform GUI library")
+    (description "Qt is a cross-platform application and UI framework for
+developers using C++ or QML, a CSS & JavaScript like language.")
+    (license (list lgpl2.1 lgpl3))))
 
 (define-public qjson
   (package
