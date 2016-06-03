@@ -468,6 +468,45 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                             (((string-append "INSTALL_ROOT)" qtbase))
                              (string-append "INSTALL_ROOT)" out)))))))))))
 
+(define-public qtimageformats
+  (package (inherit qtbase)
+    (name "qtimageformats")
+    (version "5.6.0")
+    (source (origin
+             (method url-fetch)
+             (uri (string-append "https://download.qt.io/official_releases/qt/"
+                                 (version-major+minor version) "/" version
+                                 "/submodules/" name "-opensource-src-"
+                                 version ".tar.xz"))
+             (sha256
+              (base32
+               "1nmsh682idxl0642q7376r9qfxkx0736q9pl4jx179c9lrsl519c"))))
+    (propagated-inputs `())
+    (inputs
+     `(("qtbase" ,qtbase)
+       ,@(package-inputs qtbase)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'configure
+           (lambda _
+             (zero? (system* "qmake"
+                             (string-append "PREFIX="
+                                            (assoc-ref %outputs "out"))))))
+         (add-before 'install 'fix-Makefiles
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out    (assoc-ref outputs "out"))
+                   (qtbase (assoc-ref inputs "qtbase")))
+               (substitute* '("src/plugins/imageformats/tiff/Makefile"
+                              "src/plugins/imageformats/wbmp/Makefile"
+                              "src/plugins/imageformats/dds/Makefile"
+                              "src/plugins/imageformats/tga/Makefile"
+                              "src/plugins/imageformats/webp/Makefile"
+                              "src/plugins/imageformats/icns/Makefile"
+                              "src/plugins/imageformats/mng/Makefile")
+                            (((string-append "INSTALL_ROOT)" qtbase))
+                             (string-append "INSTALL_ROOT)" out)))))))))))
+
 (define-public qjson
   (package
     (name "qjson")
