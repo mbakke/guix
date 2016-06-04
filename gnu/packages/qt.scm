@@ -469,7 +469,7 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                              (string-append "INSTALL_ROOT)" out)))))))))))
 
 (define-public qtimageformats
-  (package (inherit qtbase)
+  (package (inherit qtsvg)
     (name "qtimageformats")
     (version "5.6.0")
     (source (origin
@@ -481,29 +481,21 @@ developers using C++ or QML, a CSS & JavaScript like language.")
              (sha256
               (base32
                "1nmsh682idxl0642q7376r9qfxkx0736q9pl4jx179c9lrsl519c"))))
-    (propagated-inputs `())
-    (inputs
-     `(("qtbase" ,qtbase)
-       ,@(package-inputs qtbase)))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (zero? (system* "qmake"
-                             (string-append "PREFIX="
-                                            (assoc-ref %outputs "out"))))))
-         (add-before 'install 'fix-Makefiles
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out    (assoc-ref outputs "out"))
-                   (qtbase (assoc-ref inputs "qtbase")))
-               (for-each
-                 (lambda (format)
-                   (substitute* (string-append "src/plugins/imageformats/"
-                                               format "/Makefile")
-                                (((string-append "INSTALL_ROOT)" qtbase))
-                                 (string-append "INSTALL_ROOT)" out))))
-                 '("tiff" "wbmp" "dds" "tga" "webp" "icns" "mng"))))))))))
+      (substitute-keyword-arguments (package-arguments qtsvg)
+        ((#:phases phases)
+         `(modify-phases ,phases
+            (replace 'fix-Makefiles
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let ((out    (assoc-ref outputs "out"))
+                      (qtbase (assoc-ref inputs "qtbase")))
+                  (for-each
+                    (lambda (format)
+                      (substitute* (string-append "src/plugins/imageformats/"
+                                                  format "/Makefile")
+                                   (((string-append "INSTALL_ROOT)" qtbase))
+                                    (string-append "INSTALL_ROOT)" out))))
+                    '("tiff" "wbmp" "dds" "tga" "webp" "icns" "mng")))))))))))
 
 (define-public qjson
   (package
