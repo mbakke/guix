@@ -497,6 +497,31 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                                     (string-append "INSTALL_ROOT)" out))))
                     '("tiff" "wbmp" "dds" "tga" "webp" "icns" "mng")))))))))))
 
+(define-public qtx11extras
+  (package (inherit qtsvg)
+    (name "qtx11extras")
+    (version "5.6.0")
+    (source (origin
+             (method url-fetch)
+             (uri (string-append "https://download.qt.io/official_releases/qt/"
+                                 (version-major+minor version) "/" version
+                                 "/submodules/" name "-opensource-src-"
+                                 version ".tar.xz"))
+             (sha256
+              (base32
+               "099lc7kxcxgp5s01ddnd6n955fc8866caark43xfs2dw0a6pdva7"))))
+    (arguments
+      (substitute-keyword-arguments (package-arguments qtsvg)
+        ((#:phases phases)
+         `(modify-phases ,phases
+            (replace 'fix-Makefiles
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let ((out    (assoc-ref outputs "out"))
+                      (qtbase (assoc-ref inputs "qtbase")))
+                  (substitute* "src/x11extras/Makefile"
+                               (((string-append "INSTALL_ROOT)" qtbase))
+                                (string-append "INSTALL_ROOT)" out))))))))))))
+
 (define-public qjson
   (package
     (name "qjson")
