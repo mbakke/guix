@@ -497,15 +497,13 @@ developers using C++ or QML, a CSS & JavaScript like language.")
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let ((out    (assoc-ref outputs "out"))
                    (qtbase (assoc-ref inputs "qtbase")))
-               (substitute* '("src/plugins/imageformats/tiff/Makefile"
-                              "src/plugins/imageformats/wbmp/Makefile"
-                              "src/plugins/imageformats/dds/Makefile"
-                              "src/plugins/imageformats/tga/Makefile"
-                              "src/plugins/imageformats/webp/Makefile"
-                              "src/plugins/imageformats/icns/Makefile"
-                              "src/plugins/imageformats/mng/Makefile")
-                            (((string-append "INSTALL_ROOT)" qtbase))
-                             (string-append "INSTALL_ROOT)" out)))))))))))
+               (for-each
+                 (lambda (format)
+                   (substitute* (string-append "src/plugins/imageformats/"
+                                               format "/Makefile")
+                                (((string-append "INSTALL_ROOT)" qtbase))
+                                 (string-append "INSTALL_ROOT)" out))))
+                 '("tiff" "wbmp" "dds" "tga" "webp" "icns" "mng"))))))))))
 
 (define-public qjson
   (package
