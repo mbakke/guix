@@ -2,6 +2,7 @@
 ;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,6 +26,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages commencement)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages hurd)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -33,6 +35,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 regex)
   #:export (cross-binutils
             cross-libc
             cross-gcc))
@@ -292,12 +295,12 @@ GCC that does not target a libc; otherwise, target that libc."
             (files '("lib" "lib64")))))
     (native-search-paths '())))
 
-(define* (cross-libc target
-                     #:optional
-                     (xgcc (cross-gcc target))
-                     (xbinutils (cross-binutils target)))
-  "Return a libc cross-built for TARGET, a GNU triplet.  Use XGCC and
-XBINUTILS and the cross tool chain."
+(define* (cross-kernel-headers target
+                               #:optional
+                               (xgcc (cross-gcc target))
+                               (xbinutils (cross-binutils target)))
+  "Return headers depending on TARGET."
+
   (define xlinux-headers
     (package (inherit linux-libre-headers)
       (name (string-append (package-name linux-libre-headers)
@@ -320,6 +323,147 @@ XBINUTILS and the cross tool chain."
                        ("cross-binutils" ,xbinutils)
                        ,@(package-native-inputs linux-libre-headers)))))
 
+  (define xgnumach-headers
+    (package (inherit gnumach-headers)
+      (name (string-append (package-name gnumach-headers)
+                           "-cross-" target))
+
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ,@(package-native-inputs gnumach-headers)))))
+
+  (define xmig
+    (package (inherit mig)
+      (name (string-append "mig-cross"))
+      (arguments
+       `(#:modules ((guix build gnu-build-system)
+                    (guix build utils)
+                    (srfi srfi-26))
+         #:phases (alist-cons-before
+                   'configure 'set-cross-headers-path
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (let* ((mach (assoc-ref inputs "cross-gnumach-headers"))
+                            (cpath (string-append mach "/include")))
+                       (for-each (cut setenv <> cpath)
+                                 '("CROSS_C_INCLUDE_PATH"
+                                   "CROSS_CPLUS_INCLUDE_PATH"
+                                   "CROSS_OBJC_INCLUDE_PATH"
+                                   "CROSS_OBJCPLUS_INCLUDE_PATH"))))
+                   %standard-phases)
+         #:configure-flags (list ,(string-append "--target=" target))
+         ,@(package-arguments mig)))
+
+      (propagated-inputs `(("cross-gnumach-headers" ,xgnumach-headers)))
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ,@(package-native-inputs mig)))))
+
+  (define xhurd-headers
+    (package (inherit hurd-headers)
+      (name (string-append (package-name hurd-headers)
+                           "-cross-" target))
+
+      (propagated-inputs `(("cross-mig" ,xmig)))
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ("cross-mig" ,xmig)
+                       ,@(alist-delete "mig"(package-native-inputs hurd-headers))))))
+
+   (define xglibc/hurd-headers
+    (package (inherit glibc/hurd-headers)
+      (name (string-append (package-name glibc/hurd-headers)
+                           "-cross-" target))
+
+      (arguments
+       (substitute-keyword-arguments
+           `(#:modules ((guix build gnu-build-system)
+                        (guix build utils)
+                        (srfi srfi-26))
+             ,@(package-arguments glibc/hurd-headers))
+         ((#:phases phases)
+          `(alist-cons-before
+            'pre-configure 'set-cross-headers-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((mach (assoc-ref inputs "gnumach-headers"))
+                     (hurd (assoc-ref inputs "hurd-headers"))
+                     (cpath (string-append mach "/include:"
+                                           hurd "/include")))
+                (for-each (cut setenv <> cpath)
+                          '("CROSS_C_INCLUDE_PATH"
+                            "CROSS_CPLUS_INCLUDE_PATH"
+                            "CROSS_OBJC_INCLUDE_PATH"
+                            "CROSS_OBJCPLUS_INCLUDE_PATH"))))
+            ,phases))))
+
+      (propagated-inputs `(("gnumach-headers" ,xgnumach-headers)
+                           ("hurd-headers" ,xhurd-headers)))
+
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ("cross-mig" ,xmig)
+                       ,@(alist-delete "mig"(package-native-inputs glibc/hurd-headers))))))
+
+  (define xhurd-minimal
+    (package (inherit hurd-minimal)
+      (name (string-append (package-name hurd-minimal)
+                           "-cross-" target))
+      (arguments
+       (substitute-keyword-arguments
+         `(#:modules ((guix build gnu-build-system)
+                      (guix build utils)
+                      (srfi srfi-26))
+           ,@(package-arguments hurd-minimal))
+         ((#:phases phases)
+          `(alist-cons-before
+            'configure 'set-cross-headers-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((glibc-headers (assoc-ref inputs "cross-glibc-hurd-headers"))
+                    (cpath (string-append glibc-headers "/include")))
+                (for-each (cut setenv <> cpath)
+                          '("CROSS_C_INCLUDE_PATH"
+                            "CROSS_CPLUS_INCLUDE_PATH"
+                            "CROSS_OBJC_INCLUDE_PATH"
+                            "CROSS_OBJCPLUS_INCLUDE_PATH"))))
+            ,phases))))
+
+      (inputs `(("cross-glibc-hurd-headers" ,xglibc/hurd-headers)))
+
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ("cross-mig" ,xmig)
+                       ,@(alist-delete "mig"(package-native-inputs hurd-minimal))))))
+
+  (define xhurd-core-headers
+    (package (inherit hurd-core-headers)
+      (name (string-append (package-name hurd-core-headers)
+                           "-cross-" target))
+
+      (inputs `(("gnumach-headers" ,xgnumach-headers)
+                ("hurd-headers" ,xhurd-headers)
+                ("hurd-minimal" ,xhurd-minimal)))
+
+      (native-inputs `(("cross-gcc" ,xgcc)
+                       ("cross-binutils" ,xbinutils)
+                       ("cross-mig" ,xmig)
+                       ,@(package-native-inputs hurd-core-headers)))))
+
+  (match target
+    ((or "i586-pc-gnu" "i586-gnu") xhurd-core-headers)
+    (_ xlinux-headers)))
+
+(define* (cross-libc target
+                     #:optional
+                     (xgcc (cross-gcc target))
+                     (xbinutils (cross-binutils target))
+                     (xheaders (cross-kernel-headers target)))
+  "Return a libc cross-built for TARGET, a GNU triplet.  Use XGCC and
+XBINUTILS and the cross tool chain."
+  (define (cross-libc-for-target target)
+    "Return libc depending on TARGET."
+    (match target
+      ((or "i586-pc-gnu" "i586-gnu") glibc/hurd)
+      (_ glibc/linux)))
+
   (package (inherit glibc)
     (name (string-append "glibc-cross-" target))
     (arguments
@@ -337,7 +481,9 @@ XBINUTILS and the cross tool chain."
                       (guix build utils)
                       (srfi srfi-26))
 
-           ,@(package-arguments glibc))
+           ;; Package-arguments does not use the correct libc, so we use
+           ;; (cross-libc-for-target ...) to determine the correct one.
+           ,@(package-arguments (cross-libc-for-target target)))
        ((#:configure-flags flags)
         `(cons ,(string-append "--host=" target)
                ,flags))
@@ -352,12 +498,14 @@ XBINUTILS and the cross tool chain."
                           "CROSS_CPLUS_INCLUDE_PATH"
                           "CROSS_OBJC_INCLUDE_PATH"
                           "CROSS_OBJCPLUS_INCLUDE_PATH"))
+              (setenv "CROSS_LIBRARY_PATH"
+                      (string-append kernel "/lib")) ;for Hurd's libihash
               #t))
           ,phases))))
 
     ;; Shadow the native "kernel-headers" because glibc's recipe expects the
     ;; "kernel-headers" input to point to the right thing.
-    (propagated-inputs `(("kernel-headers" ,xlinux-headers)))
+    (propagated-inputs `(("kernel-headers" ,xheaders)))
 
     ;; FIXME: 'static-bash' should really be an input, not a native input, but
     ;; to do that will require building an intermediate cross libc.
@@ -365,6 +513,11 @@ XBINUTILS and the cross tool chain."
 
     (native-inputs `(("cross-gcc" ,xgcc)
                      ("cross-binutils" ,xbinutils)
+                     ,@(if (string-match (or "i586-pc-gnu" "i586-gnu") target)
+                           `(("cross-mig"
+                              ,@(assoc-ref (package-native-inputs xheaders)
+                                           "cross-mig")))
+                           '())
                      ,@(package-inputs glibc)     ;FIXME: static-bash
                      ,@(package-native-inputs glibc)))))
 
