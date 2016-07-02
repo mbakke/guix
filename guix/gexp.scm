@@ -98,11 +98,10 @@
 
 ;; "G expressions".
 (define-record-type <gexp>
-  (make-gexp references natives proc)
+  (make-gexp references proc)
   gexp?
-  (references gexp-references)                    ; ((DRV-OR-PKG OUTPUT) ...)
-  (natives    gexp-native-references)             ; ((DRV-OR-PKG OUTPUT) ...)
-  (proc       gexp-proc))                         ; procedure
+  (references gexp-references)                    ;list of <gexp-input>
+  (proc       gexp-proc))                         ;procedure
 
 (define (write-gexp gexp port)
   "Write GEXP on PORT."
@@ -113,8 +112,7 @@
   ;; tries to use 'append' on that, which fails with wrong-type-arg.
   (false-if-exception
    (write (apply (gexp-proc gexp)
-                 (append (gexp-references gexp)
-                         (gexp-native-references gexp)))
+                 (gexp-references gexp))
           port))
   (format port " ~a>"
           (number->string (object-address gexp) 16)))
@@ -630,11 +628,15 @@ references; otherwise, return only non-native references."
        ;; Ignore references to other kinds of objects.
        result)))
 
+  (define (native-input? x)
+    (and (gexp-input? x)
+         (gexp-input-native? x)))
+
   (fold-right add-reference-inputs
               '()
               (if native?
-                  (gexp-native-references exp)
-                  (gexp-references exp))))
+                  (filter native-input? (gexp-references exp))
+                  (remove native-input? (gexp-references exp)))))
 
 (define gexp-native-inputs
   (cut gexp-inputs <> #:native? #t))
@@ -687,7 +689,7 @@ and in the current monad setting (system type, etc.)"
                            (if (gexp-input? ref)
                                ref
                                (%gexp-input ref "out" n?))
-                           native?))
+                           (or n? native?)))
                         refs)))
         (($ <gexp-input> (? struct? thing) output n?)
          (let ((target (if (or n? native?) #f target)))
@@ -706,9 +708,7 @@ and in the current monad setting (system type, etc.)"
 
   (mlet %store-monad
       ((args (sequence %store-monad
-                       (append (map reference->sexp (gexp-references exp))
-                               (map (cut reference->sexp <> #t)
-                                    (gexp-native-references exp))))))
+                       (map reference->sexp (gexp-references exp)))))
     (return (apply (gexp-proc exp) args))))
 
 (define (syntax-location-string s)
@@ -741,33 +741,9 @@ and in the current monad setting (system type, etc.)"
           ((ungexp-splicing _ ...)
            (cons exp result))
           ((ungexp-native _ ...)
-           result)
-          ((ungexp-native-splicing _ ...)
-           result)
-          ((exp0 exp ...)
-           (let ((result (loop #'exp0 result)))
-             (fold loop result #'(exp ...))))
-          (_
-           result))))
-
-    (define (collect-native-escapes exp)
-      ;; Return all the 'ungexp-native' forms present in EXP.
-      (let loop ((exp    exp)
-                 (result '()))
-        (syntax-case exp (ungexp
-                          ungexp-splicing
-                          ungexp-native
-                          ungexp-native-splicing)
-          ((ungexp-native _)
-           (cons exp result))
-          ((ungexp-native _ _)
            (cons exp result))
           ((ungexp-native-splicing _ ...)
            (cons exp result))
-          ((ungexp _ ...)
-           result)
-          ((ungexp-splicing _ ...)
-           result)
           ((exp0 exp ...)
            (let ((result (loop #'exp0 result)))
              (fold loop result #'(exp ...))))
@@ -838,14 +814,11 @@ and in the current monad setting (system type, etc.)"
 
     (syntax-case s (ungexp output)
       ((_ exp)
-       (let* ((normals (delete-duplicates (collect-escapes #'exp)))
-              (natives (delete-duplicates (collect-native-escapes #'exp)))
-              (escapes (append normals natives))
+       (let* ((escapes (delete-duplicates (collect-escapes #'exp)))
               (formals (generate-temporaries escapes))
               (sexp    (substitute-references #'exp (zip escapes formals)))
-              (refs    (map escape->ref normals))
-              (nrefs   (map escape->ref natives)))
-         #`(make-gexp (list #,@refs) (list #,@nrefs)
+              (refs    (map escape->ref escapes)))
+         #`(make-gexp (list #,@refs)
                       (lambda #,formals
                         #,sexp)))))))
 
