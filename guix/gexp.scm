@@ -29,6 +29,7 @@
   #:use-module (ice-9 match)
   #:export (gexp
             gexp?
+            with-imported-modules
 
             gexp-input
             gexp-input?
@@ -98,9 +99,10 @@
 
 ;; "G expressions".
 (define-record-type <gexp>
-  (make-gexp references proc)
+  (make-gexp references modules proc)
   gexp?
   (references gexp-references)                    ;list of <gexp-input>
+  (modules    gexp-self-modules)                  ;list of module names
   (proc       gexp-proc))                         ;procedure
 
 (define (write-gexp gexp port)
@@ -384,6 +386,23 @@ whether this should be considered a \"native\" input or not."
 
 (set-record-type-printer! <gexp-output> write-gexp-output)
 
+(define (gexp-modules gexp)
+  "Return the list of Guile module names GEXP relies on."
+  (delete-duplicates
+   (append (gexp-self-modules gexp)
+           (append-map (match-lambda
+                         (($ <gexp-input> (? gexp? exp))
+                          (gexp-modules exp))
+                         (($ <gexp-input> (lst ...))
+                          (append-map (lambda (item)
+                                        (if (gexp? item)
+                                            (gexp-modules item)
+                                            '()))
+                                      lst))
+                         (_
+                          '()))
+                       (gexp-references gexp)))))
+
 (define raw-derivation
   (store-lift derivation))
 
@@ -494,7 +513,9 @@ Similarly for DISALLOWED-REFERENCES, which can list items that must not be
 referenced by the outputs.
 
 The other arguments are as for 'derivation'."
-  (define %modules modules)
+  (define %modules
+    (delete-duplicates
+     (append modules (gexp-modules exp))))
   (define outputs (gexp-outputs exp))
 
   (define (graphs-file-names graphs)
@@ -724,6 +745,17 @@ and in the current monad setting (system type, etc.)"
               (simple-format #f "~a:~a" line column)))
         "<unknown location>")))
 
+(define-syntax-parameter current-imported-modules
+  ;; Current list of imported modules.
+  (identifier-syntax '()))
+
+(define-syntax-rule (with-imported-modules modules body ...)
+  "Mark the gexps defined in BODY... as requiring MODULES in their execution
+environment."
+  (syntax-parameterize ((current-imported-modules
+                         (identifier-syntax modules)))
+    body ...))
+
 (define-syntax gexp
   (lambda (s)
     (define (collect-escapes exp)
@@ -819,6 +851,7 @@ and in the current monad setting (system type, etc.)"
               (sexp    (substitute-references #'exp (zip escapes formals)))
               (refs    (map escape->ref escapes)))
          #`(make-gexp (list #,@refs)
+                      current-imported-modules
                       (lambda #,formals
                         #,sexp)))))))
 
@@ -960,8 +993,11 @@ they can refer to each other."
                        #:key (modules '()) (guile (default-guile)))
   "Return an executable script NAME that runs EXP using GUILE with MODULES in
 its search path."
-  (mlet %store-monad ((modules  (imported-modules modules))
-                      (compiled (compiled-modules modules)))
+  (define %modules
+    (append (gexp-modules exp) modules))
+
+  (mlet %store-monad ((modules  (imported-modules %modules))
+                      (compiled (compiled-modules %modules)))
     (gexp->derivation name
                       (gexp
                        (call-with-output-file (ungexp output)

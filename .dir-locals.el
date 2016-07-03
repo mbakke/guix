@@ -59,6 +59,7 @@
    (eval . (put 'run-with-store 'scheme-indent-function 1))
    (eval . (put 'run-with-state 'scheme-indent-function 1))
    (eval . (put 'wrap-program 'scheme-indent-function 1))
+   (eval . (put 'with-imported-modules 'scheme-indent-function 1))
 
    (eval . (put 'call-with-container 'scheme-indent-function 1))
    (eval . (put 'container-excursion 'scheme-indent-function 1))

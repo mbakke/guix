@@ -216,6 +216,7 @@ to find 'modify-phases' keywords."
     "with-derivation-substitute"
     "with-directory-excursion"
     "with-error-handling"
+    "with-imported-modules"
     "with-monad"
     "with-mutex"
     "with-store"))
@@ -306,6 +307,7 @@ Each rule should have a form (SYMBOL VALUE).  See `put' for details."
   (with-derivation-substitute 2)
   (with-directory-excursion 1)
   (with-error-handling 0)
+  (with-imported-modules 1)
   (with-monad 1)
   (with-mutex 1)
   (with-store 1)

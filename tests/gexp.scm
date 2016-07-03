@@ -526,6 +526,18 @@
                             get-bytevector-all))))
                 files))))))
 
+(test-equal "gexp-modules & ungexp"
+  '((bar) (foo))
+  ((@@ (guix gexp) gexp-modules)
+   #~(foo #$(with-imported-modules '((foo)) #~+)
+          #+(with-imported-modules '((bar)) #~-))))
+
+(test-equal "gexp-modules & ungexp-splicing"
+  '((foo) (bar))
+  ((@@ (guix gexp) gexp-modules)
+   #~(foo #$@(list (with-imported-modules '((foo)) #~+)
+                   (with-imported-modules '((bar)) #~-)))))
+
 (test-assertm "gexp->derivation #:modules"
   (mlet* %store-monad
       ((build ->  #~(begin
@@ -539,6 +551,50 @@
       (let* ((p (derivation->output-path drv))
              (s (stat (string-append p "/guile/guix/nix"))))
         (return (eq? (stat:type s) 'directory))))))
+
+(test-assertm "gexp->derivation & with-imported-modules"
+  ;; Same test as above, but using 'with-imported-modules'.
+  (mlet* %store-monad
+      ((build ->  (with-imported-modules '((guix build utils))
+                    #~(begin
+                        (use-modules (guix build utils))
+                        (mkdir-p (string-append #$output "/guile/guix/nix"))
+                        #t)))
+       (drv       (gexp->derivation "test-with-modules" build)))
+    (mbegin %store-monad
+      (built-derivations (list drv))
+      (let* ((p (derivation->output-path drv))
+             (s (stat (string-append p "/guile/guix/nix"))))
+        (return (eq? (stat:type s) 'directory))))))
+
+(test-assertm "gexp->derivation & nested with-imported-modules"
+  (mlet* %store-monad
+      ((build1 ->  (with-imported-modules '((guix build utils))
+                     #~(begin
+                         (use-modules (guix build utils))
+                         (mkdir-p (string-append #$output "/guile/guix/nix"))
+                         #t)))
+       (build2 ->  (with-imported-modules '((guix build bournish))
+                     #~(begin
+                         (use-modules (guix build bournish)
+                                      (system base compile))
+                         #+build1
+                         (call-with-output-file (string-append #$output "/b")
+                           (lambda (port)
+                             (write
+                              (read-and-compile (open-input-string "cd /foo")
+                                                #:from %bournish-language
+                                                #:to 'scheme)
+                              port))))))
+       (drv        (gexp->derivation "test-with-modules" build2)))
+    (mbegin %store-monad
+      (built-derivations (list drv))
+      (let* ((p (derivation->output-path drv))
+             (s (stat (string-append p "/guile/guix/nix")))
+             (b (string-append p "/b")))
+        (return (and (eq? (stat:type s) 'directory)
+                     (equal? '(chdir "/foo")
+                             (call-with-input-file b read))))))))
 
 (test-assertm "gexp->derivation #:references-graphs"
   (mlet* %store-monad
@@ -676,11 +732,11 @@
 
 (test-assertm "program-file"
   (let* ((n      (random (expt 2 50)))
-         (exp    (gexp (begin
-                         (use-modules (guix build utils))
-                         (display (ungexp n)))))
+         (exp    (with-imported-modules '((guix build utils))
+                   (gexp (begin
+                           (use-modules (guix build utils))
+                           (display (ungexp n))))))
          (file   (program-file "program" exp
-                               #:modules '((guix build utils))
                                #:guile %bootstrap-guile)))
     (mlet* %store-monad ((drv (lower-object file))
                          (out -> (derivation->output-path drv)))

@@ -3697,6 +3697,30 @@ In the example above, the native build of @var{coreutils} is used, so
 that @command{ln} can actually run on the host; but then the
 cross-compiled build of @var{emacs} is referenced.
 
+@cindex imported modules, for gexps
+@findex with-imported-modules
+Another gexp feature is @dfn{imported modules}: sometimes you want to be
+able to use certain Guile modules from the ``host environment'' in the
+gexp, so those modules should be imported in the ``build environment''.
+The @code{with-imported-modules} form allows you to express that:
+
+@example
+(let ((build (with-imported-modules '((guix build utils))
+               #~(begin
+                   (use-modules (guix build utils))
+                   (mkdir-p (string-append #$output "/bin"))))))
+  (gexp->derivation "empty-dir"
+                    #~(begin
+                        #$build
+                        (display "success!\n")
+                        #t)))
+@end example
+
+@noindent
+In this example, the @code{(guix build utils)} module is automatically
+pulled into the isolated build environment of our gexp, such that
+@code{(use-modules (guix build utils))} works as expected.
+
 The syntactic form to construct gexps is summarized below.
 
 @deffn {Scheme Syntax} #~@var{exp}
@@ -3754,6 +3778,16 @@ Like the above, but refers to native builds of the objects listed in
 
 G-expressions created by @code{gexp} or @code{#~} are run-time objects
 of the @code{gexp?} type (see below.)
+@end deffn
+
+@deffn {Scheme Syntax} with-imported-modules @var{modules} @var{body}@dots{}
+Mark the gexps defined in @var{body}@dots{} as requiring @var{modules}
+in their execution environment.  @var{modules} must be a list of Guile
+module names, such as @code{'((guix build utils) (guix build gremlin))}.
+
+This form has @emph{lexical} scope: it has an effect on the gexps
+directly defined in @var{body}@dots{}, but not on those defined, say, in
+procedures called from @var{body}@dots{}.
 @end deffn
 
 @deffn {Scheme Procedure} gexp? @var{obj}
