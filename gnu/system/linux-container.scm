@@ -89,6 +89,7 @@ that will be shared with the host system."
       (define script
         (with-imported-modules '((guix config)
                                  (guix utils)
+                                 (guix combinators)
                                  (guix build utils)
                                  (guix build syscalls)
                                  (guix build bournish)
