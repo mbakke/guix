@@ -119,43 +119,45 @@ TARGET-SIZE bytes containing the installed system."
                                  os (list target))
                                 #:disk-image-size (* 1500 MiB))))
     (define install
-      #~(begin
-          (use-modules (guix build utils)
-                       (gnu build marionette))
+      (with-imported-modules '((guix build utils)
+                               (gnu build marionette))
+        #~(begin
+            (use-modules (guix build utils)
+                         (gnu build marionette))
 
-          (set-path-environment-variable "PATH" '("bin")
-                                         (list #$qemu-minimal))
+            (set-path-environment-variable "PATH" '("bin")
+                                           (list #$qemu-minimal))
 
-          (system* "qemu-img" "create" "-f" "qcow2"
-                   #$output #$(number->string target-size))
+            (system* "qemu-img" "create" "-f" "qcow2"
+                     #$output #$(number->string target-size))
 
-          (define marionette
-            (make-marionette
-             (cons (which #$(qemu-command system))
-                   (cons* "-no-reboot" "-m" "800"
-                          "-drive"
-                          (string-append "file=" #$image
-                                         ",if=virtio,readonly")
-                          "-drive"
-                          (string-append "file=" #$output ",if=virtio")
-                          (if (file-exists? "/dev/kvm")
-                              '("-enable-kvm")
-                              '())))))
+            (define marionette
+              (make-marionette
+               (cons (which #$(qemu-command system))
+                     (cons* "-no-reboot" "-m" "800"
+                            "-drive"
+                            (string-append "file=" #$image
+                                           ",if=virtio,readonly")
+                            "-drive"
+                            (string-append "file=" #$output ",if=virtio")
+                            (if (file-exists? "/dev/kvm")
+                                '("-enable-kvm")
+                                '())))))
 
-          (pk 'uname (marionette-eval '(uname) marionette))
+            (pk 'uname (marionette-eval '(uname) marionette))
 
-          ;; Wait for tty1.
-          (marionette-eval '(begin
-                              (use-modules (gnu services herd))
-                              (start 'term-tty1))
-                           marionette)
+            ;; Wait for tty1.
+            (marionette-eval '(begin
+                                (use-modules (gnu services herd))
+                                (start 'term-tty1))
+                             marionette)
 
-          (marionette-eval '(call-with-output-file "/etc/litl-config.scm"
-                              (lambda (port)
-                                (write '#$%minimal-os-source port)))
-                           marionette)
+            (marionette-eval '(call-with-output-file "/etc/litl-config.scm"
+                                (lambda (port)
+                                  (write '#$%minimal-os-source port)))
+                             marionette)
 
-          (exit (marionette-eval '(zero? (system "
+            (exit (marionette-eval '(zero? (system "
 . /etc/profile
 set -e -x;
 guix --version
@@ -178,11 +180,9 @@ cp /etc/litl-config.scm /mnt/etc/config.scm
 guix system init /mnt/etc/config.scm /mnt --no-substitutes
 sync
 reboot\n"))
-                                 marionette))))
+                                   marionette)))))
 
-    (gexp->derivation "installation" install
-                      #:modules '((guix build utils)
-                                  (gnu build marionette)))))
+    (gexp->derivation "installation" install)))
 
 
 (define %test-installed-os

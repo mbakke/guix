@@ -55,85 +55,81 @@
                              (guile %guile-static-stripped)
                              (gzip gzip)
                              (name "guile-initrd")
-                             (system (%current-system))
-                             (modules '()))
+                             (system (%current-system)))
   "Return a derivation that builds a Linux initrd (a gzipped cpio archive)
 containing GUILE and that evaluates EXP, a G-expression, upon booting.  All
-the derivations referenced by EXP are automatically copied to the initrd.
-
-MODULES is a list of Guile module names to be embedded in the initrd."
+the derivations referenced by EXP are automatically copied to the initrd."
 
   ;; General Linux overview in `Documentation/early-userspace/README' and
   ;; `Documentation/filesystems/ramfs-rootfs-initramfs.txt'.
 
   (mlet %store-monad ((init (gexp->script "init" exp
-                                          #:modules modules
                                           #:guile guile)))
     (define builder
-      #~(begin
-          (use-modules (gnu build linux-initrd))
+      (with-imported-modules '((guix cpio)
+                               (guix build utils)
+                               (guix build store-copy)
+                               (gnu build linux-initrd))
+        #~(begin
+            (use-modules (gnu build linux-initrd))
 
-          (mkdir #$output)
-          (build-initrd (string-append #$output "/initrd")
-                        #:guile #$guile
-                        #:init #$init
-                        ;; Copy everything INIT refers to into the initrd.
-                        #:references-graphs '("closure")
-                        #:gzip (string-append #$gzip "/bin/gzip"))))
+            (mkdir #$output)
+            (build-initrd (string-append #$output "/initrd")
+                          #:guile #$guile
+                          #:init #$init
+                          ;; Copy everything INIT refers to into the initrd.
+                          #:references-graphs '("closure")
+                          #:gzip (string-append #$gzip "/bin/gzip")))))
 
-   (gexp->derivation name builder
-                     #:modules '((guix cpio)
-                                 (guix build utils)
-                                 (guix build store-copy)
-                                 (gnu build linux-initrd))
-                     #:references-graphs `(("closure" ,init)))))
+    (gexp->derivation name builder
+                      #:references-graphs `(("closure" ,init)))))
 
 (define (flat-linux-module-directory linux modules)
   "Return a flat directory containing the Linux kernel modules listed in
 MODULES and taken from LINUX."
   (define build-exp
-    #~(begin
-        (use-modules (ice-9 match) (ice-9 regex)
-                     (srfi srfi-1)
-                     (guix build utils)
-                     (gnu build linux-modules))
+    (with-imported-modules '((guix build utils)
+                             (guix elf)
+                             (gnu build linux-modules))
+      #~(begin
+          (use-modules (ice-9 match) (ice-9 regex)
+                       (srfi srfi-1)
+                       (guix build utils)
+                       (gnu build linux-modules))
 
-        (define (string->regexp str)
-          ;; Return a regexp that matches STR exactly.
-          (string-append "^" (regexp-quote str) "$"))
+          (define (string->regexp str)
+            ;; Return a regexp that matches STR exactly.
+            (string-append "^" (regexp-quote str) "$"))
 
-        (define module-dir
-          (string-append #$linux "/lib/modules"))
+          (define module-dir
+            (string-append #$linux "/lib/modules"))
 
-        (define (lookup module)
-          (let ((name (ensure-dot-ko module)))
-            (match (find-files module-dir (string->regexp name))
-              ((file)
-               file)
-              (()
-               (error "module not found" name module-dir))
-              ((_ ...)
-               (error "several modules by that name"
-                      name module-dir)))))
+          (define (lookup module)
+            (let ((name (ensure-dot-ko module)))
+              (match (find-files module-dir (string->regexp name))
+                ((file)
+                 file)
+                (()
+                 (error "module not found" name module-dir))
+                ((_ ...)
+                 (error "several modules by that name"
+                        name module-dir)))))
 
-        (define modules
-          (let ((modules (map lookup '#$modules)))
-            (append modules
-                    (recursive-module-dependencies modules
-                                                   #:lookup-module lookup))))
+          (define modules
+            (let ((modules (map lookup '#$modules)))
+              (append modules
+                      (recursive-module-dependencies modules
+                                                     #:lookup-module lookup))))
 
-        (mkdir #$output)
-        (for-each (lambda (module)
-                    (format #t "copying '~a'...~%" module)
-                    (copy-file module
-                               (string-append #$output "/"
-                                              (basename module))))
-                  (delete-duplicates modules))))
+          (mkdir #$output)
+          (for-each (lambda (module)
+                      (format #t "copying '~a'...~%" module)
+                      (copy-file module
+                                 (string-append #$output "/"
+                                                (basename module))))
+                    (delete-duplicates modules)))))
 
-  (gexp->derivation "linux-modules" build-exp
-                    #:modules '((guix build utils)
-                                (guix elf)
-                                (gnu build linux-modules))))
+  (gexp->derivation "linux-modules" build-exp))
 
 (define* (base-initrd file-systems
                       #:key
@@ -227,38 +223,38 @@ loaded at boot time in the order in which they appear."
   (mlet %store-monad ((kodir (flat-linux-module-directory linux
                                                           linux-modules)))
     (expression->initrd
-     #~(begin
-         (use-modules (gnu build linux-boot)
-                      (guix build utils)
-                      (guix build bournish)   ;add the 'bournish' meta-command
-                      (srfi srfi-26)
+     (with-imported-modules '((guix build bournish)
+                              (guix build utils)
+                              (guix build syscalls)
+                              (gnu build linux-boot)
+                              (gnu build linux-modules)
+                              (gnu build file-systems)
+                              (guix elf))
+       #~(begin
+           (use-modules (gnu build linux-boot)
+                        (guix build utils)
+                        (guix build bournish) ;add the 'bournish' meta-command
+                        (srfi srfi-26)
 
-                      ;; FIXME: The following modules are for
-                      ;; LUKS-DEVICE-MAPPING.  We should instead propagate
-                      ;; this info via gexps.
-                      ((gnu build file-systems)
-                       #:select (find-partition-by-luks-uuid))
-                      (rnrs bytevectors))
+                        ;; FIXME: The following modules are for
+                        ;; LUKS-DEVICE-MAPPING.  We should instead propagate
+                        ;; this info via gexps.
+                        ((gnu build file-systems)
+                         #:select (find-partition-by-luks-uuid))
+                        (rnrs bytevectors))
 
-         (with-output-to-port (%make-void-port "w")
-           (lambda ()
-             (set-path-environment-variable "PATH" '("bin" "sbin")
-                                            '#$helper-packages)))
+           (with-output-to-port (%make-void-port "w")
+             (lambda ()
+               (set-path-environment-variable "PATH" '("bin" "sbin")
+                                              '#$helper-packages)))
 
-         (boot-system #:mounts '#$(map file-system->spec file-systems)
-                      #:pre-mount (lambda ()
-                                    (and #$@device-mapping-commands))
-                      #:linux-modules '#$linux-modules
-                      #:linux-module-directory '#$kodir
-                      #:qemu-guest-networking? #$qemu-networking?
-                      #:volatile-root? '#$volatile-root?))
-     #:name "base-initrd"
-     #:modules '((guix build bournish)
-                 (guix build utils)
-                 (guix build syscalls)
-                 (gnu build linux-boot)
-                 (gnu build linux-modules)
-                 (gnu build file-systems)
-                 (guix elf)))))
+           (boot-system #:mounts '#$(map file-system->spec file-systems)
+                        #:pre-mount (lambda ()
+                                      (and #$@device-mapping-commands))
+                        #:linux-modules '#$linux-modules
+                        #:linux-module-directory '#$kodir
+                        #:qemu-guest-networking? #$qemu-networking?
+                        #:volatile-root? '#$volatile-root?)))
+     #:name "base-initrd")))
 
 ;;; linux-initrd.scm ends here

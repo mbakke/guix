@@ -10014,15 +10014,11 @@ program.  That gives a lot of flexibility.  The
 program to run in that initrd.
 
 @deffn {Monadic Procedure} expression->initrd @var{exp} @
-       [#:guile %guile-static-stripped] [#:name "guile-initrd"] @
-       [#:modules '()]
+       [#:guile %guile-static-stripped] [#:name "guile-initrd"]
 Return a derivation that builds a Linux initrd (a gzipped cpio archive)
 containing @var{guile} and that evaluates @var{exp}, a G-expression,
 upon booting.  All the derivations referenced by @var{exp} are
 automatically copied to the initrd.
-
-@var{modules} is a list of Guile module names to be embedded in the
-initrd.
 @end deffn
 
 @node GRUB Configuration

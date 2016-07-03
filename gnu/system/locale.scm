@@ -154,10 +154,10 @@ data format changes between libc versions."
                                                                 #:libc libc))
                                      libcs)))
        (gexp->derivation "locale-multiple-versions"
-                         #~(begin
-                             (use-modules (guix build union))
-                             (union-build #$output (list #$@dirs)))
-                         #:modules '((guix build union))
+                         (with-imported-modules '((guix build union))
+                           #~(begin
+                               (use-modules (guix build union))
+                               (union-build #$output (list #$@dirs))))
                          #:local-build? #t
                          #:substitutable? #f)))))
 

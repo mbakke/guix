@@ -309,10 +309,10 @@ file."
      one)
     (_
      (computed-file name
-                    #~(begin
-                        (use-modules (guix build union))
-                        (union-build #$output '#$things))
-                    #:modules '((guix build union))))))
+                    (with-imported-modules '((guix build union))
+                      #~(begin
+                          (use-modules (guix build union))
+                          (union-build #$output '#$things)))))))
 
 (define* (activation-service->script service)
   "Return as a monadic value the activation script for SERVICE, a service of

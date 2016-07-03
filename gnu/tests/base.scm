@@ -70,125 +70,125 @@
 using COMMAND, a gexp that evaluates to a list of strings.  Compare some
 properties of running system to what's declared in OS, an <operating-system>."
   (define test
-    #~(begin
-        (use-modules (gnu build marionette)
-                     (srfi srfi-1)
-                     (srfi srfi-26)
-                     (srfi srfi-64)
-                     (ice-9 match))
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          (use-modules (gnu build marionette)
+                       (srfi srfi-1)
+                       (srfi srfi-26)
+                       (srfi srfi-64)
+                       (ice-9 match))
 
-        (define marionette
-          (make-marionette #$command))
+          (define marionette
+            (make-marionette #$command))
 
-        (mkdir #$output)
-        (chdir #$output)
+          (mkdir #$output)
+          (chdir #$output)
 
-        (test-begin "basic")
+          (test-begin "basic")
 
-        (test-assert "uname"
-          (match (marionette-eval '(uname) marionette)
-            (#("Linux" host-name version _ architecture)
-             (and (string=? host-name
-                            #$(operating-system-host-name os))
-                  (string-prefix? #$(package-version
-                                     (operating-system-kernel os))
-                                  version)
-                  (string-prefix? architecture %host-type)))))
+          (test-assert "uname"
+            (match (marionette-eval '(uname) marionette)
+              (#("Linux" host-name version _ architecture)
+               (and (string=? host-name
+                              #$(operating-system-host-name os))
+                    (string-prefix? #$(package-version
+                                       (operating-system-kernel os))
+                                    version)
+                    (string-prefix? architecture %host-type)))))
 
-        (test-assert "shell and user commands"
-          ;; Is everything in $PATH?
-          (zero? (marionette-eval '(system "
+          (test-assert "shell and user commands"
+            ;; Is everything in $PATH?
+            (zero? (marionette-eval '(system "
 . /etc/profile
 set -e -x
 guix --version
 ls --version
 grep --version
 info --version")
-                                  marionette)))
+                                    marionette)))
 
-        (test-assert "accounts"
-          (let ((users (marionette-eval '(begin
-                                           (use-modules (ice-9 match))
-                                           (let loop ((result '()))
-                                             (match (getpw)
-                                               (#f (reverse result))
-                                               (x  (loop (cons x result))))))
-                                        marionette)))
-            (lset= string=?
-                   (map passwd:name users)
-                   (list
-                    #$@(map user-account-name
-                            (operating-system-user-accounts os))))))
+          (test-assert "accounts"
+            (let ((users (marionette-eval '(begin
+                                             (use-modules (ice-9 match))
+                                             (let loop ((result '()))
+                                               (match (getpw)
+                                                 (#f (reverse result))
+                                                 (x  (loop (cons x result))))))
+                                          marionette)))
+              (lset= string=?
+                     (map passwd:name users)
+                     (list
+                      #$@(map user-account-name
+                              (operating-system-user-accounts os))))))
 
-        (test-assert "shepherd services"
-          (let ((services (marionette-eval '(begin
-                                              (use-modules (gnu services herd))
-                                              (call-with-values current-services
-                                                append))
-                                           marionette)))
-            (lset= eq?
-                   (pk 'services services)
-                   '(root #$@(operating-system-shepherd-service-names os)))))
+          (test-assert "shepherd services"
+            (let ((services (marionette-eval '(begin
+                                                (use-modules (gnu services herd))
+                                                (call-with-values current-services
+                                                  append))
+                                             marionette)))
+              (lset= eq?
+                     (pk 'services services)
+                     '(root #$@(operating-system-shepherd-service-names os)))))
 
-        (test-equal "login on tty1"
-          "root\n"
-          (begin
-            (marionette-control "sendkey ctrl-alt-f1" marionette)
-            ;; Wait for the 'term-tty1' service to be running (using
-            ;; 'start-service' is the simplest and most reliable way to do
-            ;; that.)
+          (test-equal "login on tty1"
+            "root\n"
+            (begin
+              (marionette-control "sendkey ctrl-alt-f1" marionette)
+              ;; Wait for the 'term-tty1' service to be running (using
+              ;; 'start-service' is the simplest and most reliable way to do
+              ;; that.)
+              (marionette-eval
+               '(begin
+                  (use-modules (gnu services herd))
+                  (start-service 'term-tty1))
+               marionette)
+
+              ;; Now we can type.
+              (marionette-type "root\n\nid -un > logged-in\n" marionette)
+
+              ;; It can take a while before the shell commands are executed.
+              (let loop ((i 0))
+                (unless (or (file-exists? "/root/logged-in") (> i 15))
+                  (sleep 1)
+                  (loop (+ i 1))))
+              (marionette-eval '(use-modules (rnrs io ports)) marionette)
+              (marionette-eval '(call-with-input-file "/root/logged-in"
+                                  get-string-all)
+                               marionette)))
+
+          (test-assert "host name resolution"
+            (match (marionette-eval
+                    '(begin
+                       ;; Wait for nscd or our requests go through it.
+                       (use-modules (gnu services herd))
+                       (start-service 'nscd)
+
+                       (list (getaddrinfo "localhost")
+                             (getaddrinfo #$(operating-system-host-name os))))
+                    marionette)
+              ((((? vector?) ..1) ((? vector?) ..1))
+               #t)
+              (x
+               (pk 'failure x #f))))
+
+          (test-equal "host not found"
+            #f
             (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'term-tty1))
-             marionette)
+             '(false-if-exception (getaddrinfo "does-not-exist"))
+             marionette))
 
-            ;; Now we can type.
-            (marionette-type "root\n\nid -un > logged-in\n" marionette)
+          (test-assert "screendump"
+            (begin
+              (marionette-control (string-append "screendump " #$output
+                                                 "/tty1.ppm")
+                                  marionette)
+              (file-exists? "tty1.ppm")))
 
-            ;; It can take a while before the shell commands are executed.
-            (let loop ((i 0))
-              (unless (or (file-exists? "/root/logged-in") (> i 15))
-                (sleep 1)
-                (loop (+ i 1))))
-            (marionette-eval '(use-modules (rnrs io ports)) marionette)
-            (marionette-eval '(call-with-input-file "/root/logged-in"
-                                get-string-all)
-                             marionette)))
+          (test-end)
+          (exit (= (test-runner-fail-count (test-runner-current)) 0)))))
 
-        (test-assert "host name resolution"
-          (match (marionette-eval
-                  '(begin
-                     ;; Wait for nscd or our requests go through it.
-                     (use-modules (gnu services herd))
-                     (start-service 'nscd)
-
-                     (list (getaddrinfo "localhost")
-                           (getaddrinfo #$(operating-system-host-name os))))
-                  marionette)
-            ((((? vector?) ..1) ((? vector?) ..1))
-             #t)
-            (x
-             (pk 'failure x #f))))
-
-        (test-equal "host not found"
-          #f
-          (marionette-eval
-           '(false-if-exception (getaddrinfo "does-not-exist"))
-           marionette))
-
-        (test-assert "screendump"
-          (begin
-            (marionette-control (string-append "screendump " #$output
-                                               "/tty1.ppm")
-                                marionette)
-            (file-exists? "tty1.ppm")))
-
-        (test-end)
-        (exit (= (test-runner-fail-count (test-runner-current)) 0))))
-
-  (gexp->derivation name test
-                    #:modules '((gnu build marionette))))
+  (gexp->derivation name test))
 
 (define %test-basic-os
   (system-test
@@ -243,67 +243,67 @@ functionality tests.")
                        (command (system-qemu-image/shared-store-script
                                  os #:graphic? #f)))
     (define test
-      #~(begin
-          (use-modules (gnu build marionette)
-                       (srfi srfi-64)
-                       (ice-9 match))
+      (with-imported-modules '((gnu build marionette))
+        #~(begin
+            (use-modules (gnu build marionette)
+                         (srfi srfi-64)
+                         (ice-9 match))
 
-          (define marionette
-            (make-marionette (list #$command)))
+            (define marionette
+              (make-marionette (list #$command)))
 
-          (define (wait-for-file file)
-            ;; Wait until FILE exists in the guest; 'read' its content and
-            ;; return it.
-            (marionette-eval
-             `(let loop ((i 10))
-                (cond ((file-exists? ,file)
-                       (call-with-input-file ,file read))
-                      ((> i 0)
-                       (sleep 1)
-                       (loop (- i 1)))
-                      (else
-                       (error "file didn't show up" ,file))))
-             marionette))
+            (define (wait-for-file file)
+              ;; Wait until FILE exists in the guest; 'read' its content and
+              ;; return it.
+              (marionette-eval
+               `(let loop ((i 10))
+                  (cond ((file-exists? ,file)
+                         (call-with-input-file ,file read))
+                        ((> i 0)
+                         (sleep 1)
+                         (loop (- i 1)))
+                        (else
+                         (error "file didn't show up" ,file))))
+               marionette))
 
-          (mkdir #$output)
-          (chdir #$output)
+            (mkdir #$output)
+            (chdir #$output)
 
-          (test-begin "mcron")
+            (test-begin "mcron")
 
-          (test-eq "service running"
-            'running!
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'mcron)
-                'running!)
-             marionette))
+            (test-eq "service running"
+              'running!
+              (marionette-eval
+               '(begin
+                  (use-modules (gnu services herd))
+                  (start-service 'mcron)
+                  'running!)
+               marionette))
 
-          ;; Make sure root's mcron job runs, has its cwd set to "/root", and
-          ;; runs with the right UID/GID.
-          (test-equal "root's job"
-            '(0 0)
-            (wait-for-file "/root/witness"))
+            ;; Make sure root's mcron job runs, has its cwd set to "/root", and
+            ;; runs with the right UID/GID.
+            (test-equal "root's job"
+              '(0 0)
+              (wait-for-file "/root/witness"))
 
-          ;; Likewise for Alice's job.  We cannot know what its GID is since
-          ;; it's chosen by 'groupadd', but it's strictly positive.
-          (test-assert "alice's job"
-            (match (wait-for-file "/home/alice/witness")
-              ((1000 gid)
-               (>= gid 100))))
+            ;; Likewise for Alice's job.  We cannot know what its GID is since
+            ;; it's chosen by 'groupadd', but it's strictly positive.
+            (test-assert "alice's job"
+              (match (wait-for-file "/home/alice/witness")
+                ((1000 gid)
+                 (>= gid 100))))
 
-          ;; Last, the job that uses a command; allows us to test whether
-          ;; $PATH is sane.  (Note that 'marionette-eval' stringifies objects
-          ;; that don't have a read syntax, hence the string.)
-          (test-equal "root's job with command"
-            "#<eof>"
-            (wait-for-file "/root/witness-touch"))
+            ;; Last, the job that uses a command; allows us to test whether
+            ;; $PATH is sane.  (Note that 'marionette-eval' stringifies objects
+            ;; that don't have a read syntax, hence the string.)
+            (test-equal "root's job with command"
+              "#<eof>"
+              (wait-for-file "/root/witness-touch"))
 
-          (test-end)
-          (exit (= (test-runner-fail-count (test-runner-current)) 0))))
+            (test-end)
+            (exit (= (test-runner-fail-count (test-runner-current)) 0)))))
 
-    (gexp->derivation name test
-                      #:modules '((gnu build marionette)))))
+    (gexp->derivation name test)))
 
 (define %test-mcron
   (system-test
@@ -355,90 +355,90 @@ functionality tests.")
                      ".local"))
 
     (define test
-      #~(begin
-          (use-modules (gnu build marionette)
-                       (srfi srfi-1)
-                       (srfi srfi-64)
-                       (ice-9 match))
+      (with-imported-modules '((gnu build marionette))
+        #~(begin
+            (use-modules (gnu build marionette)
+                         (srfi srfi-1)
+                         (srfi srfi-64)
+                         (ice-9 match))
 
-          (define marionette
-            (make-marionette (list #$run)))
+            (define marionette
+              (make-marionette (list #$run)))
 
-          (mkdir #$output)
-          (chdir #$output)
+            (mkdir #$output)
+            (chdir #$output)
 
-          (test-begin "avahi")
+            (test-begin "avahi")
 
-          (test-assert "wait for services"
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
+            (test-assert "wait for services"
+              (marionette-eval
+               '(begin
+                  (use-modules (gnu services herd))
 
-                (start-service 'nscd)
+                  (start-service 'nscd)
 
-                ;; XXX: Work around a race condition in nscd: nscd creates its
-                ;; PID file before it is listening on its socket.
-                (let ((sock (socket PF_UNIX SOCK_STREAM 0)))
-                  (let try ()
-                    (catch 'system-error
-                      (lambda ()
-                        (connect sock AF_UNIX "/var/run/nscd/socket")
-                        (close-port sock)
-                        (format #t "nscd is ready~%"))
-                      (lambda args
-                        (format #t "waiting for nscd...~%")
-                        (usleep 500000)
-                        (try)))))
+                  ;; XXX: Work around a race condition in nscd: nscd creates its
+                  ;; PID file before it is listening on its socket.
+                  (let ((sock (socket PF_UNIX SOCK_STREAM 0)))
+                    (let try ()
+                      (catch 'system-error
+                        (lambda ()
+                          (connect sock AF_UNIX "/var/run/nscd/socket")
+                          (close-port sock)
+                          (format #t "nscd is ready~%"))
+                        (lambda args
+                          (format #t "waiting for nscd...~%")
+                          (usleep 500000)
+                          (try)))))
 
-                ;; Wait for the other useful things.
-                (start-service 'avahi-daemon)
-                (start-service 'networking)
+                  ;; Wait for the other useful things.
+                  (start-service 'avahi-daemon)
+                  (start-service 'networking)
 
-                #t)
-             marionette))
+                  #t)
+               marionette))
 
-          (test-equal "avahi-resolve-host-name"
-            0
-            (marionette-eval
-             '(system*
-               "/run/current-system/profile/bin/avahi-resolve-host-name"
-               "-v" #$mdns-host-name)
-             marionette))
+            (test-equal "avahi-resolve-host-name"
+              0
+              (marionette-eval
+               '(system*
+                 "/run/current-system/profile/bin/avahi-resolve-host-name"
+                 "-v" #$mdns-host-name)
+               marionette))
 
-          (test-equal "avahi-browse"
-            0
-            (marionette-eval
-             '(system* "avahi-browse" "-avt")
-             marionette))
+            (test-equal "avahi-browse"
+              0
+              (marionette-eval
+               '(system* "avahi-browse" "-avt")
+               marionette))
 
-          (test-assert "getaddrinfo .local"
-            ;; Wait for the 'avahi-daemon' service and perform a resolution.
-            (match (marionette-eval
-                    '(getaddrinfo #$mdns-host-name)
-                    marionette)
-              (((? vector? addrinfos) ..1)
-               (pk 'getaddrinfo addrinfos)
-               (and (any (lambda (ai)
-                           (= AF_INET (addrinfo:fam ai)))
-                         addrinfos)
-                    (any (lambda (ai)
-                           (= AF_INET6 (addrinfo:fam ai)))
-                         addrinfos)))))
+            (test-assert "getaddrinfo .local"
+              ;; Wait for the 'avahi-daemon' service and perform a resolution.
+              (match (marionette-eval
+                      '(getaddrinfo #$mdns-host-name)
+                      marionette)
+                (((? vector? addrinfos) ..1)
+                 (pk 'getaddrinfo addrinfos)
+                 (and (any (lambda (ai)
+                             (= AF_INET (addrinfo:fam ai)))
+                           addrinfos)
+                      (any (lambda (ai)
+                             (= AF_INET6 (addrinfo:fam ai)))
+                           addrinfos)))))
 
-          (test-assert "gethostbyname .local"
-            (match (pk 'gethostbyname
-                       (marionette-eval '(gethostbyname #$mdns-host-name)
-                                        marionette))
-              ((? vector? result)
-               (and (string=? (hostent:name result) #$mdns-host-name)
-                    (= (hostent:addrtype result) AF_INET)))))
+            (test-assert "gethostbyname .local"
+              (match (pk 'gethostbyname
+                         (marionette-eval '(gethostbyname #$mdns-host-name)
+                                          marionette))
+                ((? vector? result)
+                 (and (string=? (hostent:name result) #$mdns-host-name)
+                      (= (hostent:addrtype result) AF_INET)))))
 
 
-          (test-end)
-          (exit (= (test-runner-fail-count (test-runner-current)) 0))))
+            (test-end)
+            (exit (= (test-runner-fail-count (test-runner-current)) 0)))))
 
-    (gexp->derivation "nss-mdns" test
-                      #:modules '((gnu build marionette)))))
+    (gexp->derivation "nss-mdns" test)))
 
 (define %test-nss-mdns
   (system-test

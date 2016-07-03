@@ -1138,44 +1138,44 @@ archive}).  If that is not the case, the service will fail to start."
   "Return the union of the @code{lib/udev/rules.d} directories found in each
 item of @var{packages}."
   (define build
-    #~(begin
-        (use-modules (guix build union)
-                     (guix build utils)
-                     (srfi srfi-1)
-                     (srfi srfi-26))
+    (with-imported-modules '((guix build union)
+                             (guix build utils))
+      #~(begin
+          (use-modules (guix build union)
+                       (guix build utils)
+                       (srfi srfi-1)
+                       (srfi srfi-26))
 
-        (define %standard-locations
-          '("/lib/udev/rules.d" "/libexec/udev/rules.d"))
+          (define %standard-locations
+            '("/lib/udev/rules.d" "/libexec/udev/rules.d"))
 
-        (define (rules-sub-directory directory)
-          ;; Return the sub-directory of DIRECTORY containing udev rules, or
-          ;; #f if none was found.
-          (find directory-exists?
-                (map (cut string-append directory <>) %standard-locations)))
+          (define (rules-sub-directory directory)
+            ;; Return the sub-directory of DIRECTORY containing udev rules, or
+            ;; #f if none was found.
+            (find directory-exists?
+                  (map (cut string-append directory <>) %standard-locations)))
 
-        (mkdir-p (string-append #$output "/lib/udev"))
-        (union-build (string-append #$output "/lib/udev/rules.d")
-                     (filter-map rules-sub-directory '#$packages))))
+          (mkdir-p (string-append #$output "/lib/udev"))
+          (union-build (string-append #$output "/lib/udev/rules.d")
+                       (filter-map rules-sub-directory '#$packages)))))
 
-  (computed-file "udev-rules" build
-                 #:modules '((guix build union)
-                             (guix build utils))))
+  (computed-file "udev-rules" build))
 
 (define (udev-rule file-name contents)
   "Return a directory with a udev rule file FILE-NAME containing CONTENTS."
   (computed-file file-name
-                 #~(begin
-                     (use-modules (guix build utils))
+                 (with-imported-modules '((guix build utils))
+                   #~(begin
+                       (use-modules (guix build utils))
 
-                     (define rules.d
-                       (string-append #$output "/lib/udev/rules.d"))
+                       (define rules.d
+                         (string-append #$output "/lib/udev/rules.d"))
 
-                     (mkdir-p rules.d)
-                     (call-with-output-file
-                         (string-append rules.d "/" #$file-name)
-                       (lambda (port)
-                         (display #$contents port))))
-                 #:modules '((guix build utils))))
+                       (mkdir-p rules.d)
+                       (call-with-output-file
+                           (string-append rules.d "/" #$file-name)
+                         (lambda (port)
+                           (display #$contents port)))))))
 
 (define kvm-udev-rule
   ;; Return a directory with a udev rule that changes the group of /dev/kvm to

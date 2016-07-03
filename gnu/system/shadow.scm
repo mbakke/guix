@@ -139,10 +139,11 @@
     `(fontconfig (dir "/run/current-system/profile/share/fonts")))
 
   (define copy-guile-wm
-    #~(begin
-        (use-modules (guix build utils))
-        (copy-file (car (find-files #$guile-wm "wm-init-sample.scm"))
-                   #$output)))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+          (copy-file (car (find-files #$guile-wm "wm-init-sample.scm"))
+                     #$output))))
 
   (let ((profile (plain-file "bash_profile" "\
 # Honor per-interactive-shell startup file
@@ -176,27 +177,26 @@ alias ll='ls -l'\n"))
         (zlogin    (plain-file "zlogin" "\
 # Honor system-wide environment variables
 source /etc/profile\n"))
-        (guile-wm  (computed-file "guile-wm" copy-guile-wm
-                                  #:modules '((guix build utils))))
+        (guile-wm  (computed-file "guile-wm" copy-guile-wm))
         (xdefaults (plain-file "Xdefaults" "\
 XTerm*utf8: always
 XTerm*metaSendsEscape: true\n"))
         (fonts.conf (computed-file
                      "fonts.conf"
-                     #~(begin
-                         (use-modules (guix build utils)
-                                      (sxml simple))
+                     (with-imported-modules '((guix build utils))
+                       #~(begin
+                           (use-modules (guix build utils)
+                                        (sxml simple))
 
-                         (define dir
-                           (string-append #$output
-                                          "/fontconfig"))
+                           (define dir
+                             (string-append #$output
+                                            "/fontconfig"))
 
-                         (mkdir-p dir)
-                         (call-with-output-file (string-append dir
-                                                             "/fonts.conf")
-                           (lambda (port)
-                             (sxml->xml '#$fonts.conf-content port))))
-                     #:modules '((guix build utils))))
+                           (mkdir-p dir)
+                           (call-with-output-file (string-append dir
+                                                                 "/fonts.conf")
+                             (lambda (port)
+                               (sxml->xml '#$fonts.conf-content port)))))))
         (gdbinit   (plain-file "gdbinit" "\
 # Tell GDB where to look for separate debugging files.
 set debug-file-directory ~/.guix-profile/lib/debug\n")))
@@ -211,22 +211,22 @@ set debug-file-directory ~/.guix-profile/lib/debug\n")))
 (define (skeleton-directory skeletons)
   "Return a directory containing SKELETONS, a list of name/derivation tuples."
   (computed-file "skel"
-                 #~(begin
-                     (use-modules (ice-9 match)
-                                  (guix build utils))
+                 (with-imported-modules '((guix build utils))
+                   #~(begin
+                       (use-modules (ice-9 match)
+                                    (guix build utils))
 
-                     (mkdir #$output)
-                     (chdir #$output)
+                       (mkdir #$output)
+                       (chdir #$output)
 
-                     ;; Note: copy the skeletons instead of symlinking
-                     ;; them like 'file-union' does, because 'useradd'
-                     ;; would just copy the symlinks as is.
-                     (for-each (match-lambda
-                                 ((target source)
-                                  (copy-recursively source target)))
-                               '#$skeletons)
-                     #t)
-                 #:modules '((guix build utils))))
+                       ;; Note: copy the skeletons instead of symlinking
+                       ;; them like 'file-union' does, because 'useradd'
+                       ;; would just copy the symlinks as is.
+                       (for-each (match-lambda
+                                   ((target source)
+                                    (copy-recursively source target)))
+                                 '#$skeletons)
+                       #t))))
 
 (define (assert-valid-users/groups users groups)
   "Raise an error if USERS refer to groups not listed in GROUPS."

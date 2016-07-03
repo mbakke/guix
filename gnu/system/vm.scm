@@ -155,34 +155,34 @@ made available under the /xchg CIFS share."
 
     (define builder
       ;; Code that launches the VM that evaluates EXP.
-      #~(begin
-          (use-modules (guix build utils)
-                       (gnu build vm))
+      (with-imported-modules modules
+        #~(begin
+            (use-modules (guix build utils)
+                         (gnu build vm))
 
-          (let ((inputs  '#$(list qemu coreutils))
-                (linux   (string-append #$linux "/bzImage"))
-                (initrd  (string-append #$initrd "/initrd"))
-                (loader  #$loader)
-                (graphs  '#$(match references-graphs
-                              (((graph-files . _) ...) graph-files)
-                              (_ #f))))
+            (let ((inputs  '#$(list qemu coreutils))
+                  (linux   (string-append #$linux "/bzImage"))
+                  (initrd  (string-append #$initrd "/initrd"))
+                  (loader  #$loader)
+                  (graphs  '#$(match references-graphs
+                                (((graph-files . _) ...) graph-files)
+                                (_ #f))))
 
-            (set-path-environment-variable "PATH" '("bin") inputs)
+              (set-path-environment-variable "PATH" '("bin") inputs)
 
-            (load-in-linux-vm loader
-                              #:output #$output
-                              #:linux linux #:initrd initrd
-                              #:memory-size #$memory-size
-                              #:make-disk-image? #$make-disk-image?
-                              #:disk-image-format #$disk-image-format
-                              #:disk-image-size #$disk-image-size
-                              #:references-graphs graphs))))
+              (load-in-linux-vm loader
+                                #:output #$output
+                                #:linux linux #:initrd initrd
+                                #:memory-size #$memory-size
+                                #:make-disk-image? #$make-disk-image?
+                                #:disk-image-format #$disk-image-format
+                                #:disk-image-size #$disk-image-size
+                                #:references-graphs graphs)))))
 
     (gexp->derivation name builder
                       ;; TODO: Require the "kvm" feature.
                       #:system system
                       #:env-vars env-vars
-                      #:modules modules
                       #:guile-for-build guile-for-build
                       #:references-graphs references-graphs)))
 

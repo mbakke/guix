@@ -158,27 +158,27 @@ EndSection
   "Return a directory that contains the @code{.conf} files for X.org that
 includes the @code{share/X11/xorg.conf.d} directories of each package listed
 in @var{modules}."
-  (computed-file "xorg.conf.d"
-                 #~(begin
-                     (use-modules (guix build utils)
-                                  (srfi srfi-1))
+  (with-imported-modules '((guix build utils))
+    (computed-file "xorg.conf.d"
+                   #~(begin
+                       (use-modules (guix build utils)
+                                    (srfi srfi-1))
 
-                     (define files
-                       (append-map (lambda (module)
-                                     (find-files (string-append
-                                                  module
-                                                  "/share/X11/xorg.conf.d")
-                                                 "\\.conf$"))
-                                   (list #$@modules)))
+                       (define files
+                         (append-map (lambda (module)
+                                       (find-files (string-append
+                                                    module
+                                                    "/share/X11/xorg.conf.d")
+                                                   "\\.conf$"))
+                                     (list #$@modules)))
 
-                     (mkdir #$output)
-                     (for-each (lambda (file)
-                                 (symlink file
-                                          (string-append #$output "/"
-                                                         (basename file))))
-                               files)
-                     #t)
-                 #:modules '((guix build utils))))
+                       (mkdir #$output)
+                       (for-each (lambda (file)
+                                   (symlink file
+                                            (string-append #$output "/"
+                                                           (basename file))))
+                                 files)
+                       #t))))
 
 (define* (xorg-start-command #:key
                              (guile (canonical-package guile-2.0))

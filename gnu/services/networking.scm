@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
@@ -345,39 +345,39 @@ keep the system clock synchronized with that of @var{servers}."
     (($ <tor-configuration> tor config-file services)
      (computed-file
       "torrc"
-      #~(begin
-          (use-modules (guix build utils)
-                       (ice-9 match))
+      (with-imported-modules '((guix build utils))
+        #~(begin
+            (use-modules (guix build utils)
+                         (ice-9 match))
 
-          (call-with-output-file #$output
-            (lambda (port)
-              (display "\
+            (call-with-output-file #$output
+              (lambda (port)
+                (display "\
 # The beginning was automatically added.
 User tor
 DataDirectory /var/lib/tor
 Log notice syslog\n" port)
 
-              (for-each (match-lambda
-                          ((service (ports hosts) ...)
-                           (format port "\
+                (for-each (match-lambda
+                            ((service (ports hosts) ...)
+                             (format port "\
 HiddenServiceDir /var/lib/tor/hidden-services/~a~%"
-                                   service)
-                           (for-each (lambda (tcp-port host)
-                                       (format port "\
+                                     service)
+                             (for-each (lambda (tcp-port host)
+                                         (format port "\
 HiddenServicePort ~a ~a~%"
-                                               tcp-port host))
-                                     ports hosts)))
-                        '#$(map (match-lambda
-                                  (($ <hidden-service> name mapping)
-                                   (cons name mapping)))
-                                services))
+                                                 tcp-port host))
+                                       ports hosts)))
+                          '#$(map (match-lambda
+                                    (($ <hidden-service> name mapping)
+                                     (cons name mapping)))
+                                  services))
 
-              ;; Append the user's config file.
-              (call-with-input-file #$config-file
-                (lambda (input)
-                  (dump-port input port)))
-              #t)))
-      #:modules '((guix build utils))))))
+                ;; Append the user's config file.
+                (call-with-input-file #$config-file
+                  (lambda (input)
+                    (dump-port input port)))
+                #t))))))))
 
 (define (tor-shepherd-service config)
   "Return a <shepherd-service> running TOR."
