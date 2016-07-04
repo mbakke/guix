@@ -238,42 +238,33 @@ directory."
 (define (cleanup-gexp _)
   "Return as a monadic value a gexp to clean up /tmp and similar places upon
 boot."
-  (define %modules
-    '((guix build utils)))
+  (with-monad %store-monad
+    (with-imported-modules '((guix build utils))
+      (return #~(begin
+                  (use-modules (guix build utils))
 
-  (mlet %store-monad ((modules  (imported-modules %modules))
-                      (compiled (compiled-modules %modules)))
-    (return #~(begin
-                (eval-when (expand load eval)
-                  ;; Make sure 'use-modules' below succeeds.
-                  (set! %load-path (cons #$modules %load-path))
-                  (set! %load-compiled-path
-                    (cons #$compiled %load-compiled-path)))
-
-                (use-modules (guix build utils))
-
-                ;; Clean out /tmp and /var/run.
-                ;;
-                ;; XXX This needs to happen before service activations, so it
-                ;; has to be here, but this also implicitly assumes that /tmp
-                ;; and /var/run are on the root partition.
-                (letrec-syntax ((fail-safe (syntax-rules ()
-                                             ((_ exp rest ...)
-                                              (begin
-                                                (catch 'system-error
-                                                  (lambda () exp)
-                                                  (const #f))
-                                                (fail-safe rest ...)))
-                                             ((_)
-                                              #t))))
-                  ;; Ignore I/O errors so the system can boot.
-                  (fail-safe
-                   (delete-file-recursively "/tmp")
-                   (delete-file-recursively "/var/run")
-                   (mkdir "/tmp")
-                   (chmod "/tmp" #o1777)
-                   (mkdir "/var/run")
-                   (chmod "/var/run" #o755)))))))
+                  ;; Clean out /tmp and /var/run.
+                  ;;
+                  ;; XXX This needs to happen before service activations, so it
+                  ;; has to be here, but this also implicitly assumes that /tmp
+                  ;; and /var/run are on the root partition.
+                  (letrec-syntax ((fail-safe (syntax-rules ()
+                                               ((_ exp rest ...)
+                                                (begin
+                                                  (catch 'system-error
+                                                    (lambda () exp)
+                                                    (const #f))
+                                                  (fail-safe rest ...)))
+                                               ((_)
+                                                #t))))
+                    ;; Ignore I/O errors so the system can boot.
+                    (fail-safe
+                     (delete-file-recursively "/tmp")
+                     (delete-file-recursively "/var/run")
+                     (mkdir "/tmp")
+                     (chmod "/tmp" #o1777)
+                     (mkdir "/var/run")
+                     (chmod "/var/run" #o755))))))))
 
 (define cleanup-service-type
   ;; Service that cleans things up in /tmp and similar.
@@ -337,29 +328,22 @@ ACTIVATION-SCRIPT-TYPE."
           (cut gexp->file "activate-service" <>)
           gexps))
 
-  (mlet* %store-monad ((actions  (service-activations))
-                       (modules  (imported-modules %modules))
-                       (compiled (compiled-modules %modules)))
+  (mlet* %store-monad ((actions (service-activations)))
     (gexp->file "activate"
-                #~(begin
-                    (eval-when (expand load eval)
-                      ;; Make sure 'use-modules' below succeeds.
-                      (set! %load-path (cons #$modules %load-path))
-                      (set! %load-compiled-path
-                        (cons #$compiled %load-compiled-path)))
+                (with-imported-modules %modules
+                  #~(begin
+                      (use-modules (gnu build activation))
 
-                    (use-modules (gnu build activation))
+                      ;; Make sure /bin/sh is valid and current.
+                      (activate-/bin/sh
+                       (string-append #$(canonical-package bash) "/bin/sh"))
 
-                    ;; Make sure /bin/sh is valid and current.
-                    (activate-/bin/sh
-                     (string-append #$(canonical-package bash) "/bin/sh"))
+                      ;; Run the services' activation snippets.
+                      ;; TODO: Use 'load-compiled'.
+                      (for-each primitive-load '#$actions)
 
-                    ;; Run the services' activation snippets.
-                    ;; TODO: Use 'load-compiled'.
-                    (for-each primitive-load '#$actions)
-
-                    ;; Set up /run/current-system.
-                    (activate-current-system)))))
+                      ;; Set up /run/current-system.
+                      (activate-current-system))))))
 
 (define (gexps->activation-gexp gexps)
   "Return a gexp that runs the activation script containing GEXPS."
