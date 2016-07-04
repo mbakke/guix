@@ -731,7 +731,8 @@ this file is the reconstruction of GRUB menu entries for old configurations."
                                    (kernel #$(operating-system-kernel os))
                                    (kernel-arguments
                                     #$(operating-system-kernel-arguments os))
-                                   (initrd #$initrd)))))
+                                   (initrd #$initrd))
+                #:set-load-path? #f)))
 
 
 ;;;

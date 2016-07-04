@@ -1025,15 +1025,29 @@ its search path."
                            (write '(ungexp exp) port)
                            (chmod port #o555)))))))
 
-(define (gexp->file name exp)
-  "Return a derivation that builds a file NAME containing EXP."
-  (gexp->derivation name
-                    (gexp
-                     (call-with-output-file (ungexp output)
-                       (lambda (port)
-                         (write '(ungexp exp) port))))
-                    #:local-build? #t
-                    #:substitutable? #f))
+(define* (gexp->file name exp #:key (set-load-path? #t))
+  "Return a derivation that builds a file NAME containing EXP.  When
+SET-LOAD-PATH? is true, emit code in the resulting file to set '%load-path'
+and '%load-compiled-path' to honor EXP's imported modules."
+  (match (if set-load-path? (gexp-modules exp) '())
+    (()                                           ;zero modules
+     (gexp->derivation name
+                       (gexp
+                        (call-with-output-file (ungexp output)
+                          (lambda (port)
+                            (write '(ungexp exp) port))))
+                       #:local-build? #t
+                       #:substitutable? #f))
+    ((modules ...)
+     (mlet %store-monad ((set-load-path (load-path-expression modules)))
+       (gexp->derivation name
+                         (gexp
+                          (call-with-output-file (ungexp output)
+                            (lambda (port)
+                              (write '(ungexp set-load-path) port)
+                              (write '(ungexp exp) port))))
+                         #:local-build? #t
+                         #:substitutable? #f)))))
 
 (define* (text-file* name #:rest text)
   "Return as a monadic value a derivation that builds a text file containing

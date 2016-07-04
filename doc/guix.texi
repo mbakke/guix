@@ -3941,8 +3941,12 @@ script, and @var{modules} is the list of modules visible to that script.
 This is the declarative counterpart of @code{gexp->script}.
 @end deffn
 
-@deffn {Monadic Procedure} gexp->file @var{name} @var{exp}
+@deffn {Monadic Procedure} gexp->file @var{name} @var{exp} @
+            [#:set-load-path? #t]
 Return a derivation that builds a file @var{name} containing @var{exp}.
+When @var{set-load-path?} is true, emit code in the resulting file to
+set @code{%load-path} and @code{%load-compiled-path} to honor
+@var{exp}'s imported modules.
 
 The resulting file holds references to all the dependencies of @var{exp}
 or a subset thereof.
