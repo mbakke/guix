@@ -989,6 +989,18 @@ they can refer to each other."
   (module-ref (resolve-interface '(gnu packages commencement))
               'guile-final))
 
+(define (load-path-expression modules)
+  "Return as a monadic value a gexp that sets '%load-path' and
+'%load-compiled-path' to point to MODULES, a list of module names."
+  (mlet %store-monad ((modules  (imported-modules modules))
+                      (compiled (compiled-modules modules)))
+    (return (gexp (eval-when (expand load eval)
+                    (set! %load-path
+                      (cons (ungexp modules) %load-path))
+                    (set! %load-compiled-path
+                      (cons (ungexp compiled)
+                            %load-compiled-path)))))))
+
 (define* (gexp->script name exp
                        #:key (modules '()) (guile (default-guile)))
   "Return an executable script NAME that runs EXP using GUILE with MODULES in
@@ -996,8 +1008,7 @@ its search path."
   (define %modules
     (append (gexp-modules exp) modules))
 
-  (mlet %store-monad ((modules  (imported-modules %modules))
-                      (compiled (compiled-modules %modules)))
+  (mlet %store-monad ((set-load-path (load-path-expression %modules)))
     (gexp->derivation name
                       (gexp
                        (call-with-output-file (ungexp output)
@@ -1010,16 +1021,7 @@ its search path."
                                    "#!~a/bin/guile --no-auto-compile~%!#~%"
                                    (ungexp guile))
 
-                           ;; Write the 'eval-when' form so that it can be
-                           ;; compiled.
-                           (write
-                            '(eval-when (expand load eval)
-                               (set! %load-path
-                                    (cons (ungexp modules) %load-path))
-                               (set! %load-compiled-path
-                                     (cons (ungexp compiled)
-                                           %load-compiled-path)))
-                            port)
+                           (write '(ungexp set-load-path) port)
                            (write '(ungexp exp) port)
                            (chmod port #o555)))))))
 
