@@ -489,87 +489,87 @@ MANIFEST."
     (module-ref (resolve-interface '(gnu packages compression)) 'gzip))
 
   (define build
-    #~(begin
-        (use-modules (guix build utils)
-                     (srfi srfi-1) (srfi srfi-26)
-                     (ice-9 ftw))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils)
+                       (srfi srfi-1) (srfi srfi-26)
+                       (ice-9 ftw))
 
-        (define (info-file? file)
-          (or (string-suffix? ".info" file)
-              (string-suffix? ".info.gz" file)))
+          (define (info-file? file)
+            (or (string-suffix? ".info" file)
+                (string-suffix? ".info.gz" file)))
 
-        (define (info-files top)
-          (let ((infodir (string-append top "/share/info")))
-            (map (cut string-append infodir "/" <>)
-                 (or (scandir infodir info-file?) '()))))
+          (define (info-files top)
+            (let ((infodir (string-append top "/share/info")))
+              (map (cut string-append infodir "/" <>)
+                   (or (scandir infodir info-file?) '()))))
 
-        (define (install-info info)
-          (setenv "PATH" (string-append #+gzip "/bin")) ;for info.gz files
-          (zero?
-           (system* (string-append #+texinfo "/bin/install-info") "--silent"
-                    info (string-append #$output "/share/info/dir"))))
+          (define (install-info info)
+            (setenv "PATH" (string-append #+gzip "/bin")) ;for info.gz files
+            (zero?
+             (system* (string-append #+texinfo "/bin/install-info") "--silent"
+                      info (string-append #$output "/share/info/dir"))))
 
-        (mkdir-p (string-append #$output "/share/info"))
-        (exit (every install-info
-                     (append-map info-files
-                                 '#$(manifest-inputs manifest))))))
+          (mkdir-p (string-append #$output "/share/info"))
+          (exit (every install-info
+                       (append-map info-files
+                                   '#$(manifest-inputs manifest)))))))
 
   (gexp->derivation "info-dir" build
-                    #:modules '((guix build utils))
                     #:local-build? #t
                     #:substitutable? #f))
 
 (define (ghc-package-cache-file manifest)
   "Return a derivation that builds the GHC 'package.cache' file for all the
 entries of MANIFEST, or #f if MANIFEST does not have any GHC packages."
-  (define ghc                                 ;lazy reference
+  (define ghc                                     ;lazy reference
     (module-ref (resolve-interface '(gnu packages haskell)) 'ghc))
 
   (define build
-    #~(begin
-        (use-modules (guix build utils)
-                     (srfi srfi-1) (srfi srfi-26)
-                     (ice-9 ftw))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils)
+                       (srfi srfi-1) (srfi srfi-26)
+                       (ice-9 ftw))
 
-        (define ghc-name-version
-          (let* ((base (basename #+ghc)))
-            (string-drop base
-                         (+ 1 (string-index base #\-)))))
+          (define ghc-name-version
+            (let* ((base (basename #+ghc)))
+              (string-drop base
+                           (+ 1 (string-index base #\-)))))
 
-        (define db-subdir
-          (string-append "lib/" ghc-name-version "/package.conf.d"))
+          (define db-subdir
+            (string-append "lib/" ghc-name-version "/package.conf.d"))
 
-        (define db-dir
-          (string-append #$output "/" db-subdir))
+          (define db-dir
+            (string-append #$output "/" db-subdir))
 
-        (define (conf-files top)
-          (let ((db (string-append top "/" db-subdir)))
-            (if (file-exists? db)
-                (find-files db "\\.conf$")
-                '())))
+          (define (conf-files top)
+            (let ((db (string-append top "/" db-subdir)))
+              (if (file-exists? db)
+                  (find-files db "\\.conf$")
+                  '())))
 
-        (define (copy-conf-file conf)
-          (let ((base (basename conf)))
-            (copy-file conf (string-append db-dir "/" base))))
+          (define (copy-conf-file conf)
+            (let ((base (basename conf)))
+              (copy-file conf (string-append db-dir "/" base))))
 
-        (system* (string-append #+ghc "/bin/ghc-pkg") "init" db-dir)
-        (for-each copy-conf-file
-                  (append-map conf-files
-                              (delete-duplicates
-                               '#$(manifest-inputs manifest))))
-        (let ((success
-               (zero?
-                (system* (string-append #+ghc "/bin/ghc-pkg") "recache"
-                         (string-append "--package-db=" db-dir)))))
-          (for-each delete-file (find-files db-dir "\\.conf$"))
-          (exit success))))
+          (system* (string-append #+ghc "/bin/ghc-pkg") "init" db-dir)
+          (for-each copy-conf-file
+                    (append-map conf-files
+                                (delete-duplicates
+                                 '#$(manifest-inputs manifest))))
+          (let ((success
+                 (zero?
+                  (system* (string-append #+ghc "/bin/ghc-pkg") "recache"
+                           (string-append "--package-db=" db-dir)))))
+            (for-each delete-file (find-files db-dir "\\.conf$"))
+            (exit success)))))
 
   (with-monad %store-monad
     ;; Don't depend on GHC when there's nothing to do.
     (if (any (cut string-prefix? "ghc" <>)
              (map manifest-entry-name (manifest-entries manifest)))
         (gexp->derivation "ghc-package-cache" build
-                          #:modules '((guix build utils))
                           #:local-build? #t
                           #:substitutable? #f)
         (return #f))))
@@ -585,58 +585,58 @@ MANIFEST.  Single-file bundles are required by programs such as Git and Lynx."
     (module-ref (resolve-interface '(gnu packages base)) 'glibc-utf8-locales))
 
   (define build
-    #~(begin
-        (use-modules (guix build utils)
-                     (rnrs io ports)
-                     (srfi srfi-1)
-                     (srfi srfi-26)
-                     (ice-9 ftw)
-                     (ice-9 match))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils)
+                       (rnrs io ports)
+                       (srfi srfi-1)
+                       (srfi srfi-26)
+                       (ice-9 ftw)
+                       (ice-9 match))
 
-        (define (pem-file? file)
-          (string-suffix? ".pem" file))
+          (define (pem-file? file)
+            (string-suffix? ".pem" file))
 
-        (define (ca-files top)
-          (let ((cert-dir (string-append top "/etc/ssl/certs")))
-            (map (cut string-append cert-dir "/" <>)
-                 (or (scandir cert-dir pem-file?) '()))))
+          (define (ca-files top)
+            (let ((cert-dir (string-append top "/etc/ssl/certs")))
+              (map (cut string-append cert-dir "/" <>)
+                   (or (scandir cert-dir pem-file?) '()))))
 
-        (define (concatenate-files files result)
-          "Make RESULT the concatenation of all of FILES."
-          (define (dump file port)
-            (display (call-with-input-file file get-string-all)
-                     port)
-            (newline port))    ;required, see <https://bugs.debian.org/635570>
+          (define (concatenate-files files result)
+            "Make RESULT the concatenation of all of FILES."
+            (define (dump file port)
+              (display (call-with-input-file file get-string-all)
+                       port)
+              (newline port))  ;required, see <https://bugs.debian.org/635570>
 
-          (call-with-output-file result
-            (lambda (port)
-              (for-each (cut dump <> port) files))))
+            (call-with-output-file result
+              (lambda (port)
+                (for-each (cut dump <> port) files))))
 
-        ;; Some file names in the NSS certificates are UTF-8 encoded so
-        ;; install a UTF-8 locale.
-        (setenv "LOCPATH"
-                (string-append #+glibc-utf8-locales "/lib/locale/"
-                               #+(package-version glibc-utf8-locales)))
-        (setlocale LC_ALL "en_US.utf8")
+          ;; Some file names in the NSS certificates are UTF-8 encoded so
+          ;; install a UTF-8 locale.
+          (setenv "LOCPATH"
+                  (string-append #+glibc-utf8-locales "/lib/locale/"
+                                 #+(package-version glibc-utf8-locales)))
+          (setlocale LC_ALL "en_US.utf8")
 
-        (match (append-map ca-files '#$(manifest-inputs manifest))
-          (()
-           ;; Since there are no CA files, just create an empty directory.  Do
-           ;; not create the etc/ssl/certs sub-directory, since that would
-           ;; wrongfully lead to a message about 'SSL_CERT_DIR' needing to be
-           ;; defined.
-           (mkdir #$output)
-           #t)
-          ((ca-files ...)
-           (let ((result (string-append #$output "/etc/ssl/certs")))
-             (mkdir-p result)
-             (concatenate-files ca-files
-                                (string-append result
-                                               "/ca-certificates.crt"))
-             #t)))))
+          (match (append-map ca-files '#$(manifest-inputs manifest))
+            (()
+             ;; Since there are no CA files, just create an empty directory.  Do
+             ;; not create the etc/ssl/certs sub-directory, since that would
+             ;; wrongfully lead to a message about 'SSL_CERT_DIR' needing to be
+             ;; defined.
+             (mkdir #$output)
+             #t)
+            ((ca-files ...)
+             (let ((result (string-append #$output "/etc/ssl/certs")))
+               (mkdir-p result)
+               (concatenate-files ca-files
+                                  (string-append result
+                                                 "/ca-certificates.crt"))
+               #t))))))
 
   (gexp->derivation "ca-certificate-bundle" build
-                    #:modules '((guix build utils))
                     #:local-build? #t
                     #:substitutable? #f))
 
@@ -645,44 +645,44 @@ MANIFEST.  Single-file bundles are required by programs such as Git and Lynx."
 creates the GTK+ 'icon-theme.cache' file for each theme."
   (mlet %store-monad ((gtk+ (manifest-lookup-package manifest "gtk+")))
     (define build
-      #~(begin
-          (use-modules (guix build utils)
-                       (guix build union)
-                       (guix build profiles)
-                       (srfi srfi-26)
-                       (ice-9 ftw))
+      (with-imported-modules '((guix build utils)
+                               (guix build union)
+                               (guix build profiles)
+                               (guix search-paths)
+                               (guix records))
+        #~(begin
+            (use-modules (guix build utils)
+                         (guix build union)
+                         (guix build profiles)
+                         (srfi srfi-26)
+                         (ice-9 ftw))
 
-          (let* ((destdir  (string-append #$output "/share/icons"))
-                 (icondirs (filter file-exists?
-                                   (map (cut string-append <> "/share/icons")
-                                        '#$(manifest-inputs manifest))))
-                 (update-icon-cache (string-append
-                                     #+gtk+ "/bin/gtk-update-icon-cache")))
+            (let* ((destdir  (string-append #$output "/share/icons"))
+                   (icondirs (filter file-exists?
+                                     (map (cut string-append <> "/share/icons")
+                                          '#$(manifest-inputs manifest))))
+                   (update-icon-cache (string-append
+                                       #+gtk+ "/bin/gtk-update-icon-cache")))
 
-            ;; Union all the icons.
-            (mkdir-p (string-append #$output "/share"))
-            (union-build destdir icondirs
-                         #:log-port (%make-void-port "w"))
+              ;; Union all the icons.
+              (mkdir-p (string-append #$output "/share"))
+              (union-build destdir icondirs
+                           #:log-port (%make-void-port "w"))
 
-            ;; Update the 'icon-theme.cache' file for each icon theme.
-            (for-each
-             (lambda (theme)
-               (let ((dir (string-append destdir "/" theme)))
-                 ;; Occasionally DESTDIR contains plain files, such as
-                 ;; "abiword_48.png".  Ignore these.
-                 (when (file-is-directory? dir)
-                   (ensure-writable-directory dir)
-                   (system* update-icon-cache "-t" dir "--quiet"))))
-             (scandir destdir (negate (cut member <> '("." ".."))))))))
+              ;; Update the 'icon-theme.cache' file for each icon theme.
+              (for-each
+               (lambda (theme)
+                 (let ((dir (string-append destdir "/" theme)))
+                   ;; Occasionally DESTDIR contains plain files, such as
+                   ;; "abiword_48.png".  Ignore these.
+                   (when (file-is-directory? dir)
+                     (ensure-writable-directory dir)
+                     (system* update-icon-cache "-t" dir "--quiet"))))
+               (scandir destdir (negate (cut member <> '("." "..")))))))))
 
     ;; Don't run the hook when there's nothing to do.
     (if gtk+
         (gexp->derivation "gtk-icon-themes" build
-                          #:modules '((guix build utils)
-                                      (guix build union)
-                                      (guix build profiles)
-                                      (guix search-paths)
-                                      (guix records))
                           #:local-build? #t
                           #:substitutable? #f)
         (return #f))))
@@ -695,28 +695,28 @@ MIME type."
                        (manifest-lookup-package
                         manifest "desktop-file-utils")))
     (define build
-      #~(begin
-          (use-modules (srfi srfi-26)
-                       (guix build utils)
-                       (guix build union))
-          (let* ((destdir (string-append #$output "/share/applications"))
-                 (appdirs (filter file-exists?
-                                  (map (cut string-append <>
-                                            "/share/applications")
-                                       '#$(manifest-inputs manifest))))
-                 (update-desktop-database (string-append
-                                           #+desktop-file-utils
-                                           "/bin/update-desktop-database")))
-            (mkdir-p (string-append #$output "/share"))
-            (union-build destdir appdirs
-                         #:log-port (%make-void-port "w"))
-            (exit (zero? (system* update-desktop-database destdir))))))
+      (with-imported-modules '((guix build utils)
+                               (guix build union))
+        #~(begin
+            (use-modules (srfi srfi-26)
+                         (guix build utils)
+                         (guix build union))
+            (let* ((destdir (string-append #$output "/share/applications"))
+                   (appdirs (filter file-exists?
+                                    (map (cut string-append <>
+                                              "/share/applications")
+                                         '#$(manifest-inputs manifest))))
+                   (update-desktop-database (string-append
+                                             #+desktop-file-utils
+                                             "/bin/update-desktop-database")))
+              (mkdir-p (string-append #$output "/share"))
+              (union-build destdir appdirs
+                           #:log-port (%make-void-port "w"))
+              (exit (zero? (system* update-desktop-database destdir)))))))
 
     ;; Don't run the hook when 'desktop-file-utils' is not referenced.
     (if desktop-file-utils
         (gexp->derivation "xdg-desktop-database" build
-                          #:modules '((guix build utils)
-                                      (guix build union))
                           #:local-build? #t
                           #:substitutable? #f)
         (return #f))))
@@ -728,30 +728,30 @@ entries.  It's used to query the MIME type of a given file."
                        (manifest-lookup-package
                         manifest "shared-mime-info")))
     (define build
-      #~(begin
-          (use-modules (srfi srfi-26)
-                       (guix build utils)
-                       (guix build union))
-          (let* ((datadir (string-append #$output "/share"))
-                 (destdir (string-append datadir "/mime"))
-                 (pkgdirs (filter file-exists?
-                                  (map (cut string-append <>
-                                            "/share/mime/packages")
-                                       '#$(manifest-inputs manifest))))
-                 (update-mime-database (string-append
-                                        #+shared-mime-info
-                                        "/bin/update-mime-database")))
-            (mkdir-p destdir)
-            (union-build (string-append destdir "/packages") pkgdirs
-                         #:log-port (%make-void-port "w"))
-            (setenv "XDG_DATA_HOME" datadir)
-            (exit (zero? (system* update-mime-database destdir))))))
+      (with-imported-modules  '((guix build utils)
+                                (guix build union))
+        #~(begin
+            (use-modules (srfi srfi-26)
+                         (guix build utils)
+                         (guix build union))
+            (let* ((datadir (string-append #$output "/share"))
+                   (destdir (string-append datadir "/mime"))
+                   (pkgdirs (filter file-exists?
+                                    (map (cut string-append <>
+                                              "/share/mime/packages")
+                                         '#$(manifest-inputs manifest))))
+                   (update-mime-database (string-append
+                                          #+shared-mime-info
+                                          "/bin/update-mime-database")))
+              (mkdir-p destdir)
+              (union-build (string-append destdir "/packages") pkgdirs
+                           #:log-port (%make-void-port "w"))
+              (setenv "XDG_DATA_HOME" datadir)
+              (exit (zero? (system* update-mime-database destdir)))))))
 
     ;; Don't run the hook when 'shared-mime-info' is referenced.
     (if shared-mime-info
         (gexp->derivation "xdg-mime-database" build
-                          #:modules '((guix build utils)
-                                      (guix build union))
                           #:local-build? #t
                           #:substitutable? #f)
         (return #f))))
@@ -790,34 +790,34 @@ the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
               (manifest-inputs manifest)))
 
     (define builder
-      #~(begin
-          (use-modules (guix build profiles)
-                       (guix search-paths)
-                       (srfi srfi-1))
+      (with-imported-modules '((guix build profiles)
+                               (guix build union)
+                               (guix build utils)
+                               (guix search-paths)
+                               (guix records))
+        #~(begin
+            (use-modules (guix build profiles)
+                         (guix search-paths)
+                         (srfi srfi-1))
 
-          (setvbuf (current-output-port) _IOLBF)
-          (setvbuf (current-error-port) _IOLBF)
+            (setvbuf (current-output-port) _IOLBF)
+            (setvbuf (current-error-port) _IOLBF)
 
-          (define search-paths
-            ;; Search paths of MANIFEST's packages, converted back to their
-            ;; record form.
-            (map sexp->search-path-specification
-                 (delete-duplicates
-                  '#$(map search-path-specification->sexp
-                          (append-map manifest-entry-search-paths
-                                      (manifest-entries manifest))))))
+            (define search-paths
+              ;; Search paths of MANIFEST's packages, converted back to their
+              ;; record form.
+              (map sexp->search-path-specification
+                   (delete-duplicates
+                    '#$(map search-path-specification->sexp
+                            (append-map manifest-entry-search-paths
+                                        (manifest-entries manifest))))))
 
-          (build-profile #$output '#$inputs
-                         #:manifest '#$(manifest->gexp manifest)
-                         #:search-paths search-paths)))
+            (build-profile #$output '#$inputs
+                           #:manifest '#$(manifest->gexp manifest)
+                           #:search-paths search-paths))))
 
     (gexp->derivation "profile" builder
                       #:system system
-                      #:modules '((guix build profiles)
-                                  (guix build union)
-                                  (guix build utils)
-                                  (guix search-paths)
-                                  (guix records))
 
                       ;; Not worth offloading.
                       #:local-build? #t
