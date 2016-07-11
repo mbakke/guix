@@ -10846,10 +10846,6 @@ where @var{service-name} is one of the symbols in @var{provision}
 This is the list of modules that must be in scope when @code{start} and
 @code{stop} are evaluated.
 
-@item @code{imported-modules} (default: @var{%default-imported-modules})
-This is the list of modules to import in the execution environment of
-the Shepherd.
-
 @end table
 @end deftp
 

@@ -47,9 +47,7 @@
             shepherd-service-stop
             shepherd-service-auto-start?
             shepherd-service-modules
-            shepherd-service-imported-modules
 
-            %default-imported-modules
             %default-modules
 
             shepherd-service-file
@@ -138,9 +136,7 @@ for a service that extends SHEPHERD-ROOT-SERVICE-TYPE and nothing else."
   (auto-start?   shepherd-service-auto-start?          ;Boolean
                  (default #t))
   (modules       shepherd-service-modules              ;list of module names
-                 (default %default-modules))
-  (imported-modules shepherd-service-imported-modules  ;list of module names
-                    (default %default-imported-modules)))
+                 (default %default-modules)))
 
 (define (shepherd-service-canonical-name service)
   "Return the 'canonical name' of SERVICE."
@@ -203,37 +199,26 @@ stored."
 (define (shepherd-service-file service)
   "Return a file defining SERVICE."
   (gexp->file (shepherd-service-file-name service)
-              #~(begin
-                  (use-modules #$@(shepherd-service-modules service))
+              (with-imported-modules %default-imported-modules
+                #~(begin
+                    (use-modules #$@(shepherd-service-modules service))
 
-                  (make <service>
-                    #:docstring '#$(shepherd-service-documentation service)
-                    #:provides '#$(shepherd-service-provision service)
-                    #:requires '#$(shepherd-service-requirement service)
-                    #:respawn? '#$(shepherd-service-respawn? service)
-                    #:start #$(shepherd-service-start service)
-                    #:stop #$(shepherd-service-stop service)))))
+                    (make <service>
+                      #:docstring '#$(shepherd-service-documentation service)
+                      #:provides '#$(shepherd-service-provision service)
+                      #:requires '#$(shepherd-service-requirement service)
+                      #:respawn? '#$(shepherd-service-respawn? service)
+                      #:start #$(shepherd-service-start service)
+                      #:stop #$(shepherd-service-stop service))))))
 
 (define (shepherd-configuration-file services)
   "Return the shepherd configuration file for SERVICES."
-  (define modules
-    (delete-duplicates
-     (append-map shepherd-service-imported-modules services)))
-
   (assert-valid-graph services)
 
-  (mlet %store-monad ((modules  (imported-modules modules))
-                      (compiled (compiled-modules modules))
-                      (files    (mapm %store-monad
-                                      shepherd-service-file
-                                      services)))
+  (mlet %store-monad ((files (mapm %store-monad
+                                   shepherd-service-file services)))
     (define config
       #~(begin
-          (eval-when (expand load eval)
-            (set! %load-path (cons #$modules %load-path))
-            (set! %load-compiled-path
-              (cons #$compiled %load-compiled-path)))
-
           (use-modules (srfi srfi-34)
                        (system repl error-handling))
 
