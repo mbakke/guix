@@ -286,33 +286,39 @@ in the store."
          (any https? url)))))
 
   (define builder
-    #~(begin
-        #+(if need-gnutls?
+    (with-imported-modules '((guix build download)
+                             (guix build utils)
+                             (guix ftp-client)
+                             (guix base32)
+                             (guix base64))
+      #~(begin
+          #+(if need-gnutls?
 
-              ;; Add GnuTLS to the inputs and to the load path.
-              #~(eval-when (load expand eval)
-                  (set! %load-path
-                        (cons (string-append #+(gnutls-package)
-                                             "/share/guile/site/"
-                                             (effective-version))
-                              %load-path)))
-              #~#t)
+                ;; Add GnuTLS to the inputs and to the load path.
+                #~(eval-when (load expand eval)
+                    (set! %load-path
+                      (cons (string-append #+(gnutls-package)
+                                           "/share/guile/site/"
+                                           (effective-version))
+                            %load-path)))
+                #~#t)
 
-        (use-modules (guix build download)
-                     (guix base32))
+          (use-modules (guix build download)
+                       (guix base32))
 
-        (let ((value-from-environment (lambda (variable)
-                                        (call-with-input-string
-                                            (getenv variable)
-                                          read))))
-          (url-fetch (value-from-environment "guix download url")
-                     #$output
-                     #:mirrors (call-with-input-file #$%mirror-file read)
+          (let ((value-from-environment (lambda (variable)
+                                          (call-with-input-string
+                                              (getenv variable)
+                                            read))))
+            (url-fetch (value-from-environment "guix download url")
+                       #$output
+                       #:mirrors (call-with-input-file #$%mirror-file read)
 
-                     ;; Content-addressed mirrors.
-                     #:hashes (value-from-environment "guix download hashes")
-                     #:content-addressed-mirrors
-                     (primitive-load #$%content-addressed-mirror-file)))))
+                       ;; Content-addressed mirrors.
+                       #:hashes
+                       (value-from-environment "guix download hashes")
+                       #:content-addressed-mirrors
+                       (primitive-load #$%content-addressed-mirror-file))))))
 
   (let ((uri (and (string? url) (string->uri url))))
     (if (or (and (string? url) (not uri))
@@ -325,11 +331,6 @@ in the store."
                             #:system system
                             #:hash-algo hash-algo
                             #:hash hash
-                            #:modules '((guix build download)
-                                        (guix build utils)
-                                        (guix ftp-client)
-                                        (guix base32)
-                                        (guix base64))
 
                             ;; Use environment variables and a fixed script
                             ;; name so there's only one script in store for

@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -68,23 +68,25 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
         '()))
 
   (define build
-    #~(begin
-        (use-modules (guix build git)
-                     (guix build utils)
-                     (ice-9 match))
+    (with-imported-modules '((guix build git)
+                             (guix build utils))
+      #~(begin
+          (use-modules (guix build git)
+                       (guix build utils)
+                       (ice-9 match))
 
-        ;; The 'git submodule' commands expects Coreutils, sed,
-        ;; grep, etc. to be in $PATH.
-        (set-path-environment-variable "PATH" '("bin")
-                                       (match '#+inputs
-                                         (((names dirs) ...)
-                                          dirs)))
+          ;; The 'git submodule' commands expects Coreutils, sed,
+          ;; grep, etc. to be in $PATH.
+          (set-path-environment-variable "PATH" '("bin")
+                                         (match '#+inputs
+                                           (((names dirs) ...)
+                                            dirs)))
 
-        (git-fetch '#$(git-reference-url ref)
-                   '#$(git-reference-commit ref)
-                   #$output
-                   #:recursive? '#$(git-reference-recursive? ref)
-                   #:git-command (string-append #+git "/bin/git"))))
+          (git-fetch '#$(git-reference-url ref)
+                     '#$(git-reference-commit ref)
+                     #$output
+                     #:recursive? '#$(git-reference-recursive? ref)
+                     #:git-command (string-append #+git "/bin/git")))))
 
   (mlet %store-monad ((guile (package->derivation guile system)))
     (gexp->derivation (or name "git-checkout") build
@@ -93,8 +95,6 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
                       #:hash-algo hash-algo
                       #:hash hash
                       #:recursive? #t
-                      #:modules '((guix build git)
-                                  (guix build utils))
                       #:guile-for-build guile
                       #:local-build? #t)))
 
