@@ -6946,6 +6946,7 @@ and unmount user-space FUSE file systems.  This requires the
 @cindex mapped devices
 The Linux kernel has a notion of @dfn{device mapping}: a block device,
 such as a hard disk partition, can be @dfn{mapped} into another device,
+usually in @code{/dev/mapper/},
 with additional processing over the data that flows through
 it@footnote{Note that the GNU@tie{}Hurd makes no difference between the
 concept of a ``mapped device'' and that of a file system: both boil down
@@ -6955,42 +6956,14 @@ devices, like file systems, using the generic @dfn{translator} mechanism
 (@pxref{Translators,,, hurd, The GNU Hurd Reference Manual}).}.  A
 typical example is encryption device mapping: all writes to the mapped
 device are encrypted, and all reads are deciphered, transparently.
+Guix extends this notion by considering any device or set of devices that
+are @dfn{transformed} in some way to create a new device; for instance,
+RAID devices are obtained by @dfn{assembling} several other devices, such
+as hard disks or partitions, into a new one that behaves as one partition.
+Other examples, not yet implemented, are LVM logical volumes.
 
-Mapped devices are declared using the @code{mapped-device} form:
-
-@example
-(mapped-device
-  (source "/dev/sda3")
-  (target "home")
-  (type luks-device-mapping))
-@end example
-
-Or, better yet, like this:
-
-@example
-(mapped-device
-  (source (uuid "cb67fc72-0d54-4c88-9d4b-b225f30b0f44"))
-  (target "home")
-  (type luks-device-mapping))
-@end example
-
-@cindex disk encryption
-@cindex LUKS
-This example specifies a mapping from @file{/dev/sda3} to
-@file{/dev/mapper/home} using LUKS---the
-@url{http://code.google.com/p/cryptsetup,Linux Unified Key Setup}, a
-standard mechanism for disk encryption.  In the second example, the UUID
-(unique identifier) is the LUKS UUID returned for the device by a
-command like:
-
-@example
-cryptsetup luksUUID /dev/sdx9
-@end example
-
-The @file{/dev/mapper/home}
-device can then be used as the @code{device} of a @code{file-system}
-declaration (@pxref{File Systems}).  The @code{mapped-device} form is
-detailed below.
+Mapped devices are declared using the @code{mapped-device} form,
+defined as follows; for examples, see below.
 
 @deftp {Data Type} mapped-device
 Objects of this type represent device mappings that will be made when
@@ -6998,13 +6971,17 @@ the system boots up.
 
 @table @code
 @item source
-This string specifies the name of the block device to be mapped, such as
-@code{"/dev/sda3"}.
+This is either a string specifying the name of the block device to be mapped,
+such as @code{"/dev/sda3"}, or a list of such strings when several devices
+need to be assembled for creating a new one.
 
 @item target
-This string specifies the name of the mapping to be established.  For
-example, specifying @code{"my-partition"} will lead to the creation of
+This string specifies the name of the resulting mapped device.  For
+kernel mappers such as encrypted devices of type @code{luks-device-mapping},
+specifying @code{"my-partition"} leads to the creation of
 the @code{"/dev/mapper/my-partition"} device.
+For RAID devices of type @code{raid-device-mapping}, the full device name
+such as @code{"/dev/md0"} needs to be given.
 
 @item type
 This must be a @code{mapped-device-kind} object, which specifies how
@@ -7017,6 +6994,64 @@ This defines LUKS block device encryption using the @command{cryptsetup}
 command from the package with the same name.  It relies on the
 @code{dm-crypt} Linux kernel module.
 @end defvr
+
+@defvr {Scheme Variable} raid-device-mapping
+This defines a RAID device, which is assembled using the @code{mdadm}
+command from the package with the same name.  It requires a Linux kernel
+module for the appropriate RAID level to be loaded, such as @code{raid456}
+for RAID-4, RAID-5 or RAID-6, or @code{raid10} for RAID-10.
+@end defvr
+
+@cindex disk encryption
+@cindex LUKS
+The following example specifies a mapping from @file{/dev/sda3} to
+@file{/dev/mapper/home} using LUKS---the
+@url{http://code.google.com/p/cryptsetup,Linux Unified Key Setup}, a
+standard mechanism for disk encryption.
+The @file{/dev/mapper/home}
+device can then be used as the @code{device} of a @code{file-system}
+declaration (@pxref{File Systems}).
+
+@example
+(mapped-device
+  (source "/dev/sda3")
+  (target "home")
+  (type luks-device-mapping))
+@end example
+
+Alternatively, to become independent of device numbering, one may obtain
+the LUKS UUID (@dfn{unique identifier}) of the source device by a
+command like:
+
+@example
+cryptsetup luksUUID /dev/sda3
+@end example
+
+and use it as follows:
+
+@example
+(mapped-device
+  (source (uuid "cb67fc72-0d54-4c88-9d4b-b225f30b0f44"))
+  (target "home")
+  (type luks-device-mapping))
+@end example
+
+A RAID device formed of the partitions @file{/dev/sda1} and @file{/dev/sdb1}
+may be declared as follows:
+
+@example
+(mapped-device
+  (source (list "/dev/sda1" "/dev/sdb1"))
+  (target "/dev/md0")
+  (type raid-device-mapping))
+@end example
+
+The @file{/dev/md0} device can then be used as the @code{device} of a
+@code{file-system} declaration (@pxref{File Systems}).
+Note that the RAID level need not be given; it is chosen during the
+initial creation and formatting of the RAID device and is determined
+automatically later.
+
 
 @node User Accounts
 @subsection User Accounts

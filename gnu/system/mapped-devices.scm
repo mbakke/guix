@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,6 +23,7 @@
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:autoload   (gnu packages cryptsetup) (cryptsetup)
+  #:autoload   (gnu packages linux) (mdadm)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
   #:export (mapped-device
@@ -38,7 +40,8 @@
             device-mapping-service-type
             device-mapping-service
 
-            luks-device-mapping))
+            luks-device-mapping
+            raid-device-mapping))
 
 ;;; Commentary:
 ;;;
@@ -126,5 +129,29 @@
   (mapped-device-kind
    (open open-luks-device)
    (close close-luks-device)))
+
+(define (open-raid-device source target)
+  "Return a gexp that assembles SOURCE (a list of devices) to the RAID device
+TARGET, using 'mdadm'."
+  #~(let ((every (@ (srfi srfi-1) every)))
+      (let loop ()
+        (unless (every file-exists? '#$source)
+          (format #t "waiting a bit...~%")
+          (sleep 1)
+          (loop)))
+       (zero? (system* (string-append #$mdadm "/sbin/mdadm")
+                                      "--assemble" #$target
+                                      #$@source))))
+
+(define (close-raid-device source target)
+  "Return a gexp that stops the RAID device TARGET."
+  #~(zero? (system* (string-append #$mdadm "/sbin/mdadm")
+                    "--stop" #$target)))
+
+(define raid-device-mapping
+  ;; The type of RAID mapped devices.
+  (mapped-device-kind
+   (open open-raid-device)
+   (close close-raid-device)))
 
 ;;; mapped-devices.scm ends here
