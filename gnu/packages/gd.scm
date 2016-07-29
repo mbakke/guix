@@ -50,7 +50,8 @@
              (sha256
               (base32
                "0g3xz8jpz1pl2zzmssglrpa9nxiaa7rmcmvgpbrjz8k9cyynqsvl"))
-             (patches (search-patches "gd-fix-tests-on-i686.patch"))))
+             (patches (search-patches "gd-fix-gd2-read-test.patch"
+                                      "gd-fix-tests-on-i686.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
