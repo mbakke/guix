@@ -13,6 +13,7 @@
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Kei Kebreau <kei@openmailbox.org>
 ;;; Copyright © 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,7 +36,6 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix svn-download)
   #:use-module (guix utils)
   #:use-module (guix build utils)
   #:use-module (guix build-system cmake)
@@ -79,7 +79,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages tbb)
-  #:use-module (gnu packages tcsh)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tex)
@@ -102,23 +102,26 @@
    (build-system gnu-build-system)
    (inputs
      `(("fortran" ,gfortran)))
-   (synopsis "Visualize and analyze convolution operations")
+   (synopsis "Visualizing and demonstrating convolution")
    (description
-    "GNU C-Graph demonstrates the theory of convolution underlying
-engineering systems and signal analysis.")
+     "GNU C-Graph is a tool for demonstrating the theory of convolution.
+Thus, it can serve as an excellent aid to students of signal and systems
+theory in visualizing the convolution process.  Rather than forcing the
+student to write code, the program offers an intuitive interface with
+interactive dialogs to guide them.")
    (license license:gpl3+)
    (home-page "http://www.gnu.org/software/c-graph/")))
 
 (define-public units
   (package
    (name "units")
-   (version "2.12")
+   (version "2.13")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/units/units-" version
                                 ".tar.gz"))
             (sha256 (base32
-                     "1jxvjknz2jhq773jrwx9gc1df3gfy73yqmkjkygqxzpi318yls3q"))))
+                     "1awhjw9zjlfb8s5g3yyx63f7ddfcr1sanlbxpqifmrgq24ql198b"))))
    (build-system gnu-build-system)
    (synopsis "Conversion between thousands of scales")
    (description
@@ -334,7 +337,8 @@ large scale eigenvalue problems.")
     (inputs `(("fortran" ,gfortran)
               ("python" ,python-2)))
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS:BOOL=YES")
+     `(#:configure-flags '("-DBUILD_SHARED_LIBS:BOOL=YES"
+                           "-DLAPACKE=ON")
        #:phases (alist-cons-before
                  'check 'patch-python
                  (lambda* (#:key inputs #:allow-other-keys)
@@ -379,35 +383,40 @@ singular value problems.")
                                 "See LICENSE in the distribution."))))
 
 (define-public gnuplot
-  (package
-    (name "gnuplot")
-    (version "5.0.2")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (string-append "mirror://sourceforge/gnuplot/gnuplot/"
-                          version "/gnuplot-" version ".tar.gz"))
-      (sha256
-       (base32
-        "146qn414z96c7cc42a1kb9a4kpjc2q2hfdwk44kjjvgmfp9k2ass"))))
-    (build-system gnu-build-system)
-    (inputs `(("readline" ,readline)
-              ("cairo" ,cairo)
-              ("pango" ,pango)
-              ("gd" ,gd)))
-    (native-inputs `(("pkg-config" ,pkg-config)
-                     ("texlive" ,texlive-minimal)))
-    (home-page "http://www.gnuplot.info")
-    (synopsis "Command-line driven graphing utility")
-    (description "Gnuplot is a portable command-line driven graphing
+  ;; Gnuplot version 5.0.4 was updated in-place, resulting in a hash mismatch.
+  ;; This can be removed at the next version update.
+  (let ((upstream-version "5.0.4")
+        (guix-revision "1"))
+    (package
+      (name "gnuplot")
+      (version (string-append upstream-version "-" guix-revision))
+      (source
+       (origin
+        (method url-fetch)
+        (uri (string-append "mirror://sourceforge/gnuplot/gnuplot/"
+                            upstream-version "/gnuplot-"
+                            upstream-version ".tar.gz"))
+        (sha256
+         (base32
+          "07n3w12dkcxjnhsvsliaqnkhajhi818v6q8mkpmpbplbf92vh70m"))))
+      (build-system gnu-build-system)
+      (inputs `(("readline" ,readline)
+                ("cairo" ,cairo)
+                ("pango" ,pango)
+                ("gd" ,gd)))
+      (native-inputs `(("pkg-config" ,pkg-config)
+                       ("texlive" ,texlive-minimal)))
+      (home-page "http://www.gnuplot.info")
+      (synopsis "Command-line driven graphing utility")
+      (description "Gnuplot is a portable command-line driven graphing
 utility.  It was originally created to allow scientists and students to
 visualize mathematical functions and data interactively, but has grown to
 support many non-interactive uses such as web scripting.  It is also used as a
 plotting engine by third-party applications like Octave.")
-    ;;  X11 Style with the additional restriction that derived works may only be
-    ;;  distributed as patches to the original.
-    (license (license:fsf-free
-              "http://gnuplot.cvs.sourceforge.net/gnuplot/gnuplot/Copyright"))))
+      ;;  X11 Style with the additional restriction that derived works may only be
+      ;;  distributed as patches to the original.
+      (license (license:fsf-free
+                "http://gnuplot.cvs.sourceforge.net/gnuplot/gnuplot/Copyright")))))
 
 (define-public hdf5
   (package
@@ -796,7 +805,7 @@ ASCII text files using Gmsh's own scripting language.")
 (define-public petsc
   (package
     (name "petsc")
-    (version "3.6.2")
+    (version "3.7.2")
     (source
      (origin
       (method url-fetch)
@@ -804,7 +813,7 @@ ASCII text files using Gmsh's own scripting language.")
       (uri (string-append "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/"
                           "petsc-lite-" version ".tar.gz"))
       (sha256
-       (base32 "13h0m5f9xsdpps4lsp59iz2m7zkapwavq2zfkfvs3ab6sndla0l9"))))
+       (base32 "0jfrq6rd4zagw1iimz05m2w91k0jvz3qbik1lk8pqcxw3rvdqk5d"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("python" ,python-2)
@@ -828,33 +837,34 @@ ASCII text files using Gmsh's own scripting language.")
          ,(string-append "--with-superlu-lib="
                          (assoc-ref %build-inputs "superlu") "/lib/libsuperlu.a"))
        #:phases
-       (alist-replace
-        'configure
-        ;; PETSc's configure script is actually a python script, so we can't
-        ;; run it with bash.
-        (lambda* (#:key outputs (configure-flags '())
-                  #:allow-other-keys)
-          (let* ((prefix (assoc-ref outputs "out"))
-                 (flags `(,(string-append "--prefix=" prefix)
-                          ,@configure-flags)))
-            (format #t "build directory: ~s~%" (getcwd))
-            (format #t "configure flags: ~s~%" flags)
-            (zero? (apply system* "./configure" flags))))
-        (alist-cons-after
-         'configure 'clean-local-references
-         ;; Try to keep build directory names from leaking into compiled code
-         (lambda* (#:key inputs outputs #:allow-other-keys)
-           (let ((out (assoc-ref outputs "out")))
-             (substitute* (find-files "." "^petsc(conf|machineinfo).h$")
-               (((getcwd)) out))))
-         (alist-cons-after
-          'install 'clean-install
+       (modify-phases %standard-phases
+        (replace 'configure
+          ;; PETSc's configure script is actually a python script, so we can't
+          ;; run it with bash.
+          (lambda* (#:key outputs (configure-flags '())
+                          #:allow-other-keys)
+            (let* ((prefix (assoc-ref outputs "out"))
+                   (flags `(,(string-append "--prefix=" prefix)
+                            ,@configure-flags)))
+              (format #t "build directory: ~s~%" (getcwd))
+              (format #t "configure flags: ~s~%" flags)
+              (zero? (apply system* "./configure" flags)))))
+        (add-after 'configure 'clean-local-references
+          (lambda* (#:key inputs outputs #:allow-other-keys)
+            (let ((out (assoc-ref outputs "out")))
+              (substitute* (find-files "." "^petsc(conf|machineinfo).h$")
+                ;; Prevent build directory from leaking into compiled code
+                (((getcwd)) out)
+                ;; Scrub timestamp for reproducibility
+                ((".*Libraries compiled on.*") ""))
+              #t)))
+        (add-after 'install 'clean-install
           ;; Try to keep installed files from leaking build directory names.
           (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let ((out     (assoc-ref outputs "out")))
+            (let ((out (assoc-ref outputs "out")))
               (substitute* (map (lambda (file)
                                   (string-append out "/lib/petsc/conf/" file))
-                                '("petscvariables" "PETScConfig.cmake"))
+                                '("petscvariables"))
                 (((getcwd)) out))
               ;; Make compiler references point to the store
               (substitute* (string-append out "/lib/petsc/conf/petscvariables")
@@ -867,9 +877,10 @@ ASCII text files using Gmsh's own scripting language.")
                               (delete-file f))))
                         '("configure.log" "make.log" "gmake.log"
                           "test.log" "error.log" "RDict.db"
+                          "PETScBuildInternal.cmake"
                           ;; Once installed, should uninstall with Guix
-                          "uninstall.py"))))
-          %standard-phases)))))
+                          "uninstall.py"))
+              #t))))))
     (home-page "http://www.mcs.anl.gov/petsc")
     (synopsis "Library to solve PDEs")
     (description "PETSc, pronounced PET-see (the S is silent), is a suite of
@@ -920,7 +931,7 @@ scientific applications modeled by partial differential equations.")
 (define-public slepc
   (package
     (name "slepc")
-    (version "3.6.2")
+    (version "3.7.1")
     (source
      (origin
        (method url-fetch)
@@ -929,7 +940,7 @@ scientific applications modeled by partial differential equations.")
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
         (base32
-         "1pv5iqz2kc8sj49zsabyz4arnfpana8mjrhq31vzgk16xldk3d1a"))))
+         "1hijlmrvxvfqslnx8yydzw5xqbsn1yy02g32w0hln1z3cgr1c0k7"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("python" ,python-2)))
@@ -945,8 +956,7 @@ scientific applications modeled by partial differential equations.")
                          (assoc-ref %build-inputs "arpack") "/lib"))
        #:phases
        (modify-phases %standard-phases
-         (replace
-          'configure
+         (replace 'configure
           ;; configure is a python script, so we can't run it with bash.
           (lambda* (#:key inputs outputs (configure-flags '())
                     #:allow-other-keys)
@@ -958,8 +968,7 @@ scientific applications modeled by partial differential equations.")
               (setenv "SLEPC_DIR" (getcwd))
               (setenv "PETSC_DIR" (assoc-ref inputs "petsc"))
               (zero? (apply system* "./configure" flags)))))
-         (add-after
-          'install 'delete-doc
+         (add-after 'install 'delete-doc
           ;; TODO: SLEPc installs HTML documentation alongside headers in
           ;; $out/include.  We'd like to move them to share/doc, but delete
           ;; them for now, as they are incomplete and installing the complete
@@ -967,8 +976,7 @@ scientific applications modeled by partial differential equations.")
           (lambda* (#:key outputs #:allow-other-keys)
             (let* ((out (assoc-ref outputs "out")))
               (for-each delete-file (find-files out "\\.html$")))))
-         (add-after
-          'install 'clean-install
+         (add-after 'install 'clean-install
           ;; Clean up unnecessary build logs from installation.
           (lambda* (#:key outputs #:allow-other-keys)
             (let ((out (assoc-ref outputs "out")))
@@ -1207,74 +1215,56 @@ porting.")
 (define-public superlu
   (package
     (name "superlu")
-    (version "4.3")
+    (version "5.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "http://crd-legacy.lbl.gov/~xiaoye/SuperLU/"
                            "superlu_" version ".tar.gz"))
        (sha256
-        (base32 "10b785s9s4x0m9q7ihap09275pq4km3k2hk76jiwdfdr5qr2168n"))))
-    (build-system gnu-build-system)
+        (base32 "0qzlb7cd608q62kyppd0a8c65l03vrwqql6gsm465rky23b6dyr8"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Replace the non-free implementation of MC64 with a stub adapted
+        ;; from Debian
+        '(begin
+           (use-modules (ice-9 regex)
+                        (ice-9 rdelim))
+           (call-with-output-file "SRC/mc64ad.c"
+             (lambda (port)
+               (display "
+#include <stdio.h>
+#include <stdlib.h>
+void mc64id_(int *a) {
+  fprintf (stderr, \"SuperLU: non-free MC64 not available.  Aborting.\\n\");
+  abort ();
+}
+void mc64ad_ (int *a, int *b, int *c, int *d, int *e, double *f, int *g,
+              int *h, int *i, int *j, int *k, double *l, int *m, int *n) {
+  fprintf (stderr, \"SuperLU: non-free MC64 not available.  Aborting.\\n\");
+  abort ();
+}\n" port)))
+           ;; Remove the corresponding license verbiage.  MC64 license follows
+           ;; a "------" line separator.
+           (with-atomic-file-replacement "License.txt"
+             (let ((rx (make-regexp "-{8}")))
+               (lambda (in out)
+                 (let loop ()
+                   (let ((line (read-line in 'concat)))
+                    (unless (regexp-exec rx line)
+                      (display line out)
+                      (loop)))))))))))
+    (build-system cmake-build-system)
     (native-inputs
      `(("tcsh" ,tcsh)))
     (inputs
-     `(("lapack" ,lapack)
+     `(("blas" ,openblas)
        ("gfortran" ,gfortran)))
     (arguments
-     `(#:parallel-build? #f
-       #:tests? #f                      ;tests are run as part of `make all`
-       #:phases
-       (alist-replace
-        'configure
-        (lambda* (#:key inputs outputs #:allow-other-keys)
-          (call-with-output-file "make.inc"
-            (lambda (port)
-              (format port "
-PLAT        =
-SuperLUroot = ~a
-SUPERLULIB  = ~a/lib/libsuperlu.a
-TMGLIB      = libtmglib.a
-BLASDEF     = -DUSE_VENDOR_BLAS
-BLASLIB     = -L~a/lib -lblas
-LIBS        = $(SUPERLULIB) $(BLASLIB)
-ARCH        = ar
-ARCHFLAGS   = cr
-RANLIB      = ranlib
-CC          = gcc
-PIC         = -fPIC
-CFLAGS      = -O3 -DPRNTlevel=0 $(PIC)
-NOOPTS      = -O0 $(PIC)
-FORTRAN     = gfortran
-FFLAGS      = -O2 $(PIC)
-LOADER      = $(CC)
-CDEFS       = -DAdd_"
-                      (getcwd)
-                      (assoc-ref outputs "out")
-                      (assoc-ref inputs "lapack")))))
-        (alist-cons-before
-         'build 'create-install-directories
-         (lambda* (#:key outputs #:allow-other-keys)
-           (for-each
-            (lambda (dir)
-              (mkdir-p (string-append (assoc-ref outputs "out")
-                                      "/" dir)))
-            '("lib" "include")))
-         (alist-replace
-          'install
-          (lambda* (#:key outputs #:allow-other-keys)
-            ;; Library is placed in lib during the build phase.  Copy over
-            ;; headers to include.
-            (let* ((out    (assoc-ref outputs "out"))
-                   (incdir (string-append out "/include")))
-              (for-each (lambda (file)
-                          (let ((base (basename file)))
-                            (format #t "installing `~a' to `~a'~%"
-                                    base incdir)
-                            (copy-file file
-                                       (string-append incdir "/" base))))
-                        (find-files "SRC" ".*\\.h$"))))
-          %standard-phases)))))
+     `(#:configure-flags '("-Denable_blaslib:BOOL=NO" ;do not use internal cblas
+                           "-DTPL_BLAS_LIBRARIES=openblas"
+                           "-DBUILD_SHARED_LIBS:BOOL=YES"
+                           "-DCMAKE_INSTALL_LIBDIR=lib")))
     (home-page "http://crd-legacy.lbl.gov/~xiaoye/SuperLU/")
     (synopsis "Supernodal direct solver for sparse linear systems")
     (description
@@ -1284,7 +1274,9 @@ The library is written in C and is callable from either C or Fortran.  The
 library routines perform an LU decomposition with partial pivoting and
 triangular system solves through forward and back substitution.  The library
 also provides threshold-based ILU factorization preconditioners.")
-    (license license:bsd-3)))
+    (license (list license:bsd-3
+                   license:gpl2+        ;EXAMPLE/*fgmr.c
+                   (license:fsf-free "file://SRC/colamd.h")))))
 
 (define-public superlu-dist
   (package
@@ -1297,6 +1289,30 @@ also provides threshold-based ILU factorization preconditioners.")
                            "superlu_dist_" version ".tar.gz"))
        (sha256
         (base32 "1hnak09yxxp026blq8zhrl7685yip16svwngh1wysqxf8z48vzfj"))
+              (modules '((guix build utils)))
+       (snippet
+        ;; Replace the non-free implementation of MC64 with a stub
+        '(begin
+           (use-modules (ice-9 regex)
+                        (ice-9 rdelim))
+           (call-with-output-file "SRC/mc64ad.c"
+             (lambda (port)
+               (display "
+#include <stdio.h>
+#include <stdlib.h>
+void mc64id_(int *a) {
+  fprintf (stderr, \"SuperLU_DIST: non-free MC64 not available.  Aborting.\\n\");
+  abort ();
+}
+void mc64ad_ (int *a, int *b, int *c, int *d, int *e, double *f, int *g,
+              int *h, int *i, int *j, int *k, double *l, int *m, int *n) {
+  fprintf (stderr, \"SuperLU_DIST: non-free MC64 not available.  Aborting.\\n\");
+  abort ();
+}\n" port)))
+           (delete-file "SRC/mc64ad.f.bak")
+           (substitute* "SRC/util.c"    ;adjust default algorithm
+             (("RowPerm[[:blank:]]*=[[:blank:]]*LargeDiag")
+              "RowPerm = NOROWPERM"))))
        (patches (search-patches "superlu-dist-scotchmetis.patch"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -1790,29 +1806,36 @@ associated functions (eg. contiguous and non-contiguous submatrix views).")
                 "1cdpjxb0fz5f28y5qrqgpw53s7qi8s2v3al9lfdldqxngb21vpx8"))))))
 
 (define-public muparser
-  (package
-    (name "muparser")
-    (version "2.2.5")
-    (source
-     (origin
-       (method svn-fetch)
-       (uri (svn-reference
-             (url "http://muparser.googlecode.com/svn/trunk/")
-             (revision 34)))
-       (sha256
-        (base32
-         "1d6bdbhx9zj3srwj3m7c9hvr18gnx1fx43h6d25my7q85gicpcwn"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags '("--enable-samples=no")
-       #:tests? #f)) ;no "check" target
-    (home-page "http://muparser.beltoforion.de/")
-    (synopsis "Fast parser library for mathematical expressions")
-    (description
-     "muParser is an extensible high performance math parser library.  It is
-based on transforming an expression into a bytecode and precalculating
-constant parts of it.")
-    (license license:expat)))
+  ;; When switching download sites, muparser re-issued a 2.2.5 release with a
+  ;; different hash. In order to make `guix package --upgrade` work correctly,
+  ;; we set a Guix packaging revision.
+  ;; When the next version of muparser is released, we can remove
+  ;; UPSTREAM-VERSION and REVISION and use the plain VERSION.
+  (let ((upstream-version "2.2.5")
+        (revision "2"))
+    (package
+      (name "muparser")
+      (version (string-append upstream-version "-" revision))
+      (source
+       (origin
+         (method url-fetch)
+         (uri (string-append "https://github.com/beltoforion/muparser/archive/v"
+                             upstream-version ".tar.gz"))
+         (file-name (string-append name "-" version ".tar.gz"))
+         (sha256
+          (base32
+           "0277qsi5l23jsck1vhn383bmvc2n9l4a1dl5r9bf7hvjv9ayyrh6"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:configure-flags '("--enable-samples=no")
+         #:tests? #f)) ;no "check" target
+      (home-page "http://muparser.beltoforion.de/")
+      (synopsis "Fast parser library for mathematical expressions")
+      (description
+       "muParser is an extensible high performance math parser library.  It is
+based on transforming an expression into a bytecode and precalculating constant
+parts of it.")
+      (license license:expat))))
 
 (define-public openblas
   (package
@@ -2005,8 +2028,8 @@ packages.")
     (version "3.10.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/math-atlas/atlas"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/math-atlas/Stable/"
+                                  version "/atlas" version ".tar.bz2"))
               (sha256
                (base32
                 "0bqh4bdnjdyww4mcpg6kn0x7338mfqbdgysn97dzrwwb26di7ars"))))
@@ -2119,14 +2142,13 @@ Optimization occurs at build time.  For this reason, the library is built on
 the machine where it is installed, without resorting to pre-built substitutes.
 
 Before building the library, CPU throttling should be disabled.  This can be
-done in the BIOS, or, on GNU/Linux, with the following commands:
+done in the BIOS, or, on GNU/Linux, with the following command:
 
-cpufreq-selector -g performance -c 0
-...
-cpufreq-selector -g performance -c N-1
+@example
+# cpupower --governor performance
+@end example
 
-where N is the number of cores of your CPU.  Failure to do so will result in a
-library with poor performance.")
+Failure to do so will result in a library with poor performance.")
     (license license:bsd-3)))
 
 (define-public glm
@@ -2136,8 +2158,8 @@ library with poor performance.")
     (source
      (origin
        (method url-fetch)
-      (uri (string-append "mirror://sourceforge/ogl-math/glm-"
-                          version ".zip"))
+       (uri (string-append "mirror://sourceforge/ogl-math/glm-" version
+                           "/glm-" version ".zip"))
        (sha256
         (base32
          "1cnjmi033a16a95v6xfkr1bvfmkd26hzdjka8j1819hgn5b1nr8l"))))
@@ -2170,7 +2192,14 @@ specifications.")
           ;; Pretend to be on a 64 bit platform to obtain a common directory
           ;; name for the build results on all architectures; nothing else
           ;; seems to depend on it.
-          (("^PLATFORM=.*$") "PLATFORM=ux64\n")))))
+          (("^PLATFORM=.*$") "PLATFORM=ux64\n")
+
+          ;; The check for 'isnan' as it is written fails with
+          ;; "non-floating-point argument in call to function
+          ;; ‘__builtin_isnan’", which leads to the 'NOISNAN' cpp macro
+          ;; definition, which in turn leads to bad things.  Fix the feature
+          ;; test.
+          (("isnan\\(0\\)") "isnan(0.)")))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f ; no check target
@@ -2179,11 +2208,10 @@ specifications.")
          (delete 'configure)
          (replace 'build
            (lambda _
-             (with-directory-excursion "lpsolve55"
-               (system* "bash" "ccc"))
-             (with-directory-excursion "lp_solve"
-               (system* "bash" "ccc"))
-             #t))
+             (and (with-directory-excursion "lpsolve55"
+                    (zero? (system* "bash" "ccc")))
+                  (with-directory-excursion "lp_solve"
+                    (zero? (system* "bash" "ccc"))))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -2219,7 +2247,7 @@ revised simplex and the branch-and-bound methods.")
 (define-public dealii
   (package
     (name "dealii")
-    (version "8.2.1")
+    (version "8.4.1")
     (source
      (origin
        (method url-fetch)
@@ -2227,8 +2255,7 @@ revised simplex and the branch-and-bound methods.")
                            "download/v" version "/dealii-" version ".tar.gz"))
        (sha256
         (base32
-         "185jych0gdnpkjwxni7pd0dda149492zwq2457xdjg76bzj78mnp"))
-       (patches (search-patches "dealii-p4est-interface.patch"))
+         "1bdksvvyp1rj37df1ndh8j3x9nzpc3sazw8nd0hzvnlw0qnyk800"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled sources: UMFPACK, TBB, muParser, and boost
@@ -2355,9 +2382,8 @@ FLANN is written in C++ and contains bindings for C, Octave and Python.")
     (source
       (origin
         (method url-fetch)
-        (uri
-          (string-append
-            "mirror://sourceforge/w-calc/wcalc-" version ".tar.bz2"))
+        (uri (string-append "mirror://sourceforge/w-calc/Wcalc/" version "/"
+                            "wcalc-" version ".tar.bz2"))
         (sha256
           (base32
             "1vi8dl6rccqiq1apmpwawyg2ywx6a1ic1d3cvkf2hlwk1z11fb0f"))))
@@ -2381,8 +2407,8 @@ evaluates expressions using the standard order of operations.")
     (version "3.6")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xaos/xaos-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/xaos/XaoS/" version
+                                  "/xaos-" version ".tar.gz"))
               (sha256
                (base32
                 "15cd1cx1dyygw6g2nhjqq3bsfdj8sj8m4va9n75i0f3ryww3x7wq"))))
@@ -2524,7 +2550,7 @@ structured and unstructured grid problems.")))
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/matio/" version "/"
+       (uri (string-append "mirror://sourceforge/matio/matio/" version "/"
                            "matio-" version ".tar.gz"))
        (sha256
         (base32
@@ -2538,3 +2564,25 @@ structured and unstructured grid problems.")))
     (description "Matio is a library for reading and writing MAT files.  It
 supports compressed MAT files, as well as newer (version 7.3) MAT files.")
     (license license:bsd-2)))
+
+(define-public libhilbert
+  (package
+    (name "libhilbert")
+    (version "0.2-1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://web.cs.dal.ca/~chamilto/hilbert/"
+                           "libhilbert-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0v48x8405dj95gjn2saja4bzhw86d6zl6d3dg8h7dzac2qr97s34"))))
+    (build-system gnu-build-system)
+    (home-page "http://web.cs.dal.ca/~chamilto/hilbert")
+    (synopsis "Hilbert indices for multidimensional data")
+    (description "The libhilbert library can efficiently calculate Hilbert
+curves and order-preserving representations of Hilbert curve indices that use
+the same amount of space as the original point representation.  This is useful
+when using the Gilbert curve as a space filling curve through a
+high-dimensional space where not all demensions have the same cardinality.")
+    (license license:lgpl2.1+)))

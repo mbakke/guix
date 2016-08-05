@@ -1,7 +1,7 @@
 # htmlxref.cnf - reference file for free Texinfo manuals on the web.
 # Modified by Ludovic Courtès <ludo@gnu.org> for the GNU Guix manual.
 
-htmlxrefversion=2016-03-30.07; # UTC
+htmlxrefversion=2016-08-03.13; # UTC
 
 # Copyright 2010, 2011, 2012, 2013, 2014, 2015 Free Software Foundation, Inc.
 # 
@@ -224,6 +224,9 @@ emacs-muse	node	${GS}/emacs-muse/manual/html_node/
 
 emms		node	${GS}/emms/manual/
 
+# The file is called 'find.info' but the package is 'findutils'.
+find		mono	${GS}/findutils/manual/html_mono/find.html
+find		node	${GS}/findutils/manual/html_node/find_html
 findutils	mono	${GS}/findutils/manual/html_mono/find.html
 findutils	node	${GS}/findutils/manual/html_node/find_html
 
@@ -467,6 +470,9 @@ mailutils	node	${GS}/mailutils/manual/html_node/
 
 make		mono	${GS}/make/manual/make.html
 make		node	${GS}/make/manual/html_node/
+
+mcron		mono	${GS}/mcron/manual/mcron.html
+mcron		node	${GS}/mcron/manual/html_node/
 
 mdk		mono	${GS}/mdk/manual/mdk.html
 mdk		node	${GS}/mdk/manual/html_node/

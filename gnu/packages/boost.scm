@@ -28,7 +28,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages python)
-  #:use-module (gnu packages tcsh)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages perl))
 
 (define-public boost
@@ -38,7 +38,7 @@
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/boost/boost_"
+                    "mirror://sourceforge/boost/boost/" version "/boost_"
                     (string-map (lambda (x) (if (eq? x #\.) #\_ x)) version)
                     ".tar.bz2"))
               (sha256
@@ -51,50 +51,50 @@
        ("python" ,python-2)
        ("tcsh" ,tcsh)))
     (arguments
-     (let ((build-flags
-            `("threading=multi" "link=shared"
+     `(#:tests? #f
+       #:make-flags
+       (list "threading=multi" "link=shared"
 
-              ;; Set the RUNPATH to $libdir so that the libs find each other.
-              (string-append "linkflags=-Wl,-rpath="
-                             (assoc-ref outputs "out") "/lib")
+             ;; Set the RUNPATH to $libdir so that the libs find each other.
+             (string-append "linkflags=-Wl,-rpath="
+                            (assoc-ref %outputs "out") "/lib")
 
-              ;; Boost's 'context' library is not yet supported on mips64, so
-              ;; we disable it.  The 'coroutine' library depends on 'context',
-              ;; so we disable that too.
-              ,@(if (string-prefix? "mips64" (or (%current-target-system)
-                                                 (%current-system)))
-                    '("--without-context"
-                      "--without-coroutine" "--without-coroutine2")
-                    '()))))
-       `(#:tests? #f
-         #:phases
-         (modify-phases %standard-phases
-           (replace
-            'configure
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out")))
-                (substitute* '("libs/config/configure"
-                               "libs/spirit/classic/phoenix/test/runtest.sh"
-                               "tools/build/doc/bjam.qbk"
-                               "tools/build/src/engine/execunix.c"
-                               "tools/build/src/engine/Jambase"
-                               "tools/build/src/engine/jambase.c")
-                  (("/bin/sh") (which "sh")))
+             ;; Boost's 'context' library is not yet supported on mips64, so
+             ;; we disable it.  The 'coroutine' library depends on 'context',
+             ;; so we disable that too.
+             ,@(if (string-prefix? "mips64" (or (%current-target-system)
+                                                (%current-system)))
+                   '("--without-context"
+                     "--without-coroutine" "--without-coroutine2")
+                   '()))
+       #:phases
+       (modify-phases %standard-phases
+         (replace
+             'configure
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* '("libs/config/configure"
+                              "libs/spirit/classic/phoenix/test/runtest.sh"
+                              "tools/build/doc/bjam.qbk"
+                              "tools/build/src/engine/execunix.c"
+                              "tools/build/src/engine/Jambase"
+                              "tools/build/src/engine/jambase.c")
+                 (("/bin/sh") (which "sh")))
 
-                (setenv "SHELL" (which "sh"))
-                (setenv "CONFIG_SHELL" (which "sh"))
+               (setenv "SHELL" (which "sh"))
+               (setenv "CONFIG_SHELL" (which "sh"))
 
-                (zero? (system* "./bootstrap.sh"
-                                (string-append "--prefix=" out)
-                                "--with-toolset=gcc")))))
-           (replace
-            'build
-            (lambda* (#:key outputs #:allow-other-keys)
-              (zero? (system* "./b2" ,@build-flags))))
-           (replace
-            'install
-            (lambda* (#:key outputs #:allow-other-keys)
-              (zero? (system* "./b2" "install" ,@build-flags))))))))
+               (zero? (system* "./bootstrap.sh"
+                               (string-append "--prefix=" out)
+                               "--with-toolset=gcc")))))
+         (replace
+             'build
+           (lambda* (#:key outputs make-flags #:allow-other-keys)
+             (zero? (apply system* "./b2" make-flags))))
+         (replace
+             'install
+           (lambda* (#:key outputs make-flags #:allow-other-keys)
+             (zero? (apply system* "./b2" "install" make-flags)))))))
 
     (home-page "http://boost.org")
     (synopsis "Peer-reviewed portable C++ source libraries")

@@ -1,0 +1,14 @@
+Fix a 'maybe-uninitialized' warning (turned error)
+which occurs on non-Intel platforms.
+
+--- libgd-2.2.3/tests/gd2/gd2_read.c	2016-07-21 01:21:16.000000000 -0400
++++ libgd-2.2.3/tests/gd2/gd2_read.c	2016-07-29 15:52:03.806405312 -0400
+@@ -5,7 +5,7 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-	int error, i = 0;
++	int error = 0, i = 0;
+ 	gdImagePtr im, exp;
+ 	FILE *fp;
+ 	char *path[] = {

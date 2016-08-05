@@ -5,6 +5,7 @@
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
+;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,7 +37,7 @@
   #:use-module ((gnu packages base)
                 #:select (canonical-package glibc))
   #:use-module (gnu packages package-management)
-  #:use-module (gnu packages lsh)
+  #:use-module (gnu packages ssh)
   #:use-module (gnu packages lsof)
   #:use-module ((gnu build file-systems)
                 #:select (mount-flags->bit-mask))
@@ -93,13 +94,21 @@
             guix-publish-configuration?
             guix-publish-service
             guix-publish-service-type
+
+            gpm-configuration
+            gpm-configuration?
             gpm-service-type
             gpm-service
 
             urandom-seed-service-type
             urandom-seed-service
+
+            rngd-configuration
+            rngd-configuration?
             rngd-service-type
             rngd-service
+            pam-limits-service-type
+            pam-limits-service
 
             %base-services))
 
@@ -229,59 +238,58 @@ FILE-SYSTEM."
         (create? (file-system-create-mount-point? file-system))
         (dependencies (file-system-dependencies file-system)))
     (if (file-system-mount? file-system)
-        (list
-         (shepherd-service
-          (provision (list (file-system->shepherd-service-name file-system)))
-          (requirement `(root-file-system
-                         ,@(map dependency->shepherd-service-name dependencies)))
-          (documentation "Check, mount, and unmount the given file system.")
-          (start #~(lambda args
-                     ;; FIXME: Use or factorize with 'mount-file-system'.
-                     (let ((device (canonicalize-device-spec #$device '#$title))
-                           (flags  #$(mount-flags->bit-mask
-                                      (file-system-flags file-system))))
-                       #$(if create?
-                             #~(mkdir-p #$target)
-                             #~#t)
-                       #$(if check?
-                             #~(begin
-                                 ;; Make sure fsck.ext2 & co. can be found.
-                                 (setenv "PATH"
-                                         (string-append
-                                          #$e2fsprogs "/sbin:"
-                                          "/run/current-system/profile/sbin:"
-                                          (getenv "PATH")))
-                                 (check-file-system device #$type))
-                             #~#t)
+        (with-imported-modules '((gnu build file-systems)
+                                 (guix build bournish))
+          (list
+           (shepherd-service
+            (provision (list (file-system->shepherd-service-name file-system)))
+            (requirement `(root-file-system
+                           ,@(map dependency->shepherd-service-name dependencies)))
+            (documentation "Check, mount, and unmount the given file system.")
+            (start #~(lambda args
+                       ;; FIXME: Use or factorize with 'mount-file-system'.
+                       (let ((device (canonicalize-device-spec #$device '#$title))
+                             (flags  #$(mount-flags->bit-mask
+                                        (file-system-flags file-system))))
+                         #$(if create?
+                               #~(mkdir-p #$target)
+                               #~#t)
+                         #$(if check?
+                               #~(begin
+                                   ;; Make sure fsck.ext2 & co. can be found.
+                                   (setenv "PATH"
+                                           (string-append
+                                            #$e2fsprogs "/sbin:"
+                                            "/run/current-system/profile/sbin:"
+                                            (getenv "PATH")))
+                                   (check-file-system device #$type))
+                               #~#t)
 
-                       (mount device #$target #$type flags
-                              #$(file-system-options file-system))
+                         (mount device #$target #$type flags
+                                #$(file-system-options file-system))
 
-                       ;; For read-only bind mounts, an extra remount is
-                       ;; needed, as per <http://lwn.net/Articles/281157/>,
-                       ;; which still applies to Linux 4.0.
-                       (when (and (= MS_BIND (logand flags MS_BIND))
-                                  (= MS_RDONLY (logand flags MS_RDONLY)))
-                         (mount device #$target #$type
-                                (logior MS_BIND MS_REMOUNT MS_RDONLY))))
-                     #t))
-          (stop #~(lambda args
-                    ;; Normally there are no processes left at this point, so
-                    ;; TARGET can be safely unmounted.
+                         ;; For read-only bind mounts, an extra remount is
+                         ;; needed, as per <http://lwn.net/Articles/281157/>,
+                         ;; which still applies to Linux 4.0.
+                         (when (and (= MS_BIND (logand flags MS_BIND))
+                                    (= MS_RDONLY (logand flags MS_RDONLY)))
+                           (mount device #$target #$type
+                                  (logior MS_BIND MS_REMOUNT MS_RDONLY))))
+                       #t))
+            (stop #~(lambda args
+                      ;; Normally there are no processes left at this point, so
+                      ;; TARGET can be safely unmounted.
 
-                    ;; Make sure PID 1 doesn't keep TARGET busy.
-                    (chdir "/")
+                      ;; Make sure PID 1 doesn't keep TARGET busy.
+                      (chdir "/")
 
-                    (umount #$target)
-                    #f))
+                      (umount #$target)
+                      #f))
 
-          ;; We need an additional module.
-          (modules `(((gnu build file-systems)
-                      #:select (check-file-system canonicalize-device-spec))
-                     ,@%default-modules))
-          (imported-modules `((gnu build file-systems)
-                              (guix build bournish)
-                              ,@%default-imported-modules))))
+            ;; We need an additional module.
+            (modules `(((gnu build file-systems)
+                        #:select (check-file-system canonicalize-device-spec))
+                       ,@%default-modules)))))
         '())))
 
 (define file-system-service-type
@@ -925,6 +933,46 @@ settings.
 information on the configuration file syntax."
   (service syslog-service-type config-file))
 
+(define pam-limits-service-type
+  (let ((security-limits
+         ;; Create /etc/security containing the provided "limits.conf" file.
+         (lambda (limits-file)
+           `(("security"
+              ,(computed-file
+                "security"
+                #~(begin
+                    (mkdir #$output)
+                    (stat #$limits-file)
+                    (symlink #$limits-file
+                             (string-append #$output "/limits.conf"))))))))
+        (pam-extension
+         (lambda (pam)
+           (let ((pam-limits (pam-entry
+                              (control "required")
+                              (module "pam_limits.so")
+                              (arguments '("conf=/etc/security/limits.conf")))))
+             (if (member (pam-service-name pam)
+                         '("login" "su" "slim"))
+                 (pam-service
+                  (inherit pam)
+                  (session (cons pam-limits
+                                 (pam-service-session pam))))
+                 pam)))))
+    (service-type
+     (name 'limits)
+     (extensions
+      (list (service-extension etc-service-type security-limits)
+            (service-extension pam-root-service-type
+                               (lambda _ (list pam-extension))))))))
+
+(define* (pam-limits-service #:optional (limits '()))
+  "Return a service that makes selected programs respect the list of
+pam-limits-entry specified in LIMITS via pam_limits.so."
+  (service pam-limits-service-type
+           (plain-file "limits.conf"
+                       (string-join (map pam-limits-entry->string limits)
+                                    "\n"))))
+
 
 ;;;
 ;;; Guix services.
@@ -1138,44 +1186,44 @@ archive}).  If that is not the case, the service will fail to start."
   "Return the union of the @code{lib/udev/rules.d} directories found in each
 item of @var{packages}."
   (define build
-    #~(begin
-        (use-modules (guix build union)
-                     (guix build utils)
-                     (srfi srfi-1)
-                     (srfi srfi-26))
+    (with-imported-modules '((guix build union)
+                             (guix build utils))
+      #~(begin
+          (use-modules (guix build union)
+                       (guix build utils)
+                       (srfi srfi-1)
+                       (srfi srfi-26))
 
-        (define %standard-locations
-          '("/lib/udev/rules.d" "/libexec/udev/rules.d"))
+          (define %standard-locations
+            '("/lib/udev/rules.d" "/libexec/udev/rules.d"))
 
-        (define (rules-sub-directory directory)
-          ;; Return the sub-directory of DIRECTORY containing udev rules, or
-          ;; #f if none was found.
-          (find directory-exists?
-                (map (cut string-append directory <>) %standard-locations)))
+          (define (rules-sub-directory directory)
+            ;; Return the sub-directory of DIRECTORY containing udev rules, or
+            ;; #f if none was found.
+            (find directory-exists?
+                  (map (cut string-append directory <>) %standard-locations)))
 
-        (mkdir-p (string-append #$output "/lib/udev"))
-        (union-build (string-append #$output "/lib/udev/rules.d")
-                     (filter-map rules-sub-directory '#$packages))))
+          (mkdir-p (string-append #$output "/lib/udev"))
+          (union-build (string-append #$output "/lib/udev/rules.d")
+                       (filter-map rules-sub-directory '#$packages)))))
 
-  (computed-file "udev-rules" build
-                 #:modules '((guix build union)
-                             (guix build utils))))
+  (computed-file "udev-rules" build))
 
 (define (udev-rule file-name contents)
   "Return a directory with a udev rule file FILE-NAME containing CONTENTS."
   (computed-file file-name
-                 #~(begin
-                     (use-modules (guix build utils))
+                 (with-imported-modules '((guix build utils))
+                   #~(begin
+                       (use-modules (guix build utils))
 
-                     (define rules.d
-                       (string-append #$output "/lib/udev/rules.d"))
+                       (define rules.d
+                         (string-append #$output "/lib/udev/rules.d"))
 
-                     (mkdir-p rules.d)
-                     (call-with-output-file
-                         (string-append rules.d "/" #$file-name)
-                       (lambda (port)
-                         (display #$contents port))))
-                 #:modules '((guix build utils))))
+                       (mkdir-p rules.d)
+                       (call-with-output-file
+                           (string-append rules.d "/" #$file-name)
+                         (lambda (port)
+                           (display #$contents port)))))))
 
 (define kvm-udev-rule
   ;; Return a directory with a udev rule that changes the group of /dev/kvm to

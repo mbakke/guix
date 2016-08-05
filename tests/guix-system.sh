@@ -1,5 +1,5 @@
 # GNU Guix --- Functional package management for GNU
-# Copyright © 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+# Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 #
 # This file is part of GNU Guix.
 #
@@ -139,7 +139,7 @@ if guix system build "$tmpfile" 2> "$errorfile"
 then
     exit 1
 else
-    grep "service 'buggy!'.*'does-not-exist'.*undefined" "$errorfile"
+    grep "service 'buggy!'.*'does-not-exist'.*not provided" "$errorfile"
 fi
 
 # Reporting inconsistent user accounts.

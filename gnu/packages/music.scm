@@ -7,6 +7,7 @@
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Kei Kebreau <kei@openmailbox.org>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -30,6 +31,7 @@
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system ant)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system python)
   #:use-module (guix build-system waf)
@@ -404,7 +406,7 @@ interface.  It is implemented as a frontend to @code{klick}.")
        ("font-tex-gyre" ,font-tex-gyre)
        ("fontconfig" ,fontconfig)
        ("freetype" ,freetype)
-       ("ghostscript" ,ghostscript)
+       ("ghostscript" ,ghostscript-gs)
        ("pango" ,pango)
        ("python" ,python-2)))
     (native-inputs
@@ -694,8 +696,8 @@ Editor.  It is compatible with Power Tab Editor 1.7 and Guitar Pro.")
     (source (origin
               (method url-fetch)
               (uri
-               (string-append "mirror://sourceforge/synthv1/synthv1-"
-                              version ".tar.gz"))
+               (string-append "mirror://sourceforge/synthv1/synthv1/" version
+                              "/synthv1-" version ".tar.gz"))
               (sha256
                (base32
                 "0h5zja78phf9705i9g54zh61iczb24iv7rxhljyms30sjgajig1y"))))
@@ -903,45 +905,85 @@ is subjective.")
 (define-public tuxguitar
   (package
     (name "tuxguitar")
-    (version "1.2")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
                     "mirror://sourceforge/tuxguitar/TuxGuitar/TuxGuitar-"
-                    version "/tuxguitar-src-" version ".tar.gz"))
+                    version "/tuxguitar-" version "-src.tar.gz"))
               (sha256
                (base32
-                "1g1yf2gd06fzdhqb8kb8dmdcmr602s9y24f01kyl4940wimgr944"))))
-    (build-system gnu-build-system)
+                "0ldml31zvywid1w28mfd65ramyiics55fdl0ch846vm7j7nwv58j"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Delete pre-built classes
+               '(delete-file-recursively "TuxGuitar-android/bin"))))
+    (build-system ant-build-system)
     (arguments
-     `(#:make-flags (list (string-append "LDFLAGS=-Wl,-rpath="
-                                         (assoc-ref %outputs "out") "/lib")
-                          (string-append "PREFIX="
-                                         (assoc-ref %outputs "out"))
-                          (string-append "SWT_PATH="
-                                         (assoc-ref %build-inputs "java-swt")
-                                         "/share/java/swt.jar"))
-       #:tests? #f ;no "check" target
-       #:parallel-build? #f ;not supported
+     `(#:build-target "build"
+       #:tests? #f ; no tests
        #:phases
        (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'enter-dir-and-set-flags
-          (lambda* (#:key inputs #:allow-other-keys)
-            (chdir "TuxGuitar")
-            (substitute* "GNUmakefile"
-              (("GCJFLAGS\\+=(.*)" _ rest)
-               (string-append "GCJFLAGS=-fsource=1.4 -fPIC " rest))
-              (("PROPERTIES\\?=")
-               (string-append "PROPERTIES?= -Dswt.library.path="
-                              (assoc-ref inputs "java-swt") "/lib"))
-              (("\\$\\(GCJ\\) -o") "$(GCJ) $(LDFLAGS) -o"))
-            #t)))))
+         (add-after 'unpack 'enter-dir
+           (lambda _ (chdir "TuxGuitar-lib") #t))
+         (add-after 'build 'build-editor-utils
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (chdir "..")
+             (let ((cwd (getcwd)))
+               (setenv "CLASSPATH"
+                       (string-append
+                        cwd "/TuxGuitar-lib/tuxguitar-lib.jar" ":"
+                        cwd "/TuxGuitar-editor-utils/build/jar/tuxguitar-editor-utils.jar" ":"
+                        (getenv "CLASSPATH"))))
+             (chdir "TuxGuitar-editor-utils")
+             ;; Generate default build.xml
+             ((@@ (guix build ant-build-system) default-build.xml)
+              "tuxguitar-editor-utils.jar"
+              (string-append (assoc-ref outputs "out")
+                             "/share/java"))
+             ((assoc-ref %standard-phases 'build))))
+         (add-after 'build-editor-utils 'build-application
+           (lambda _
+             (chdir "../TuxGuitar")
+             ((assoc-ref %standard-phases 'build)
+              #:build-target "build")))
+         (replace 'install
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let* ((out   (assoc-ref outputs "out"))
+                    (bin   (string-append out "/bin"))
+                    (share (string-append out "/share"))
+                    (lib   (string-append share "/java"))
+                    (swt   (assoc-ref inputs "java-swt")))
+               (mkdir-p bin)
+               (mkdir-p lib)
+               ;; install all jars
+               (for-each (lambda (file)
+                           (install-file file lib))
+                         (find-files ".." "\\.jar$"))
+               ;; install all resources
+               (for-each (lambda (file)
+                           (install-file file share))
+                         (find-files "share" ".*"))
+               ;; create wrapper
+               (call-with-output-file (string-append bin "/tuxguitar")
+                 (lambda (port)
+                   (let ((classpath (string-join (append (find-files lib "\\.jar$")
+                                                         (find-files swt "\\.jar$"))
+                                                 ":")))
+                     (format
+                      port
+                      (string-append "#!/bin/sh\n"
+                                     (which "java")
+                                     " -cp " classpath
+                                     " -Dtuxguitar.home.path=" out
+                                     " -Dtuxguitar.share.path=" out "/share"
+                                     " -Dswt.library.path=" swt "/lib"
+                                     " org.herac.tuxguitar.app.TGMainSingleton"
+                                     " \"$1\" \"$2\"")))))
+               (chmod (string-append bin "/tuxguitar") #o555)
+               #t))))))
     (inputs
      `(("java-swt" ,java-swt)))
-    (native-inputs
-     `(("gcj" ,gcj)
-       ("pkg-config" ,pkg-config)))
     (home-page "http://tuxguitar.com.ar")
     (synopsis "Multitrack tablature editor and player")
     (description
@@ -1518,17 +1560,13 @@ websites such as Libre.fm.")
 (define-public beets
   (package
     (name "beets")
-    (version "1.3.18")
+    (version "1.3.19")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                     "https://pypi.python.org/packages/"
-                     "14/6f/c9c79c5339ab3ecced265ca18adbf5bae3d4058bae737b6164d738fb4d2c/"
-                     name "-" version ".tar.gz"))
-              (patches (search-patches "beets-image-test-failure.patch"))
+              (uri (pypi-uri "beets" version))
               (sha256
                (base32
-                "09pgyywa5llbc36y0lrr21ywgsp8m2zx6p8ncf8hxik28knd5kld"))))
+                "1vi1dh3fr554bnm8y9pjy09hblw18v6cl2jppzwlp72afri1w93b"))))
     (build-system python-build-system)
     (arguments
      `(#:python ,python-2 ; only Python 2 is supported

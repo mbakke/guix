@@ -1,0 +1,196 @@
+This patch fixes a couple of test failures introduced by changes to the pandas
+package.  It was extracted from this pull request:
+
+https://github.com/statsmodels/statsmodels/pull/2675
+
+
+From c9ef60a7bc4407766ab9e9f12c8a6b89013046ee Mon Sep 17 00:00:00 2001
+From: Ralf Gommers <ralf.gommers@gmail.com>
+Date: Tue, 20 Oct 2015 07:34:11 +0200
+Subject: [PATCH 1/4] MAINT: fix use of old_behavior kw for numpy.correlate. 
+ Was removed in 1.10.0
+
+Numpy PR that removed it: https://github.com/numpy/numpy/pull/5991
+
+Closes gh-2667.
+---
+ statsmodels/tsa/ar_model.py | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/statsmodels/tsa/ar_model.py b/statsmodels/tsa/ar_model.py
+index 087a9e0..02984bd 100644
+--- a/statsmodels/tsa/ar_model.py
++++ b/statsmodels/tsa/ar_model.py
+@@ -261,10 +261,8 @@ def _presample_varcov(self, params):
+ 
+         Vpinv = np.zeros((p, p), dtype=params.dtype)
+         for i in range(1, p1):
+-            Vpinv[i-1, i-1:] = np.correlate(params0, params0[:i],
+-                                            old_behavior=False)[:-1]
+-            Vpinv[i-1, i-1:] -= np.correlate(params0[-i:], params0,
+-                                             old_behavior=False)[:-1]
++            Vpinv[i-1, i-1:] = np.correlate(params0, params0[:i],)[:-1]
++            Vpinv[i-1, i-1:] -= np.correlate(params0[-i:], params0,)[:-1]
+ 
+         Vpinv = Vpinv + Vpinv.T - np.diag(Vpinv.diagonal())
+         return Vpinv
+
+From f1dc8979b09bc1736149993f895943b3158ee2db Mon Sep 17 00:00:00 2001
+From: Ralf Gommers <ralf.gommers@gmail.com>
+Date: Wed, 21 Oct 2015 22:05:52 +0200
+Subject: [PATCH 2/4] MAINT: fix graphics module for changes in recent pandas
+ versions.
+
+---
+ statsmodels/graphics/tests/test_mosaicplot.py | 2 +-
+ statsmodels/graphics/tests/test_tsaplots.py   | 6 +++---
+ statsmodels/graphics/tsaplots.py              | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/statsmodels/graphics/tests/test_mosaicplot.py b/statsmodels/graphics/tests/test_mosaicplot.py
+index cb9bbbe..e41020e 100644
+--- a/statsmodels/graphics/tests/test_mosaicplot.py
++++ b/statsmodels/graphics/tests/test_mosaicplot.py
+@@ -113,7 +113,7 @@ def test_mosaic():
+     # sort by the marriage quality and give meaningful name
+     # [rate_marriage, age, yrs_married, children,
+     # religious, educ, occupation, occupation_husb]
+-    datas = datas.sort(['rate_marriage', 'religious'])
++    datas = datas.sort_values(by=['rate_marriage', 'religious'])
+     num_to_desc = {1: 'awful', 2: 'bad', 3: 'intermediate',
+                       4: 'good', 5: 'wonderful'}
+     datas['rate_marriage'] = datas['rate_marriage'].map(num_to_desc)
+diff --git a/statsmodels/graphics/tests/test_tsaplots.py b/statsmodels/graphics/tests/test_tsaplots.py
+index 511f18f..365be82 100644
+--- a/statsmodels/graphics/tests/test_tsaplots.py
++++ b/statsmodels/graphics/tests/test_tsaplots.py
+@@ -1,4 +1,4 @@
+-from statsmodels.compat.python import lmap, lzip, map
++from statsmodels.compat.python import lmap, map
+ import numpy as np
+ import pandas as pd
+ from numpy.testing import dec
+@@ -51,8 +51,8 @@ def test_plot_month():
+     dta = sm.datasets.elnino.load_pandas().data
+     dta['YEAR'] = dta.YEAR.astype(int).apply(str)
+     dta = dta.set_index('YEAR').T.unstack()
+-    dates = lmap(lambda x : pd.datetools.parse('1 '+' '.join(x)),
+-                                            dta.index.values)
++    dates = lmap(lambda x : pd.datetools.parse_time_string('1 '+' '.join(x))[0],
++                                                           dta.index.values)
+ 
+     # test dates argument
+     fig = month_plot(dta.values, dates=dates, ylabel='el nino')
+diff --git a/statsmodels/graphics/tsaplots.py b/statsmodels/graphics/tsaplots.py
+index 3d04692..94626c9 100644
+--- a/statsmodels/graphics/tsaplots.py
++++ b/statsmodels/graphics/tsaplots.py
+@@ -200,7 +200,7 @@ def seasonal_plot(grouped_x, xticklabels, ylabel=None, ax=None):
+     ticks = []
+     for season, df in grouped_x:
+         df = df.copy() # or sort balks for series. may be better way
+-        df.sort()
++        df.sort_values(inplace=True)
+         nobs = len(df)
+         x_plot = np.arange(start, start + nobs)
+         ticks.append(x_plot.mean())
+
+From 4cfbef6af137629c6953f1f025d9cfc781874256 Mon Sep 17 00:00:00 2001
+From: Ralf Gommers <ralf.gommers@gmail.com>
+Date: Wed, 21 Oct 2015 22:15:25 +0200
+Subject: [PATCH 3/4] MAINT: work around pandas breaking backwards compat for
+ pandas.version
+
+---
+ setup.py                     | 5 ++++-
+ statsmodels/tools/testing.py | 6 ++----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/setup.py b/setup.py
+index 0002840..74aefb8 100644
+--- a/setup.py
++++ b/setup.py
+@@ -134,7 +134,10 @@ def check_dependency_versions(min_versions):
+                               (spversion, min_versions['scipy']))
+ 
+     try:
+-        from pandas.version import short_version as pversion
++        import pandas
++        #FIXME: this will break for pandas 1.0.0.  Needs elaborate parsing now,
++        # due to pandas removing version.short_version
++        pversion = pandas.__version__[:6]
+     except ImportError:
+         install_requires.append('pandas')
+     else:
+diff --git a/statsmodels/tools/testing.py b/statsmodels/tools/testing.py
+index e207e44..643f79f 100644
+--- a/statsmodels/tools/testing.py
++++ b/statsmodels/tools/testing.py
+@@ -16,10 +16,8 @@ def strip_rc(version):
+ 
+ 
+ def is_pandas_min_version(min_version):
+-    '''check whether pandas is at least min_version
+-    '''
+-    from pandas.version import short_version as pversion
+-    return StrictVersion(strip_rc(pversion)) >= min_version
++    '''check whether pandas is at least min_version '''
++    return StrictVersion((pandas.__version__[:6])) >= min_version
+ 
+ 
+ # local copies, all unchanged
+
+From c894c3f4882d570efb517950069d83afa9794db8 Mon Sep 17 00:00:00 2001
+From: Ralf Gommers <ralf.gommers@gmail.com>
+Date: Mon, 26 Oct 2015 20:47:51 +0100
+Subject: [PATCH 4/4] BUG: fix use of Series.sort_values for older pandas.
+
+Some failing tests in the previous commits because older ``pandas`` versions
+don't have ``Series.sort_values``.  That method was only added in pandas 0.17,
+in https://github.com/pydata/pandas/pull/10726
+---
+ statsmodels/graphics/tests/test_mosaicplot.py | 6 +++++-
+ statsmodels/graphics/tsaplots.py              | 6 +++++-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/statsmodels/graphics/tests/test_mosaicplot.py b/statsmodels/graphics/tests/test_mosaicplot.py
+index e41020e..2a873e7 100644
+--- a/statsmodels/graphics/tests/test_mosaicplot.py
++++ b/statsmodels/graphics/tests/test_mosaicplot.py
+@@ -113,7 +113,11 @@ def test_mosaic():
+     # sort by the marriage quality and give meaningful name
+     # [rate_marriage, age, yrs_married, children,
+     # religious, educ, occupation, occupation_husb]
+-    datas = datas.sort_values(by=['rate_marriage', 'religious'])
++    if pandas.__version__ < '0.17.0':
++        datas = datas.sort(['rate_marriage', 'religious'])
++    else:
++        datas = datas.sort_values(by=['rate_marriage', 'religious'])
++
+     num_to_desc = {1: 'awful', 2: 'bad', 3: 'intermediate',
+                       4: 'good', 5: 'wonderful'}
+     datas['rate_marriage'] = datas['rate_marriage'].map(num_to_desc)
+diff --git a/statsmodels/graphics/tsaplots.py b/statsmodels/graphics/tsaplots.py
+index 94626c9..217724f 100644
+--- a/statsmodels/graphics/tsaplots.py
++++ b/statsmodels/graphics/tsaplots.py
+@@ -2,6 +2,7 @@
+ 
+ 
+ import numpy as np
++import pandas
+ 
+ from statsmodels.graphics import utils
+ from statsmodels.tsa.stattools import acf, pacf
+@@ -200,7 +201,10 @@ def seasonal_plot(grouped_x, xticklabels, ylabel=None, ax=None):
+     ticks = []
+     for season, df in grouped_x:
+         df = df.copy() # or sort balks for series. may be better way
+-        df.sort_values(inplace=True)
++        if pandas.__version__ < '0.17.0':
++            df.sort()
++        else:
++            df.sort_values(inplace=True)
+         nobs = len(df)
+         x_plot = np.arange(start, start + nobs)
+         ticks.append(x_plot.mean())

@@ -2,6 +2,7 @@
 ;;; Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,12 +37,9 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages xiph)
-  #:export (libsndfile
-            libsamplerate
-            pulseaudio))
+  #:use-module (gnu packages xiph))
 
-(define libsndfile
+(define-public libsndfile
   (package
     (name "libsndfile")
     (version "1.0.26")
@@ -74,7 +72,7 @@ SPARC.  Hopefully the design of the library will also make it easy to extend
 for reading and writing new sound file formats.")
     (license l:gpl2+)))
 
-(define libsamplerate
+(define-public libsamplerate
   (package
     (name "libsamplerate")                     ; aka. Secret Rabbit Code (SRC)
     (version "0.1.8")
@@ -112,7 +110,7 @@ the theoretical best bandwidth for a given pair of input and output sample
 rates.")
     (license l:gpl2+)))
 
-(define pulseaudio
+(define-public pulseaudio
   (package
     (name "pulseaudio")
     (version "8.0")
@@ -138,6 +136,7 @@ rates.")
     (arguments
      `(#:configure-flags (list "--localstatedir=/var" ;"--sysconfdir=/etc"
                                "--disable-oss-output"
+                               "--enable-bluez5"
                                (string-append "--with-udev-rules-dir="
                                               (assoc-ref %outputs "out")
                                               "/lib/udev/rules.d"))
@@ -153,8 +152,9 @@ rates.")
                  %standard-phases)))
     (inputs
      ;; TODO: Add optional inputs (GTK+?).
-     `(;; ("sbc" ,sbc)
-       ("alsa-lib" ,alsa-lib)
+     `(("alsa-lib" ,alsa-lib)
+       ("bluez" ,bluez)
+       ("sbc" ,sbc)
        ("json-c" ,json-c)
        ("speex" ,speex)
        ("libsndfile" ,libsndfile)

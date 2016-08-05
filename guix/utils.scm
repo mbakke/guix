@@ -79,6 +79,7 @@
             arguments-from-environment-variable
             file-extension
             file-sans-extension
+            compressed-file?
             switch-symlinks
             call-with-temporary-output-file
             call-with-temporary-directory
@@ -550,6 +551,11 @@ minor version numbers from version-string."
     (if dot
         (substring file 0 dot)
         file)))
+
+(define (compressed-file? file)
+  "Return true if FILE denotes a compressed file."
+  (->bool (member (file-extension file)
+                  '("gz" "bz2" "xz" "lz" "tgz" "tbz2" "zip"))))
 
 (define (switch-symlinks link target)
   "Atomically switch LINK, a symbolic link, to point to TARGET.  Works

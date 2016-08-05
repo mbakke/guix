@@ -94,12 +94,13 @@
      `(#:tests? #f ; no test target
        #:python ,python-2   ; Python 3 apparently not yet supported, see
                             ; https://answers.launchpad.net/bzr/+question/229048
-       #:phases (alist-cons-after
-                 'unpack 'fix-mandir
-                 (lambda _
-                   (substitute* "setup.py"
-                     (("man/man1") "share/man/man1")))
-                 %standard-phases)))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-mandir
+           (lambda _
+             (substitute* "setup.py"
+                          (("man/man1") "share/man/man1"))
+             #t)))))
     (home-page "https://gnu.org/software/bazaar")
     (synopsis "Version control system supporting both distributed and centralized workflows")
     (description
@@ -112,14 +113,14 @@ as well as the classic centralized workflow.")
   ;; Keep in sync with 'git-manpages'!
   (package
    (name "git")
-   (version "2.9.0")
+   (version "2.9.2")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "02dl8yvvl7m4zy39s0xmqr958ah7krvkv94lmx4vz3wl95wsj7zl"))))
+              "1d9dmhgzcnwc2jbib4q23ypjbnw1gh1w8gif63qldwkpixj4dxgq"))))
    (build-system gnu-build-system)
    (native-inputs
     `(("native-perl" ,perl)
@@ -166,25 +167,28 @@ as well as the classic centralized workflow.")
       #:modules ((srfi srfi-1)
                  ,@%gnu-build-system-modules)
       #:phases
-       (alist-cons-after
-        'configure 'patch-makefile-shebangs
-        (lambda _
-          (substitute* "Makefile"
-            (("/bin/sh") (which "sh"))
-            (("/usr/bin/perl") (which "perl"))
-            (("/usr/bin/python") (which "python"))))
-        (alist-cons-after
-         'install 'install-shell-completion
-         (lambda* (#:key outputs #:allow-other-keys)
-           (let* ((out         (assoc-ref outputs "out"))
-                  (completions (string-append out "/etc/bash_completion.d")))
-             ;; TODO: Install the tcsh and zsh completions in the right place.
-             (mkdir-p completions)
-             (copy-file "contrib/completion/git-completion.bash"
-                        (string-append completions "/git"))
-             #t))
-         (alist-cons-after
-          'install 'split
+      (modify-phases %standard-phases
+        (add-after 'configure 'patch-makefile-shebangs
+          (lambda _
+            (substitute* "Makefile"
+              (("/bin/sh") (which "sh"))
+              (("/usr/bin/perl") (which "perl"))
+              (("/usr/bin/python") (which "python")))))
+        (add-after 'configure 'add-PM.stamp
+          (lambda _
+            ;; Add the "PM.stamp" to avoid "no rule to make target".
+            (call-with-output-file "perl/PM.stamp" (const #t))
+            #t))
+        (add-after 'install 'install-shell-completion
+          (lambda* (#:key outputs #:allow-other-keys)
+            (let* ((out         (assoc-ref outputs "out"))
+                   (completions (string-append out "/etc/bash_completion.d")))
+              ;; TODO: Install the tcsh and zsh completions in the right place.
+              (mkdir-p completions)
+              (copy-file "contrib/completion/git-completion.bash"
+                         (string-append completions "/git"))
+              #t)))
+        (add-after 'install 'split
           (lambda* (#:key inputs outputs #:allow-other-keys)
             ;; Split the binaries to the various outputs.
             (let* ((out      (assoc-ref outputs "out"))
@@ -256,8 +260,7 @@ as well as the classic centralized workflow.")
               ;; specify a single directory, not a search path.
               (wrap-program (string-append out "/bin/git")
                 `("PATH" ":" prefix
-                  ("$HOME/.guix-profile/libexec/git-core")))))
-          %standard-phases)))))
+                  ("$HOME/.guix-profile/libexec/git-core")))))))))
 
    (native-search-paths
     ;; For HTTPS access, Git needs a single-file certificate bundle, specified
@@ -292,7 +295,7 @@ everything from small to very large projects with speed and efficiency.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "0ic4zs4axkkwa44nqv5iihj3q2nm42kx0j8scnfp1z93m6pw31fw"))))
+                "08y38w6yfvrpgj10dl3vghp05xjpl8jj37kkfna2nhf0wip52p2c"))))
     (build-system trivial-build-system)
     (arguments
      '(#:modules ((guix build utils))
@@ -489,19 +492,19 @@ will work.")
      '(#:tests? #f                    ; no tests
        #:make-flags (list (string-append "prefix="
                                          (assoc-ref %outputs "out")))
-       #:phases (alist-cons-after
-                 'unpack 'reset-shFlags-link
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   ;; The link points to a file in the shFlags submodule.
-                   ;; Redirect it to point to our system shFlags.
-                   (let ((shflags (assoc-ref inputs "shflags")))
-                     (begin
-                       (delete-file "gitflow-shFlags")
-                       (symlink (string-append shflags "/src/shflags")
-                                "gitflow-shFlags"))))
-                 (alist-delete
-                  'configure
-                  (alist-delete 'build %standard-phases)))))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'reset-shFlags-link
+           (lambda* (#:key inputs #:allow-other-keys)
+             ;; The link points to a file in the shFlags submodule.
+             ;; Redirect it to point to our system shFlags.
+             (let ((shflags (assoc-ref inputs "shflags")))
+               (begin
+                 (delete-file "gitflow-shFlags")
+                 (symlink (string-append shflags "/src/shflags")
+                          "gitflow-shFlags")))))
+         (delete 'configure)
+         (delete 'build))))
     (home-page "http://nvie.com/posts/a-successful-git-branching-model/")
     (synopsis "Git extensions for Vincent Driessen's branching model")
     (description
@@ -684,48 +687,45 @@ property manipulation.")
     (version "1.8.16")
     (source (origin
              (method url-fetch)
-             (uri (string-append "http://archive.apache.org/dist/subversion/"
+             (uri (string-append "https://archive.apache.org/dist/subversion/"
                                  "subversion-" version ".tar.bz2"))
              (sha256
               (base32
                "0imkxn25n6sbcgfldrx4z29npjprb1lxjm5fb89q4297161nx3zi"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases (alist-cons-after
-                 'configure 'patch-libtool-wrapper-ls
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   ;; This substitution allows tests svnauthz_tests and
-                   ;; svnlook_tests to pass.  These tests execute svnauthz and
-                   ;; svnlook through their libtool wrapper scripts from svn
-                   ;; hooks, whose empty environments cause "ls: command not
-                   ;; found" errors.  It would be nice if this fix ultimately
-                   ;; made its way into libtool.
-                   (let ((coreutils (assoc-ref inputs "coreutils")))
-                     (substitute* "libtool"
-                       (("\\\\`ls") (string-append "\\`" coreutils "/bin/ls")))))
-                 (alist-cons-after
-                  'install 'install-perl-bindings
-                  (lambda* (#:key outputs #:allow-other-keys)
-                    ;; Follow the instructions from
-                    ;; 'subversion/bindings/swig/INSTALL'.
-                    (let ((out (assoc-ref outputs "out")))
-                      (and (zero? (system* "make" "swig-pl-lib"))
-                           ;; FIXME: Test failures.
-                           ;; (zero? (system* "make" "check-swig-pl"))
-                           (zero? (system* "make" "install-swig-pl-lib"))
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'configure 'patch-libtool-wrapper-ls
+           (lambda* (#:key inputs #:allow-other-keys)
+             ;; This substitution allows tests svnauthz_tests and svnlook_tests
+             ;; to pass.  These tests execute svnauthz and svnlook through
+             ;; their libtool wrapper scripts from svn hooks, whose empty
+             ;; environments cause "ls: command not found" errors.  It would be
+             ;; nice if this fix ultimately made its way into libtool.
+             (let ((coreutils (assoc-ref inputs "coreutils")))
+               (substitute* "libtool"
+                 (("\\\\`ls") (string-append "\\`" coreutils "/bin/ls"))))))
+         (add-after 'install 'install-perl-bindings
+           (lambda* (#:key outputs #:allow-other-keys)
+             ;; Follow the instructions from 'subversion/bindings/swig/INSTALL'.
+             (let ((out (assoc-ref outputs "out")))
+               (and (zero? (system* "make" "swig-pl-lib"))
+                    ;; FIXME: Test failures.
+                    ;; (zero? (system* "make" "check-swig-pl"))
+                    (zero? (system* "make" "install-swig-pl-lib"))
 
-                           ;; Set the right installation prefix.
-                           (with-directory-excursion
-                               "subversion/bindings/swig/perl/native"
-                             (and (zero?
-                                   (system* "perl" "Makefile.PL"
-                                            (string-append "PREFIX=" out)))
-                                  (zero?
-                                   (system* "make" "install"
-                                            (string-append "OTHERLDFLAGS="
-                                                           "-Wl,-rpath="
-                                                           out "/lib"))))))))
-                  %standard-phases))))
+                    ;; Set the right installation prefix.
+                    (with-directory-excursion
+                        "subversion/bindings/swig/perl/native"
+                      (and (zero?
+                            (system* "perl" "Makefile.PL"
+                                     (string-append "PREFIX=" out)))
+                           (zero?
+                            (system* "make" "install"
+                                     (string-append "OTHERLDFLAGS="
+                                                    "-Wl,-rpath="
+                                                    out "/lib"))))))))))))
     (native-inputs
       `(("pkg-config" ,pkg-config)
         ;; For the Perl bindings.
@@ -738,7 +738,7 @@ property manipulation.")
         ("python" ,python-2) ; incompatible with Python 3 (print syntax)
         ("sqlite" ,sqlite)
         ("zlib" ,zlib)))
-    (home-page "http://subversion.apache.org/")
+    (home-page "https://subversion.apache.org/")
     (synopsis "Revision control system")
     (description
      "Subversion exists to be universally recognized and adopted as a
@@ -900,23 +900,23 @@ large, complex patch files.")
                                        "cssc-missing-include.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases (alist-cons-before
-                 'check 'precheck
-                 (lambda _
-                   (begin
-                     (substitute* "tests/common/test-common"
-                       (("/bin/pwd") (which "pwd")))
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'precheck
+           (lambda _
+             (begin
+               (substitute* "tests/common/test-common"
+                 (("/bin/pwd") (which "pwd")))
 
-                     (substitute* "tests/prt/all-512.sh"
-                       (("/bin/sh") (which "sh")))
+               (substitute* "tests/prt/all-512.sh"
+                 (("/bin/sh") (which "sh")))
 
-                     ;; XXX: This test has no hope of passing until there is a "nogroup"
-                     ;; entry (or at least some group to which the guix builder does
-                     ;; not belong) in the /etc/group file of the build environment.
-                     ;; Currently we do not have such a group.  Disable this test for now.
-                     (substitute* "tests/Makefile"
-                       (("test-delta ") ""))))
-                 %standard-phases)))
+               ;; XXX: This test has no hope of passing until there is a "nogroup"
+               ;; entry (or at least some group to which the guix builder does
+               ;; not belong) in the /etc/group file of the build environment.
+               ;; Currently we do not have such a group.  Disable this test for now.
+               (substitute* "tests/Makefile"
+                 (("test-delta ") ""))))))))
     ;; These are needed for the tests
     (native-inputs `(("git" ,git)
                      ("cvs" ,cvs)))
@@ -935,8 +935,8 @@ accessed and migrated on modern systems.")
     (version "4.24")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/aegis/aegis-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/aegis/aegis/" version
+                                  "/aegis-" version ".tar.gz"))
               (sha256
                (base32
                 "18s86ssarfmc4l17gbpzybca29m5wa37cbaimdji8czlcry3mcjl"))
@@ -969,39 +969,37 @@ accessed and migrated on modern systems.")
                                "--sharedstatedir=/var/com/aegis")
        #:parallel-build? #f ; There are some nasty racy rules in the Makefile.
        #:phases
-        (alist-cons-before
-         'configure 'pre-conf
-         (lambda _
-             (substitute* (append '("configure"
-                                    "etc/check-tar-gz.sh"
-                                    "etc/patches.sh"
-                                    "etc/test.sh"
-                                    "script/aexver.in"
-                                    "script/aebisect.in"
-                                    "script/aeintegratq.in"
-                                    "script/tkaegis.in"
-                                    "script/test_funcs.in"
-                                    "web/eg_oss_templ.sh"
-                                    "web/webiface.html"
-                                    "libaegis/getpw_cache.cc")
-                                  (find-files "test" "\\.sh"))
-               (("/bin/sh") (which "sh")))
-             (setenv "SH" (which "sh")))
-         (alist-replace
-          'check
-          (lambda _
-            (let ((home (string-append (getcwd) "/my-new-home")))
-              ;; Some tests need to write to $HOME.
-              (mkdir home)
-              (setenv "HOME" home)
+       (modify-phases %standard-phases
+         (add-before 'configure 'pre-conf
+           (lambda _
+              (substitute* (append '("configure"
+                                     "etc/check-tar-gz.sh"
+                                     "etc/patches.sh"
+                                     "etc/test.sh"
+                                     "script/aexver.in"
+                                     "script/aebisect.in"
+                                     "script/aeintegratq.in"
+                                     "script/tkaegis.in"
+                                     "script/test_funcs.in"
+                                     "web/eg_oss_templ.sh"
+                                     "web/webiface.html"
+                                     "libaegis/getpw_cache.cc")
+                                   (find-files "test" "\\.sh"))
+                           (("/bin/sh") (which "sh")))
+              (setenv "SH" (which "sh"))))
+         (replace 'check
+           (lambda _
+             (let ((home (string-append (getcwd) "/my-new-home")))
+               ;; Some tests need to write to $HOME.
+               (mkdir home)
+               (setenv "HOME" home)
 
-              ;; This test assumes that  flex has been symlinked to "lex".
-              (substitute* "test/00/t0011a.sh"
-                (("type lex")  "type flex"))
+               ;; This test assumes that  flex has been symlinked to "lex".
+               (substitute* "test/00/t0011a.sh"
+                 (("type lex")  "type flex"))
 
-              ;; The author decided to call the check rule "sure".
-              (zero? (system* "make" "sure"))))
-         %standard-phases))))
+               ;; The author decided to call the check rule "sure".
+               (zero? (system* "make" "sure"))))))))
     (home-page "http://aegis.sourceforge.net")
     (synopsis "Project change supervisor")
     (description "Aegis is a project change supervisor, and performs some of

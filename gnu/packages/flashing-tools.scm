@@ -114,8 +114,8 @@ technique (ISP).")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/dfu-programmer/dfu-programmer-"
-                          version ".tar.gz"))
+      (uri (string-append "mirror://sourceforge/dfu-programmer/dfu-programmer/"
+                          version "/dfu-programmer-" version ".tar.gz"))
       (sha256
        (base32
         "15gr99y1z9vbvhrkd25zqhnzhg6zjmaam3vfjzf2mazd39mx7d0x"))

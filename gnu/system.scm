@@ -81,6 +81,8 @@
             operating-system-mapped-devices
             operating-system-file-systems
             operating-system-store-file-system
+            operating-system-user-mapped-devices
+            operating-system-boot-mapped-devices
             operating-system-activation-script
             operating-system-user-accounts
             operating-system-shepherd-service-names
@@ -208,8 +210,9 @@ as 'needed-for-boot'."
   "Return a file system among FILE-SYSTEMS that uses DEVICE, or #f."
   (let ((target (string-append "/dev/mapper/" (mapped-device-target device))))
     (find (lambda (fs)
-            (and (eq? 'device (file-system-title fs))
-                 (string=? (file-system-device fs) target)))
+            (or (member device (file-system-dependencies fs))
+                (and (eq? 'device (file-system-title fs))
+                     (string=? (file-system-device fs) target))))
           file-systems)))
 
 (define (operating-system-user-mapped-devices os)
@@ -405,6 +408,17 @@ GUIX_PROFILE=/run/current-system/profile \\
 # Prepend setuid programs.
 export PATH=/run/setuid-programs:$PATH
 
+# Since 'lshd' does not use pam_env, /etc/environment must be explicitly
+# loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
+# We need 'PATH' to be defined here, for 'cat' and 'cut'.  Do this before
+# reading the user's 'etc/profile' to allow variables to be overridden.
+if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
+     -a -z \"$LINUX_MODULE_DIRECTORY\" ]
+then
+  . /etc/environment
+  export `cat /etc/environment | cut -d= -f1`
+fi
+
 if [ -f \"$HOME/.guix-profile/etc/profile\" ]
 then
   # Load the user profile's settings.
@@ -414,16 +428,6 @@ else
   # At least define this one so that basic things just work
   # when the user installs their first package.
   export PATH=\"$HOME/.guix-profile/bin:$PATH\"
-fi
-
-# Since 'lshd' does not use pam_env, /etc/environment must be explicitly
-# loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
-# We need 'PATH' to be defined here, for 'cat' and 'cut'.
-if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
-     -a -z \"$LINUX_MODULE_DIRECTORY\" ]
-then
-  . /etc/environment
-  export `cat /etc/environment | cut -d= -f1`
 fi
 
 # Set the umask, notably for users logging in via 'lsh'.
@@ -541,7 +545,12 @@ use 'plain-file' instead~%")
 
     ;; By default, applications that use D-Bus, such as Emacs, abort at startup
     ;; when /etc/machine-id is missing.  Make sure these warnings are non-fatal.
-    ("DBUS_FATAL_WARNINGS" . "0")))
+    ("DBUS_FATAL_WARNINGS" . "0")
+
+    ;; XXX: Normally we wouldn't need to do this, but our glibc@2.23 package
+    ;; looks things up in 'PREFIX/lib/locale' instead of
+    ;; '/run/current-system/locale' as was intended.
+    ("GUIX_LOCPATH" . "/run/current-system/locale")))
 
 (define %setuid-programs
   ;; Default set of setuid-root programs.
@@ -731,7 +740,8 @@ this file is the reconstruction of GRUB menu entries for old configurations."
                                    (kernel #$(operating-system-kernel os))
                                    (kernel-arguments
                                     #$(operating-system-kernel-arguments os))
-                                   (initrd #$initrd)))))
+                                   (initrd #$initrd))
+                #:set-load-path? #f)))
 
 
 ;;;

@@ -1,0 +1,87 @@
+From e0c8341b3e4e13778bcde00d477e461ea8e94306 Mon Sep 17 00:00:00 2001
+From: Stefan Westerfeld <stefan@space.twc.de>
+Date: Fri, 22 Apr 2016 18:03:37 +0200
+Subject: [PATCH 031/176] RCORE: compile fixes for KUbuntu 16.04/gcc
+ 5.3.1-14ubuntu2
+
+Rapicorn uses isnan(...) and isinf(...) from cmath.h, however on KUbuntu 16.04
+it should use std::isnan(...) and std::isinf(...) instead. Patch below.
+
+Acked-by: Tim Janik <timj@gnu.org>
+---
+ rcore/strings.cc          | 10 +++++-----
+ rcore/tests/benchrcore.cc |  4 ++--
+ rcore/tests/strings.cc    |  4 ++--
+ 3 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/rcore/strings.cc b/rcore/strings.cc
+index d5b0216..8b3bc3f 100644
+--- a/rcore/strings.cc
++++ b/rcore/strings.cc
+@@ -437,7 +437,7 @@ static long double
+ libc_strtold (const char *nptr, char **endptr)
+ {
+   const long double result = strtold (nptr, endptr);
+-  if (isnan (result) && std::signbit (result) == 0)
++  if (std::isnan (result) && std::signbit (result) == 0)
+     {
+       const char *p = nptr;
+       while (isspace (*p))
+@@ -500,9 +500,9 @@ string_to_double (const char *dblstring, const char **endptr)
+ String
+ string_from_float (float value)
+ {
+-  if (isnan (value))
++  if (std::isnan (value))
+     return std::signbit (value) ? "-NaN" : "+NaN";
+-  if (isinf (value))
++  if (std::isinf (value))
+     return std::signbit (value) ? "-Infinity" : "+Infinity";
+   return string_format ("%.7g", value);
+ }
+@@ -511,9 +511,9 @@ string_from_float (float value)
+ String
+ string_from_double (double value)
+ {
+-  if (isnan (value))
++  if (std::isnan (value))
+     return std::signbit (value) ? "-NaN" : "+NaN";
+-  if (isinf (value))
++  if (std::isinf (value))
+     return std::signbit (value) ? "-Infinity" : "+Infinity";
+   return string_format ("%.17g", value);
+ }
+diff --git a/rcore/tests/benchrcore.cc b/rcore/tests/benchrcore.cc
+index 3899a08..12fde16 100644
+--- a/rcore/tests/benchrcore.cc
++++ b/rcore/tests/benchrcore.cc
+@@ -188,8 +188,8 @@ test_random_numbers()
+       const double rf = random_frange (989617512, 9876547656);
+       TASSERT (rf >= 989617512 && rf < 9876547656);
+     }
+-  TASSERT (isnan (random_frange (NAN, 1)));
+-  TASSERT (isnan (random_frange (0, NAN)));
++  TASSERT (std::isnan (random_frange (NAN, 1)));
++  TASSERT (std::isnan (random_frange (0, NAN)));
+ #if 0 // example penalty paid in random_int64()
+   size_t i, j = 0;
+   for (i = 0; i < 100; i++)
+diff --git a/rcore/tests/strings.cc b/rcore/tests/strings.cc
+index 468a6e6..dae3e3d 100644
+--- a/rcore/tests/strings.cc
++++ b/rcore/tests/strings.cc
+@@ -311,9 +311,9 @@ string_conversions (void)
+   TCMP (string_to_double ("-0.5"), ==, -0.5);
+   double tfloat;
+   tfloat = string_to_double ("+NAN");
+-  assert (isnan (tfloat) && std::signbit (tfloat) == 0);
++  assert (std::isnan (tfloat) && std::signbit (tfloat) == 0);
+   tfloat = string_to_double ("-NAN");
+-  assert (isnan (tfloat) && std::signbit (tfloat) == 1);
++  assert (std::isnan (tfloat) && std::signbit (tfloat) == 1);
+   TCMP (string_capitalize ("fOO bar"), ==, "Foo Bar");
+   TCMP (string_capitalize ("foo BAR BAZ", 2), ==, "Foo Bar BAZ");
+ }
+-- 
+2.9.1
+

@@ -32,7 +32,10 @@
   #:use-module (guix scripts graph)
   #:use-module (guix monads)
   #:use-module ((guix gnu-maintenance)
-                #:select (%gnu-updater %gnome-updater %xorg-updater))
+                #:select (%gnu-updater
+                          %gnome-updater
+                          %kde-updater
+                          %xorg-updater))
   #:use-module (guix import elpa)
   #:use-module (guix import cran)
   #:use-module (guix import hackage)
@@ -195,6 +198,7 @@ unavailable optional dependencies such as Guile-JSON."
   ;; List of "updaters" used by default.  They are consulted in this order.
   (list-updaters %gnu-updater
                  %gnome-updater
+                 %kde-updater
                  %xorg-updater
                  %elpa-updater
                  %cran-updater

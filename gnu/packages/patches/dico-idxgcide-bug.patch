@@ -1,0 +1,21 @@
+Reported at <http://mail.gnu.org.ua/archives/bug-dico/2016-07/msg00000.html>.
+Patch the .c file to avoid depending on Flex.
+
+commit 4599abbda3b5979367138ea098e435c919fe93fc
+Author: Sergey Poznyakoff <gray@gnu.org>
+Date:   Thu Jul 28 14:09:58 2016 +0300
+
+    Bugfix
+    
+    * modules/gcide/idxgcide.l (main): Initialize ipg_header.
+
+--- dico-2.2/modules/gcide/idxgcide.c	2016-07-28 14:15:07.823587004 +0200
++++ dico-2.2/modules/gcide/idxgcide.c	2016-07-28 14:15:09.435600549 +0200
+@@ -2497,6 +2497,7 @@ main(int argc, char **argv)
+ 	dico_log(L_ERR, 0, _("not enough memory"));
+ 	exit(EX_UNAVAILABLE);
+     }
++    idx_page->ipg_header.hdr.phdr_numentries = 0;
+     idx_page->ipg_header.hdr.phdr_text_offset = idx_header.ihdr_pagesize / 2;
+ 
+     idx_header.ihdr_maxpageref = idx_header.ihdr_pagesize / 2 /

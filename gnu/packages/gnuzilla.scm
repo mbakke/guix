@@ -4,6 +4,7 @@
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -76,7 +77,10 @@
       `(("perl" ,perl)
         ("python" ,python-2)))
     (arguments
-      `(#:phases
+      `(;; XXX: parallel build fails, lacking:
+        ;;   mkdir -p "system_wrapper_js/"
+        #:parallel-build? #f
+        #:phases
           (alist-cons-before
            'configure 'chdir
            (lambda _
@@ -116,7 +120,10 @@ in C/C++.")
                '(substitute* '("js/src/config/milestone.pl")
                   (("defined\\(@TEMPLATE_FILE)") "@TEMPLATE_FILE")))))
     (arguments
-     '(#:phases
+     '(;; XXX: parallel build fails, lacking:
+       ;;   mkdir -p "system_wrapper_js/"
+       #:parallel-build? #f
+       #:phases
        (modify-phases %standard-phases
          (replace
           'configure
@@ -287,16 +294,16 @@ standards.")
 (define-public icecat
   (package
     (name "icecat")
-    (version "38.8.0-gnu1")
+    (version "38.8.0-gnu2")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/gnuzilla/"
-                          (first (string-split version #\-)) "/"
+                          version "/"
                           name "-" version ".tar.bz2"))
       (sha256
        (base32
-        "0v4k47ziqsyfksv9sn4v1xvk4q414rc883hb1qzld63grj2nxxwp"))
+        "1yb7a1zsqpra9cgq8hrzrbm5v31drb9367cwvwiksz0ngqy342hb"))
       (patches (search-patches
                 "icecat-avoid-bundled-includes.patch"
                 "icecat-CVE-2016-2818-pt1.patch"
@@ -399,7 +406,7 @@ standards.")
     (arguments
      `(#:tests? #f          ; no check target
        #:out-of-source? #t  ; must be built outside of the source directory
-
+       #:parallel-build? #f
 
        ;; XXX: There are RUNPATH issues such as
        ;; $prefix/lib/icecat-31.6.0/plugin-container NEEDing libmozalloc.so,
@@ -566,7 +573,21 @@ standards.")
                  (("@MOZ_APP_NAME@")
                   "icecat"))
                (install-file "debian/icecat.desktop" applications)
-               #t))))))
+               #t)))
+         (add-after 'install-desktop-entry 'install-icons
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (with-directory-excursion "browser/branding/official"
+                 (for-each
+                  (lambda (file)
+                    (let* ((size (string-filter char-numeric? file))
+                           (icons (string-append out "/share/icons/hicolor/"
+                                                 size "x" size "/apps")))
+                      (mkdir-p icons)
+                      (copy-file file (string-append icons "/icecat.png"))))
+                  '("default16.png" "default22.png" "default24.png"
+                    "default32.png" "default48.png" "content/icon64.png"
+                    "mozicon128.png" "default256.png")))))))))
     (home-page "http://www.gnu.org/software/gnuzilla/")
     (synopsis "Entirely free browser derived from Mozilla Firefox")
     (description

@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012, 2013, 2014 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -20,6 +21,7 @@
   #:use-module (guix licenses)
   #:use-module (gnu packages)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages perl)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -85,3 +87,29 @@ comfortable for anyone.")
               (sha256
                (base32
                 "10ckm2bd2rkxhvdmj7nmbsylmihw0abwcsnxf8y27305183rd9kr"))))))
+
+(define-public rlwrap
+  (package
+    (name "rlwrap")
+    (version "0.42")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "http://utopia.knoware.nl/~hlub/uck/rlwrap/rlwrap-"
+                            version ".tar.gz"))
+        (sha256
+         (base32
+          "0i3yz303wscrysyzpdq04h4nrl9ajz9dbwi80risdl5rkm3dhw2s"))))
+    (build-system gnu-build-system)
+    (native-inputs `(("perl" ,perl)))
+    (inputs
+     `(("readline" ,readline)))
+    (synopsis "Wrapper to allow the editing of keyboard commands")
+    (description
+     "Rlwrap is a 'readline wrapper', a small utility that uses the GNU
+readline library to allow the editing of keyboard input for any command.  You
+should consider rlwrap especially when you need user-defined completion (by way
+of completion word lists) and persistent history, or if you want to program
+'special effects' using the filter mechanism.")
+    (home-page "http://utopia.knoware.nl/~hlub/uck/rlwrap/")
+    (license gpl2+)))

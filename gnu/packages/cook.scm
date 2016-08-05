@@ -33,9 +33,7 @@
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "http://miller.emu.id.au/pmiller/software/cook/cook-" version
-             ".tar.gz"))
+       (uri "http://fossies.org/linux/misc/old/cook-2.34.tar.gz")
        (sha256
         (base32
          "104saqnqql1l7zr2pm3f718fdky3ds8j07c6xvwrs1rfkhrw58yw"))))

@@ -23,6 +23,7 @@
   #:use-module (gnu services)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module ((guix utils) #:select (%current-system))
@@ -37,6 +38,13 @@
             pam-entry-control
             pam-entry-module
             pam-entry-arguments
+
+            pam-limits-entry
+            pam-limits-entry-domain
+            pam-limits-entry-type
+            pam-limits-entry-item
+            pam-limits-entry-value
+            pam-limits-entry->string
 
             pam-services->directory
             unix-pam-service
@@ -75,6 +83,59 @@
   (module     pam-entry-module)          ; file name
   (arguments  pam-entry-arguments        ; list of string-valued g-expressions
               (default '())))
+
+;; PAM limits entries are used by the pam_limits PAM module to set or override
+;; limits on system resources for user sessions.  The format is specified
+;; here: http://linux-pam.org/Linux-PAM-html/sag-pam_limits.html
+(define-record-type <pam-limits-entry>
+  (make-pam-limits-entry domain type item value)
+  pam-limits-entry?
+  (domain     pam-limits-entry-domain)   ; string
+  (type       pam-limits-entry-type)     ; symbol
+  (item       pam-limits-entry-item)     ; symbol
+  (value      pam-limits-entry-value))   ; symbol or number
+
+(define (pam-limits-entry domain type item value)
+  "Construct a pam-limits-entry ensuring that the provided values are valid."
+  (define (valid? value)
+    (case item
+      ((priority) (number? value))
+      ((nice)     (and (number? value)
+                       (>= value -20)
+                       (<= value 19)))
+      (else       (or (and (number? value)
+                           (>= value -1))
+                      (member value '(unlimited infinity))))))
+  (define items
+    (list 'core      'data       'fsize
+          'memlock   'nofile     'rss
+          'stack     'cpu        'nproc
+          'as        'maxlogins  'maxsyslogins
+          'priority  'locks      'sigpending
+          'msgqueue  'nice       'rtprio))
+  (when (not (member type '(hard soft both)))
+    (error "invalid limit type" type))
+  (when (not (member item items))
+    (error "invalid limit item" item))
+  (when (not (valid? value))
+    (error "invalid limit value" value))
+  (make-pam-limits-entry domain type item value))
+
+(define (pam-limits-entry->string entry)
+  "Convert a pam-limits-entry record to a string."
+  (match entry
+    (($ <pam-limits-entry> domain type item value)
+     (string-join (list domain
+                        (if (eq? type 'both)
+                            "-"
+                            (symbol->string type))
+                        (symbol->string item)
+                        (cond
+                         ((symbol? value)
+                          (symbol->string value))
+                         (else
+                          (number->string value))))
+                  "	"))))
 
 (define (pam-service->configuration service)
   "Return the derivation building the configuration file for SERVICE, to be

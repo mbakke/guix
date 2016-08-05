@@ -7,6 +7,7 @@ Description=Build daemon for GNU Guix
 
 [Service]
 ExecStart=@bindir@/guix-daemon --build-users-group=guixbuild
+Environment=GUIX_LOCPATH=/root/.guix-profile/lib/locale
 RemainAfterExit=yes
 StandardOutput=syslog
 StandardError=syslog

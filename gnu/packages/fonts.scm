@@ -126,15 +126,15 @@ TrueType (TTF) files.")
 (define-public font-dejavu
   (package
     (name "font-dejavu")
-    (version "2.34")
+    (version "2.35")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/dejavu/"
+             (uri (string-append "mirror://sourceforge/dejavu/dejavu/"
                                  version "/dejavu-fonts-ttf-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "0pgb0a3ngamidacmrvasg51ck3gp8gn93w6sf1s8snwzx4x2r9yh"))))
+               "122d35y93r820zhi6d7m9xhakdib10z51v63lnlg67qhhrardmzn"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -386,7 +386,7 @@ The Liberation Fonts are sponsored by Red Hat.")
       (origin
         (method url-fetch)
         (uri (string-append
-               "mirror://sourceforge/project/terminus-font/terminus-font-"
+               "mirror://sourceforge/terminus-font/terminus-font-"
                version
                "/terminus-font-"
                version
@@ -476,7 +476,8 @@ text in Simplified Chinese, Traditional Chinese, Japanese, and Korean.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/wqy/wqy-zenhei-"
+                    "mirror://sourceforge/wqy/wqy-zenhei/" version
+                    "%20%28Fighting-state%20RC1%29/wqy-zenhei-"
                     version ".tar.gz"))
               (file-name (string-append "wqy-zenhei-" version ".tar.gz"))
               (sha256

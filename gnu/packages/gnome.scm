@@ -19,6 +19,8 @@
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
+;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -788,7 +790,7 @@ the API.")
     (version "1.2.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/project/gtkglext/gtkglext/"
+              (uri (string-append "mirror://sourceforge/gtkglext/gtkglext/"
                                   version "/gtkglext-" version ".tar.gz"))
               (sha256
                (base32 "1ya4d2j2aacr9ii5zj4ac95fjpdvlm2rg79mgnk7yvl1dcy3y1z5"))
@@ -4421,6 +4423,8 @@ users.")
                              "rundir=/tmp"
                              "statedir=/tmp"
                              "install")))))))
+    (propagated-inputs
+     `(("glib" ,glib)))
     (native-inputs
      `(("glib:bin" ,glib "bin") ; for gdbus-codegen
        ("gobject-introspection" ,gobject-introspection)
@@ -5014,6 +5018,7 @@ software that do not provide their own configuration interface.")
        ("eog"                       ,eog)
        ("epiphany"                  ,epiphany)
        ("evince"                    ,evince)
+       ("file-roller"               ,file-roller)
        ("gedit"                     ,gedit)
        ("glib-networking"           ,glib-networking)
        ("gnome-backgrounds"         ,gnome-backgrounds)
@@ -5386,3 +5391,32 @@ compiled.")
 GLib/GObject code.")
     (home-page "https://wiki.gnome.org/Projects/GFBGraph")
     (license license:lgpl2.1+)))
+
+(define-public libgnomekbd
+  (package
+    (name "libgnomekbd")
+    (version "3.6.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/" name "/"
+                                  (version-major+minor version)  "/"
+                                  name "-" version ".tar.xz"))
+              (sha256
+               (base32
+                "02bahnl3vaqyqyr99r9kwka84sxj8qdrz7x0bf97192dysqaa7n4"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("glib" ,glib "bin")
+       ("intltool" ,intltool)))
+    (propagated-inputs
+     ;; Referred to in .h files and .pc.
+     `(("glib" ,glib)
+       ("gtk+" ,gtk+)
+       ("libxklavier" ,libxklavier)))
+    (home-page "https://www.gnome.org")
+    (synopsis "GNOME keyboard configuration library")
+    (description
+     "Libgnomekbd is a keyboard configuration library for the GNOME desktop
+environment, which can notably display keyboard layouts.")
+    (license license:lgpl2.0+)))

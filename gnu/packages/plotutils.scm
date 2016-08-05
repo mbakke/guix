@@ -186,7 +186,8 @@ colors, styles, options and details.")
     ;; "help" command in interactive mode, so adding a "doc" output is not
     ;; currently useful.
     (native-inputs
-     `(("gs" ,ghostscript)              ;For tests
+     `(("gs" ,ghostscript-gs)           ;For tests
+       ("gs-2" ,ghostscript)             ;For dvipdfm
        ("texinfo" ,texinfo)             ;For generating documentation
        ("texlive" ,texlive)             ;For tests and documentation
        ("emacs" ,emacs-minimal)

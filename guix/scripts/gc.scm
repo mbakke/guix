@@ -24,6 +24,7 @@
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:export (guix-gc))
@@ -221,9 +222,11 @@ Invoke the garbage collector.\n"))
             (free-space
              (ensure-free-space store free-space))
             (min-freed
-             (collect-garbage store min-freed))
+             (let-values (((paths freed) (collect-garbage store min-freed)))
+              (info (_ "freed ~h bytes~%") freed)))
             (else
-             (collect-garbage store)))))
+             (let-values (((paths freed) (collect-garbage store)))
+              (info (_ "freed ~h bytes~%") freed))))))
         ((delete)
          (delete-paths store (map direct-store-path paths)))
         ((list-references)

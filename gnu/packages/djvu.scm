@@ -28,8 +28,8 @@
     (version "3.5.27")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/djvu/djvulibre-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/djvu/DjVuLibre/"
+                                  version "/djvulibre-" version ".tar.gz"))
               (sha256
                (base32
                 "0psh3zl9dj4n4r3lx25390nx34xz0bg0ql48zdskhq354ljni5p6"))))

@@ -7,6 +7,7 @@
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015, 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2015 Raimon Grau <raimonster@gmail.com>
+;;; Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -46,16 +47,17 @@
 (define-public expat
   (package
     (name "expat")
-    (replacement expat/fixed)
-    (version "2.1.0")
+    (version "2.1.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://sourceforge/expat/expat/"
-                                 version "/expat-" version ".tar.gz"))
+                                 version "/expat-" version ".tar.bz2"))
+             (patches (search-patches "expat-CVE-2012-6702-and-CVE-2016-5300.patch"
+                                      "expat-CVE-2015-1283-refix.patch"
+                                      "expat-CVE-2016-0718.patch"))
              (sha256
               (base32
-               "11pblz61zyxh68s5pdcbhc30ha1b2vfjd83aiwfg4vc15x3hadw2"))
-             (patches (search-patches "expat-CVE-2015-1283.patch"))))
+               "0ryyjgvy7jq0qb7a9mhc1giy3bzn56aiwrs8dpydqngplbjq9xdg"))))
     (build-system gnu-build-system)
     (home-page "http://www.libexpat.org/")
     (synopsis "Stream-oriented XML parser library written in C")
@@ -65,28 +67,17 @@ stream-oriented parser in which an application registers handlers for
 things the parser might find in the XML document (like start tags).")
     (license license:expat)))
 
-(define expat/fixed
-  (package
-    (inherit expat)
-    (source (origin
-              (inherit (package-source expat))
-              (patches (search-patches "expat-CVE-2012-6702-and-CVE-2016-5300.patch"
-                                       "expat-CVE-2015-1283.patch"
-                                       "expat-CVE-2015-1283-refix.patch"
-                                       "expat-CVE-2016-0718.patch"))))))
-
 (define-public libxml2
   (package
     (name "libxml2")
-    (version "2.9.3")
-    (replacement libxml2/fixed)                   ;multiple CVEs
+    (version "2.9.4")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://xmlsoft.org/libxml2/libxml2-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "0bd17g6znn2r98gzpjppsqjg33iraky4px923j3k8kdl8qgy7sad"))))
+               "0g336cr0bw6dax1q48bblphmchgihx9p1pjmxdnrd6sh3qci3fgz"))))
     (build-system gnu-build-system)
     (home-page "http://www.xmlsoft.org/")
     (synopsis "C parser for XML")
@@ -105,20 +96,6 @@ things the parser might find in the XML document (like start tags).")
      "Libxml2 is the XML C parser and toolkit developed for the Gnome
 project (but it is usable outside of the Gnome platform).")
     (license license:x11)))
-
-(define libxml2/fixed
-  (package
-    (inherit libxml2)
-    (source
-     (let ((name "libxml2")
-           (version "2.9.4"))
-       (origin
-         (method url-fetch)
-         (uri (string-append "ftp://xmlsoft.org/libxml2/libxml2-"
-                             version ".tar.gz"))
-         (sha256
-          (base32
-           "0g336cr0bw6dax1q48bblphmchgihx9p1pjmxdnrd6sh3qci3fgz")))))))
 
 (define-public python-libxml2
   (package (inherit libxml2)
@@ -153,16 +130,15 @@ project (but it is usable outside of the Gnome platform).")
 (define-public libxslt
   (package
     (name "libxslt")
-    (version "1.1.28")
-    (replacement libxslt/fixed)  ; CVE-2016-1683 and CVE-2016-1684
+    (version "1.1.29")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://xmlsoft.org/libxslt/libxslt-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "13029baw9kkyjgr7q3jccw2mz38amq7mmpr5p3bh775qawd1bisz"))
-             (patches (search-patches "libxslt-CVE-2015-7995.patch"))))
+               "1klh81xbm9ppzgqk339097i39b7fnpmlj8lzn8bpczl3aww6x5xm"))
+             (patches (search-patches "libxslt-generated-ids.patch"))))
     (build-system gnu-build-system)
     (home-page "http://xmlsoft.org/XSLT/index.html")
     (synopsis "C library for applying XSLT stylesheets to XML documents")
@@ -174,19 +150,6 @@ project (but it is usable outside of the Gnome platform).")
      "Libxslt is an XSLT C library developed for the GNOME project.  It is
 based on libxml for XML parsing, tree manipulation and XPath support.")
     (license license:x11)))
-
-(define-public libxslt/fixed
-  (package
-    (inherit libxslt)
-    (source
-     (let ((version "1.1.29"))
-       (origin
-         (method url-fetch)
-         (uri (string-append "ftp://xmlsoft.org/libxslt/libxslt-"
-                             version ".tar.gz"))
-         (sha256
-          (base32
-           "1klh81xbm9ppzgqk339097i39b7fnpmlj8lzn8bpczl3aww6x5xm")))))))
 
 (define-public perl-xml-parser
   (package
@@ -244,7 +207,7 @@ module.")
 (define-public perl-xml-libxml
   (package
     (name "perl-xml-libxml")
-    (version "2.0125")
+    (version "2.0128")
     (source
      (origin
        (method url-fetch)
@@ -252,7 +215,7 @@ module.")
                            "XML-LibXML-" version ".tar.gz"))
        (sha256
         (base32
-         "1mvbv1pwpdqni9ia9b6brg8brnnvfxr8j5x872qsngc92gipyh01"))))
+         "0awgd2gjzy7kn38bqblsigikzl81xsi561phkz9f9b9v3x2vmrr6"))))
     (build-system perl-build-system)
     (propagated-inputs
      `(("perl-xml-namespacesupport" ,perl-xml-namespacesupport)
@@ -693,7 +656,8 @@ UTF-8 and UTF-16 encoding.")
     (version "2.6.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/tinyxml/tinyxml_"
+              (uri (string-append "mirror://sourceforge/tinyxml/tinyxml/"
+                                  version "/tinyxml_"
                                   (string-join (string-split version #\.) "_")
                                   ".tar.gz"))
               (sha256

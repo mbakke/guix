@@ -2,7 +2,7 @@
 
 #+TITLE: Hacking GNU Guix and Its Incredible Distro
 
-Copyright © 2012, 2013, 2014 Ludovic Courtès <ludo@gnu.org>
+Copyright © 2012, 2013, 2014, 2016 Ludovic Courtès <ludo@gnu.org>
 Copyright © 2015 Mathieu Lirzin <mthl@openmailbox.org>
 
   Copying and distribution of this file, with or without modification,
@@ -34,6 +34,14 @@ package upgrades, except upgrades that trigger a lot of rebuilds (for example,
 upgrading GnuTLS or GLib.)  We have a mailing list for commit notifications
 (guix-commits@gnu.org), so people can notice.  Before pushing your changes,
 make sure to run ‘git pull --rebase’.
+
+All commits that are pushed to the central repository on Savannah must be
+signed with an OpenPGP key, and the public key should be uploaded to your user
+account on Savannah and to public key servers, such as ‘pgp.mit.edu’.  To
+configure Git to automatically sign commits, run:
+
+  git config commit.gpgsign true
+  git config user.signingkey CABBA6EA1DC0FF33
 
 For anything else, please post to guix-devel@gnu.org and leave time for a
 review, without committing anything.  If you didn’t receive any reply

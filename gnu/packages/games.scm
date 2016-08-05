@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 John Darrington <jmd@gnu.org>
+;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2016 David Thompson <dthompson2@worcester.edu>
 ;;; Copyright © 2014, 2015, 2016 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2014 Cyrill Schenkel <cyrill.schenkel@gmail.com>
@@ -20,7 +21,7 @@
 ;;; Copyright © 2016 Albin Söderqvist <albin@fripost.org>
 ;;; Copyright © 2016 Kei Kebreau <kei@openmailbox.org>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il"
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -54,12 +55,15 @@
   #:use-module (gnu packages audio)
   #:use-module (gnu packages avahi)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages fltk)
   #:use-module (gnu packages fribidi)
   #:use-module (gnu packages game-development)
   #:use-module (gnu packages gettext)
+  #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages libcanberra)
@@ -69,6 +73,7 @@
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages netpbm)
   #:use-module (gnu packages python)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages xorg)
@@ -93,9 +98,7 @@
   #:use-module (gnu packages video)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages tcl)
-  #:use-module (gnu packages fribidi)
   #:use-module (gnu packages xdisorg)
-  #:use-module (guix build-system trivial)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system haskell)
   #:use-module (guix build-system cmake)
@@ -1023,14 +1026,16 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.12.5")
+    (version "1.12.6")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/wesnoth/"
+              (uri (string-append "mirror://sourceforge/wesnoth/wesnoth-"
+                                  (version-major+minor version) "/wesnoth-"
+                                  version "/"
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "07d8ms9ayswg2g530p0zwmz3d77zv68l6nmc718iq9sbv90av6jr"))))
+                "0kifp6g1dsr16m6ngjq2hx19h851fqg326ps3krnhpyix963h3x5"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ; no check target
@@ -1868,14 +1873,14 @@ and a game metadata scraper.")
 (define openttd-engine
   (package
     (name "openttd-engine")
-    (version "1.6.0")
+    (version "1.6.1")
     (source
      (origin (method url-fetch)
              (uri (string-append "http://binaries.openttd.org/releases/"
                                  version "/openttd-" version "-source.tar.xz"))
              (sha256
               (base32
-               "1cjf9gz7d0sn7893wv9d00q724sxv3d81bgb0c5f5ppz2ssyc4jc"))
+               "1ak32fj5xkk2fvmm3g8i7wzmk4bh2ijsp8fzvvw5wj6365p9j24v"))
              (modules '((guix build utils)))
              (snippet
               ;; The DOS port contains proprietary software.
@@ -1915,7 +1920,8 @@ and a game metadata scraper.")
 passengers by land, water and air.  It is a re-implementation of Transport
 Tycoon Deluxe with many enhancements including multiplayer mode,
 internationalization support, conditional orders and the ability to clone,
-autoreplace and autoupdate vehicles.")
+autoreplace and autoupdate vehicles.  This package only includes the game engine.  When you start
+it you will be prompted to download a graphics set.")
     (home-page "http://openttd.org/")
     ;; This package is GPLv2, except for a few files located in
     ;; "src/3rdparty/" which are under the 3-clause BSD, LGPLv2.1+ and Zlib
@@ -2082,7 +2088,7 @@ is attributed to Albert Einstein.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "http://www.hoopajoo.net/static/projects/powwow-"
+                    "https://www.hoopajoo.net/static/projects/powwow-"
                     version ".tar.gz"))
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
@@ -2102,42 +2108,42 @@ http://lavachat.symlynx.com/unix/")
 
 (define-public red-eclipse
   (let ((data-sources
-         '(("acerspyro"   "0gxxr6nbac918b49x1cp72nw951hqm5m4iyi2shb1612ly384w8q")
-           ("actors"      "1jq9q82m6nx07nwpb5cnpdcwa33jrcgg0j2yir8zk6zpnxdmp0il")
-           ("appleflap"   "1cn41c6xs68l88rmphqh4rlsh6h04xnkkvklxdpqpvvr4zlsmi85")
-           ("blendbrush"  "0wjbgnniirl9arv274m8mpdqbbq7d09g0pq1z9dl56sazmbk5yy0")
-           ("caustics"    "0gxv1pqhi6c27mqi9mwqyfnzv9rq5sva1vgxhb9ljh231rmkdc15")
-           ("crosshairs"  "0vlyhd10mly2qnjpwvss9ani7dg3v2njpf7457ilx7fk9a3hlbkk")
-           ("elyvisions"  "0s0l77rd9fd09imvj05pwcz4bqrn3j8qsw8prv5pi5bqa50mbn19")
-           ("fonts"       "0apn8j9lf43nmnidq1f0azhrr1n896g7si4djbix1bwll6ild0mq")
-           ("freezurbern" "0y60s3g8v8bl2m6pk2yr9fzl67ymv821x6l2f9hszzydlcjwlscn")
-           ("john"        "1lmwn0r7qpyac2qrnkv9llhsbyzqpgr27hxq2qn1rfbq12fja0ld")
-           ("jojo"        "0sh3ricqlqw868a0mz2n9iw7lhp650pysd2wkcdizhcmw2hlayx9")
-           ("jwin"        "1r459jhxx64j3vdw886ypkm6zg0yg6cr2qark54i1zdskjhp762k")
-           ("luckystrike" "08xq87crcz0jq45q1g6p8h4xrm1bcqzd019zp7n0f9c3p9j6al91")
-           ("maps"        "1f0hqh8mbd4nzqi4hja4k5f380nszhx8igajg5ini4p9cp39x9vi")
-           ("mayhem"      "1hn9jp64aiz8k6p2nxyg82h2nc8fadgghzhrm26y7i4bz9xwxacm")
-           ("mikeplus64"  "1kj2zznxykgm3f1h1fvd8xzim5f292lyh96l2gj5km1nynzjmaap")
-           ("misc"        "1phmzjs5rmika3568b7jb6ywbsi40r711rhg8cbsflllcp7hdidf")
-           ("nobiax"      "08in9c24m2pq7x371q10ny4q3l1l3zb8m029iypy2lx9gr99i7hm")
-           ("particles"   "0wcd3s6vhrjknffnfqrcpkcqk1r01f1fiz6q7n4srhpdv3i4d6vm")
-           ("philipk"     "1s0kmap8iv5sddanrhycblskj3ywvz9xg2m11f6vnfy108palkga")
-           ("projectiles" "0xdhrs9rsncd1f88s5igdbfksli7h0irg5jdbj6p2a3rgdzb3gnj")
-           ("props"       "1sbh3a94pmzic78bil0dvdh4fd8s6gh52f77jdram3w0gwv79x3r")
-           ("skyboxes"    "0hy95a6ps0fk4cq8j6pjipk8rnsjna9bm0ly2l373gbshlfg6zgi")
-           ("sounds"      "1pnyd7acm19sj1k1cy9hq3n3dnzzaiak7j5f0h7fikiybq5rdk7b")
-           ("textures"    "0gxfnc4xm0kp3pd7lhd4yy1dqq00g727h21l64nyiw2b2d6n1755")
-           ("torley"      "1cri5mf8ls8mvpn1x1p9hacyg9ibilaiz07gqv2hl2q8ww5xc1s6")
-           ("trak"        "0xyk5z59kn9ym9n5fdcrwhqig6gjcjgnrgi9rqbbai713w9vpsbq")
-           ("ulukai"      "0ziv9c4inmza40mas1w9dp048y6f646x00bs7kqv33hd1snbg3v3")
-           ("unnamed"     "0hm291k9azilnp0m04zhm52vml1rhxk1z4l74v66spbikr6s2zdx")
-           ("vanities"    "1qbc2v67kdrlvq10miw3dfmg3j9w9bq1hgqrzjcbph0l4gra1ndw")
-           ("vegetation"  "13928yw0wflcj620cmp8rqwplaw8508f3j4zi32vxida1ksz6xn0")
-           ("weapons"     "1ghn6nfcnd5lyl8dnj22csldvf9hrb32wjzpab4sjjz3iyv0zmr3")
-           ("wicked"      "0q9badvg6ix5rhl05s83kw2v6a49jpnbkqk4ls89qahaddfagi8g"))))
+         '(("acerspyro"   "0s6q56i5marpm67lx70g5109lir5d6r45y45i8kbz6arc1spa7pp")
+           ("actors"      "0jclmciz64i81ngxwbag8x5m8wvxkhraa9c7plix566y6rh28fv1")
+           ("appleflap"   "1iz5igzdksamldhy0zh4vdjkxqhmg5c0n5g64pd3kan6h8vlbkq4")
+           ("blendbrush"  "1hz3x5npp25dixcadp020xyahmd1i3ihs4cdf77iy84i9njbp7bv")
+           ("caustics"    "05sbj46lrc6lkf7j6ls6jwc21n0qzxvfhfy9j7hdw482p9gvz54h")
+           ("crosshairs"  "05vfxc6vm91dyf1kzig550fglgydp9szl9135q677lk4g60w5dfh")
+           ("elyvisions"  "0fzdbxc40ggqmv4v1llx6sys2gjc6l1nxsbi5scpxqvm86dbddi9")
+           ("fonts"       "0sbvnd96aip49dy1ja01s36p8fwwczibpic7myfw1frs110m0zgr")
+           ("freezurbern" "0k60dzzq42mfq360qf7bsf4alhy6k5gjfaidg2i1wsz5zssgmqwn")
+           ("john"        "1ln9v8vfm0ggavvdyl438cy4mizzm1i87r9msx1sbja30q8f57c1")
+           ("jojo"        "0cdgl82s4bm6qlv07fsq5l7anbywvvw13d0mng831yn6scf0hxb1")
+           ("jwin"        "0yg5vriffyckgfjmi4487sw07hsp44b3gfw90f0v4jsgbjjm2v20")
+           ("luckystrike" "0f82caq09znsr9m08qnlbh3jl9j5w0ysga0b7d5ayqr5lpqxfk9k")
+           ("maps"        "14m23h3mip12anhx7i9k5xlapwkjbw4n0l7lj1b7dfcimf71gjll")
+           ("mayhem"      "0dxrr6craqi7ag724qfj9y0lb0pmwyrfpap02cndmjbbacdya0ra")
+           ("mikeplus64"  "040giyrk3hdd26sxhdx37q4mk923g5v3jbrinq1fw2yfvsl6n1cs")
+           ("misc"        "07xfs9hngshg27rl2vf65nyxilgnak3534h8msaan0fjgmzvlk0q")
+           ("nobiax"      "1n3nghi5426r2zav4rsfih8gn37sfa85absvhdwhir8wycsvbkh6")
+           ("particles"   "0yj0nykal3fgxx50278xl2zn2bfz09wbrjcvng56aa6hhfiwp8gd")
+           ("philipk"     "1m3krkxq9hsknbmxg1g5sgnpcv7c8c2q7zpbizw2wb3dir8snvcj")
+           ("projectiles" "05swvalja7vzqc3dlk136n5b5kdzn3a8il6bg1h12alcaa0k9rba")
+           ("props"       "1cqi6gw5s4z5pj06x6kiiilh4if0hm1yrbqys5dln23mcvw8f0ny")
+           ("skyboxes"    "1mm6xl89b0l98l2h3qn99id7svmpwr940bydgjbcrvlx21yqdric")
+           ("sounds"      "03q7jazf0chszyiaa9cxirbwdnckcp5fl812sj42lv0z4sqz222l")
+           ("textures"    "1caqyxa9xkrwpyhac65akdv1l7nqychgz7zfivasnskk2yy6jani")
+           ("torley"      "1hp8lkzqmdqyq3jn9rains32diw11gg1w3dxxlln5pc041cd7vil")
+           ("trak"        "0wlczjax33q0hz75lgc4qnxlm592pcxgnbkin5qrglv59nrxzxyr")
+           ("ulukai"      "0dkn7qxf92sidhsy4sm4v5z54n449a2z2w9qax5cfgzs78kb5c34")
+           ("unnamed"     "0p9mmfp0vplmswyxh8qab33phcl8lzmzh3mms4f7i587hppdg6db")
+           ("vanities"    "1w23853lmvj4kx5cbxvb5dk598jiqz7ml2bm0qiy7idkf5mcd2lv")
+           ("vegetation"  "0jw1ljhmv62fzvklid6i8syiacmrs075cp7r3gc069bg4fg47cpn")
+           ("weapons"     "1p64ry1s4y7hkgm6i2rdk2x78368359wvx8v81gg179p3sjnjkww")
+           ("wicked"      "1kmpy2n15lyh50rqjspyfg3qrc72jf0n3dx2y3ian7pjfp6ldxd9"))))
     (package
       (name "red-eclipse")
-      (version "1.5.3")
+      (version "1.5.5")
       (source (origin
                 (method url-fetch)
                 (uri (string-append "https://github.com/red-eclipse/base"
@@ -2145,7 +2151,7 @@ http://lavachat.symlynx.com/unix/")
                 (file-name (string-append name "-" version ".tar.gz"))
                 (sha256
                  (base32
-                  "1y0jv5lz69zisiw8sd5z9a9v21zc83by1sx9b7dly78ngif4gc4l"))))
+                  "0xl3655876i8j5nixy0yp73s0yw9nwysj68fyhqs2agmvshryy96"))))
       (build-system gnu-build-system)
       (arguments
        `(#:tests? #f            ; no check target
@@ -2164,7 +2170,7 @@ http://lavachat.symlynx.com/unix/")
                                     "-Cdata"
                                     "--transform"
                                     (string-append "s/"
-                                                   name "-1.5.3/"
+                                                   name "-" ,version "/"
                                                    name "/")))
                          (list ,@(map car data-sources)))
                #t))
@@ -2173,13 +2179,15 @@ http://lavachat.symlynx.com/unix/")
              (lambda* (#:key inputs #:allow-other-keys)
                (setenv "CPATH"
                        (string-append (assoc-ref inputs "sdl-union")
-                                      "/include/SDL"))
+                                      "/include/SDL2"))
                #t))
            (add-after 'install 'copy-data
              (lambda* (#:key outputs #:allow-other-keys)
                (let ((out (assoc-ref outputs "out")))
                  (copy-recursively "config"
                                    (string-append out "/config"))
+                 (copy-file "doc/examples/servinit.cfg"
+                            (string-append out "/config/servinit.cfg"))
                  (copy-recursively "data"
                                    (string-append out "/data")))
                #t))
@@ -2217,7 +2225,9 @@ exec -a \"$0\" ~a/.redeclipse_server_linux-real~%"
       (inputs
        `(("curl" ,curl)
          ("glu" ,glu)
-         ("sdl-union" ,(sdl-union))
+         ("sdl-union" ,(sdl-union (list sdl2
+                                        sdl2-image
+                                        sdl2-mixer)))
          ;; Create origin records for the many separate data packages.
          ,@(map (match-lambda
                   ((name hash)
@@ -2361,9 +2371,9 @@ Super Game Boy, BS-X Satellaview, and Sufami Turbo.")
                           (perl    (string-append (assoc-ref %build-inputs
                                                              "perl")
                                                   "/bin"))
-                          (gunzip  (string-append (assoc-ref %build-inputs
+                          (gzip    (string-append (assoc-ref %build-inputs
                                                              "gzip")
-                                                  "/bin/gunzip"))
+                                                  "/bin/gzip"))
                           (tar     (string-append (assoc-ref %build-inputs
                                                              "tar")
                                                   "/bin/tar"))
@@ -2373,7 +2383,7 @@ Super Game Boy, BS-X Satellaview, and Sufami Turbo.")
                      (begin
                        (mkdir out)
                        (copy-file tarball "grue-hunter.tar.gz")
-                       (zero? (system* gunzip "grue-hunter.tar.gz"))
+                       (zero? (system* gzip "-d" "grue-hunter.tar.gz"))
                        (zero? (system* tar "xvf"  "grue-hunter.tar"))
 
                        (mkdir-p bin)
@@ -2528,3 +2538,196 @@ safety of the Chromium vessel.")
     ;; Clarified Artistic License for everything but sound, which is covered
     ;; by the Expat License.
     (license (list license:clarified-artistic license:expat))))
+
+(define-public tuxpaint
+  (package
+    (name "tuxpaint")
+    (version "0.9.22")                  ;keep VER_DATE below in sync
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/tuxpaint/tuxpaint/"
+                           version "/tuxpaint-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1qrbrdck9yxpcg3si6jb9i11w8lw9h4hqad0pfaxgyiniqpr7gca"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove win32 directory which contains binary dll's and the
+           ;; deprecated visualc directory.
+           (for-each delete-file-recursively '("win32" "visualc"))
+           (substitute* "Makefile"
+             ;; Do not rely on $(GPERF) being an absolute file name
+             (("\\[ -x \\$\\(GPERF\\) \\]")
+              "$(GPERF) --version >/dev/null 2>&1"))))
+       (patches (search-patches "tuxpaint-stamps-path.patch"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("gperf" ,gperf)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("cairo" ,cairo)
+       ("fribidi" ,fribidi)
+       ("gettext" ,gnu-gettext)
+       ("libpng" ,libpng)
+       ("librsvg" ,librsvg)
+       ("libpaper" ,libpaper)
+       ("netpbm" ,netpbm)
+       ("sdl" ,(sdl-union (list sdl sdl-mixer sdl-ttf sdl-image)))))
+    ;; TODO: Use system fonts rather than those in data/fonts
+    (arguments
+     `(#:make-flags `("VER_DATE=2014-08-23"
+                      "GPERF=gperf" "CC=gcc"
+                      "SDL_PCNAME=sdl SDL_image SDL_mixer SDL_ttf"
+                      ,(string-append "PREFIX=" %output)
+                      "GNOME_PREFIX=$(PREFIX)"
+                      "COMPLETIONDIR=$(PREFIX)/etc/bash_completion.d")
+       #:tests? #f                      ;No tests
+       #:phases (modify-phases %standard-phases
+                  (delete 'configure)   ;no configure phase
+                  (add-after 'install 'fix-import
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      (let* ((out (assoc-ref outputs "out"))
+                             (net (assoc-ref inputs "netpbm"))
+                             (tpi (string-append out "/bin/tuxpaint-import")))
+                        (substitute* tpi
+                          ;; Point to installation prefix so that the default
+                          ;; configure file is found.
+                          (("/usr/local") out))
+                        ;; tuxpaint-import uses a bunch of programs from
+                        ;; netpbm, so make sure it knows where those are
+                        (wrap-program tpi
+                          `("PATH" ":" prefix
+                            (,(string-append net "/bin"))))))))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "TUXPAINT_STAMPS_PATH")
+            (files '("share/tuxpaint/stamps")))))
+    (home-page "http://www.tuxpaint.org")
+    (synopsis "Drawing software for children")
+    (description
+     "Tux Paint is a free drawing program designed for young children (kids
+ages 3 and up).  It has a simple, easy-to-use interface; fun sound effects;
+and an encouraging cartoon mascot who helps guide children as they use the
+program.  It provides a blank canvas and a variety of drawing tools to help
+your child be creative.")
+    (license license:gpl2+)))
+
+(define-public tuxpaint-stamps
+  (package
+    (name "tuxpaint-stamps")
+    (version "2014.08.23")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/tuxpaint/tuxpaint-stamps/"
+                           (string-map (λ (x) (if (eq? x #\.) #\- x)) version)
+                           "/tuxpaint-stamps-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0rhlwrjz44wp269v3rid4p8pi0i615pzifm1ym6va64gn1bms06q"))))
+    (build-system trivial-build-system)
+    (native-inputs
+     `(("tar" ,tar)
+       ("gzip" ,gzip)))
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder (begin
+                   (use-modules (guix build utils))
+                   (setenv "PATH"
+                           (string-append
+                            (assoc-ref %build-inputs "tar") "/bin" ":"
+                            (assoc-ref %build-inputs "gzip") "/bin"))
+                   (system* "tar" "xvf" (assoc-ref %build-inputs "source"))
+                   (chdir (string-append ,name "-" ,version))
+                   (let ((dir (string-append %output "/share/tuxpaint/stamps")))
+                     (mkdir-p dir)
+                     (copy-recursively "stamps" dir)))))
+    (home-page (package-home-page tuxpaint))
+    (synopsis "Stamp images for Tux Paint")
+    (description
+     "This package contains a set of \"Rubber Stamp\" images which can be used
+with the \"Stamp\" tool within Tux Paint.")
+    (license license:gpl2+)))
+
+(define-public tuxpaint-config
+  (package
+    (name "tuxpaint-config")
+    (version "0.0.13")                  ;keep VER_DATE below in sync
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/tuxpaint/tuxpaint-config/"
+                           version "/tuxpaint-config-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1z12s46mvy87qs3vgq9m0ki9pp21zqc52mmgphahpihw3s7haf6v"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("gettext" ,gnu-gettext)))
+    (inputs
+     `(("fltk" ,fltk)
+       ("libpaper" ,libpaper)
+       ;; TODO: Should the following be propagated by fltk?
+       ("libx11" ,libx11)
+       ("libxft" ,libxft)
+       ("mesa" ,mesa)))
+    (arguments
+     `(#:make-flags `("VER_DATE=2014-08-23"
+                      "CONFDIR=/etc/tuxpaint" ;don't write to store
+                      ,(string-append "PREFIX=" %output)
+                      "GNOME_PREFIX=$(PREFIX)")
+       #:tests? #f                      ;no tests
+       #:phases (modify-phases %standard-phases
+                  (delete 'configure)   ;no configure phase
+                  (add-before 'install 'gzip-no-name
+                    (lambda* _
+                      (substitute* "Makefile"
+                        ;; tuxpaint-config compresses its own documentation;
+                        ;; make sure it uses flags for reproducibility.
+                        (("gzip") "gzip --no-name"))))
+                  (add-before 'install 'make-install-dirs
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((out (assoc-ref outputs "out")))
+                        (mkdir-p (string-append out "/bin"))
+                        #t))))))
+    (home-page (package-home-page tuxpaint))
+    (synopsis "Configure Tux Paint")
+    (description
+     "Tux Paint Config is a graphical configuration editor for Tux Paint.")
+    (license license:gpl2)))            ;no "or later" present
+
+(define-public supertux
+  (package
+   (name "supertux")
+   (version "0.4.0")
+   (source (origin
+            (method url-fetch)
+            (uri (string-append "https://github.com/SuperTux/supertux/releases/"
+                                "download/v" version
+                                "/supertux-" version ".tar.bz2"))
+            (sha256
+             (base32
+              "10ppmy6w77lxj8bdzjahc9bidgl4qgzr9rimn15rnqay84ydx3fi"))))
+   (arguments '(#:tests? #f
+                #:configure-flags '("-DINSTALL_SUBDIR_BIN=bin")))
+   (build-system cmake-build-system)
+   (inputs `(("sdl2" ,sdl2)
+             ("sdl2-image" ,sdl2-image)
+             ("sdl2-mixer" ,sdl2-mixer)
+             ("openal" ,openal)
+             ("mesa" ,mesa)
+             ("glew" ,glew)
+             ("libvorbis" ,libvorbis)
+             ("libogg" ,libogg)
+             ("physfs" ,physfs)
+             ("curl" ,curl)
+             ("boost" ,boost)))
+   (native-inputs `(("pkg-config" ,pkg-config)))
+   (synopsis "2D platformer game")
+   (description "SuperTux is a free classic 2D jump'n run sidescroller game
+in a style similar to the original Super Mario games covered under
+the GNU GPL.")
+   (home-page "https://supertuxproject.org/")
+   (license license:gpl3+)))

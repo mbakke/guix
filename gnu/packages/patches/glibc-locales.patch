@@ -5,8 +5,8 @@ in a package separate from glibc.
   2. Use '--no-archive' to avoid building the big locale archive, and
      because the already-built 'localedef' would want to write it
      to '/run/current-system/locale', which is not possible.
-  3. Pass $(localedir)/$$locale to install files in the right place, and
-     because otherwise, 'localedef' fails with:
+  3. Pass $(inst_complocaledir)/$$locale to install files in the right
+     place, and because otherwise, 'localedef' fails with:
      "cannot write output files to `(null)'".
 
 --- glibc-2.22/localedata/Makefile	1970-01-01 01:00:00.000000000 +0100
@@ -25,7 +25,7 @@ in a package separate from glibc.
  	$(LOCALEDEF) --alias-file=../intl/locale.alias \
  		     -i locales/$$input -c -f charmaps/$$charset \
 -		     $(addprefix --prefix=,$(install_root)) $$locale \
-+		     $(addprefix --prefix=,$(install_root)) $(localedir)/$$locale \
++		     $(addprefix --prefix=,$(install_root)) $(inst_complocaledir)/$$locale \
  	&& echo ' done'; \
  
  tst-setlocale-ENV = LC_ALL=ja_JP.EUC-JP

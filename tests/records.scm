@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -17,6 +17,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (test-records)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-64)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
@@ -213,6 +214,32 @@
              (set! m 777)
              (equal? (foo-bar y) 1))              ;promise was already forced
            (eq? (foo-baz y) 'b)))))
+
+(test-assert "define-record-type* & wrong field specifier"
+  (let ((exp '(begin
+                (define-record-type* <foo> foo make-foo
+                  foo?
+                  (bar foo-bar (default 42))
+                  (baz foo-baz))
+
+                (foo (baz 1 2 3 4 5))))           ;syntax error
+        (loc         (current-source-location)))  ;keep this alignment!
+    (catch 'syntax-error
+      (lambda ()
+        (eval exp (test-module))
+        #f)
+      (lambda (key proc message location form . args)
+        (and (eq? proc 'foo)
+             (string-match "invalid field" message)
+             (equal? form '(baz 1 2 3 4 5))
+
+             ;; Make sure the location is that of the field specifier.
+             ;; See <http://bugs.gnu.org/23969>.
+             (lset= equal?
+                    (pk 'expected-loc
+                        `((line . ,(- (assq-ref loc 'line) 1))
+                          ,@(alist-delete 'line loc)))
+                    (pk 'actual-loc location)))))))
 
 (test-assert "define-record-type* & missing initializers"
   (catch 'syntax-error

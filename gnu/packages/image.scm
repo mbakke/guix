@@ -8,6 +8,7 @@
 ;;; Copyright © 2014 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -332,8 +333,8 @@ work.")
       (origin
         (method url-fetch)
         (uri
-         (string-append "mirror://sourceforge/openjpeg.mirror/" name "-"
-                        version ".tar.gz"))
+         (string-append "mirror://sourceforge/openjpeg.mirror/" version "/"
+                        name "-" version ".tar.gz"))
         (sha256
          (base32 "00zzm303zvv4ijzancrsb1cqbph3pgz0nky92k9qx3fq9y0vnchj"))
         (patches (search-patches "openjpeg-use-after-free-fix.patch"
@@ -369,8 +370,8 @@ error-resilience, a Java-viewer for j2k-images, ...")
      (origin
        (method url-fetch)
        (uri
-        (string-append "mirror://sourceforge/openjpeg.mirror/" name "-"
-                       version ".tar.gz"))
+        (string-append "mirror://sourceforge/openjpeg.mirror/" version "/"
+                       name "-" version ".tar.gz"))
        (sha256
         (base32 "1c2xc3nl2mg511b63rk7hrckmy14681p1m44mzw3n1fyqnjm0b0z"))
        (patches (search-patches "openjpeg-use-after-free-fix.patch"
@@ -384,8 +385,8 @@ error-resilience, a Java-viewer for j2k-images, ...")
      (origin
        (method url-fetch)
        (uri
-        (string-append "mirror://sourceforge/openjpeg.mirror/" name "-"
-                       version ".tar.gz"))
+        (string-append "mirror://sourceforge/openjpeg.mirror/" version "/"
+                       name "-" version ".tar.gz"))
        (sha256
         (base32 "11waq9w215zvzxrpv40afyd18qf79mxc28fda80bm3ax98cpppqm"))))))
 
@@ -396,8 +397,7 @@ error-resilience, a Java-viewer for j2k-images, ...")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/giflib/giflib-"
-                                  (first (string-split version #\.))
-                                  ".x/giflib-" version ".tar.bz2"))
+                                  version ".tar.bz2"))
               (sha256
                (base32
                 "1md83dip8rf29y40cm5r7nn19705f54iraz6545zhwa6y8zyq9yz"))))
@@ -443,7 +443,8 @@ compose, and analyze GIF images.")
     (version "4.1.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/giflib/libungif-"
+              (uri (string-append "mirror://sourceforge/giflib/libungif-4.x/"
+                                  "libungif-" version "/libungif-"
                                   version ".tar.bz2"))
               (sha256
                (base32
@@ -463,8 +464,8 @@ compose, and analyze GIF images.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/enlightenment/imlib2-"
-                    version ".tar.bz2"))
+                    "mirror://sourceforge/enlightenment/imlib2-src/" version
+                    "/imlib2-" version ".tar.bz2"))
               (sha256
                (base32
                 "08809xxk2555yj6glixzw9a0x3x8cx55imd89kj3r0h152bn8a3x"))))
@@ -663,8 +664,8 @@ channels.")
     (version "2.0.3")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/libmng/"
-                                  name "-" version ".tar.xz"))
+              (uri (string-append "mirror://sourceforge/libmng/libmng-devel/"
+                                  version "/" name "-" version ".tar.xz"))
               (sha256
                (base32
                 "1lvxnpds0vcf0lil6ia2036ghqlbl740c4d2sz0q5g6l93fjyija"))))
@@ -801,3 +802,34 @@ the programmer.")
     ;; test/extra/ contains musl-libm, 
     ;; which is MIT/expat licensed, but only used for tests
     (license (license:fsf-free "file://COPYING")))) ;WTFPL version 2
+
+(define-public perceptualdiff
+  (package
+    (name "perceptualdiff")
+    (version "1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/myint/perceptualdiff/archive/v"
+                           version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+        (sha256
+         (base32
+          "0zl6xmp971fffg7fzcz2fbgxg5x2w7l8qa65c008i4kbkc9016ps"))))
+    (build-system cmake-build-system)
+    (inputs `(("freeimage" ,freeimage)))
+    (arguments
+     '(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'fix-tests
+                    ;; cmake-build-system uses a build/ directory outside
+                    ;; of the source tree, one level higher than expected
+                    (lambda _
+                      (substitute* "test/run_tests.bash"
+                        (("../build") "../../build")))))))
+    (home-page "https://github.com/myint/perceptualdiff")
+    (synopsis "Perceptual image comparison utility")
+    (description "PerceptualDiff visually compares two images to determine
+whether they look alike.  It uses a computational model of the human visual
+system to detect similarities.  This allows it too see beyond irrelevant
+differences in file encoding, image quality, and other small variations.")
+    (license license:gpl2+)))

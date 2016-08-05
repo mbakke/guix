@@ -257,14 +257,12 @@ supports HTTPS, HTTPS and GnuTLS.")
            %standard-phases)))))
    (synopsis "Secure, decentralized, peer-to-peer networking framework")
    (description
-    "GNUnet is a framework for secure peer-to-peer networking that does not
-use any centralized or otherwise trusted services.  Our high-level goal is to
-provide a strong free software foundation for a global network that provides
-security and privacy.  GNUnet started with an idea for anonymous
-censorship-resistant file-sharing, but has grown to incorporate other
-applications as well as many generic building blocks for secure networking
-applications.  In particular, GNUnet now includes the GNU Name System, a
-privacy-preserving, decentralized public key infrastructure.")
+     "GNUnet is a framework for secure peer-to-peer networking.  The
+high-level goal is to provide a strong foundation of free software for a
+global, distributed network that provides security and privacy.  GNUnet in
+that sense aims to replace the current internet protocol stack.  Along with
+an application for secure publication of files, it has grown to include all
+kinds of basic applications for the foundation of a GNU internet.")
    (license license:gpl3+)
    (home-page "https://gnunet.org/")))
 
@@ -318,7 +316,9 @@ services.")
     (arguments
      `(#:configure-flags
        (list "--without-libunique"
-             "--with-qrencode")))
+             "--with-qrencode"
+             (string-append "--with-gnunet="
+                            (assoc-ref %build-inputs "gnunet")))))
     (inputs
      `(("gnunet" ,gnunet)
        ("libgcrypt" ,libgcrypt)

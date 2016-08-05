@@ -33,8 +33,8 @@
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/mcrypt/mcrypt-"
-                          version ".tar.gz"))
+      (uri (string-append "mirror://sourceforge/mcrypt/MCrypt/"
+                          version "/" name "-" version ".tar.gz"))
       (sha256
        (base32
         "161031n1w9pb4yzz9i47szc12a4mwpcpvyxnvafsik2l9s2aliai"))
@@ -66,8 +66,8 @@ them.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/mcrypt/libmcrypt-"
-                          version ".tar.gz"))
+      (uri (string-append "mirror://sourceforge/mcrypt/Libmcrypt/" version
+                          "/libmcrypt-" version ".tar.gz"))
       (sha256
        (base32
         "0gipgb939vy9m66d3k8il98rvvwczyaw2ixr8yn6icds9c3nrsz4"))))
@@ -89,9 +89,8 @@ XTEA, 3WAY, TWOFISH, BLOWFISH, ARCFOUR, WAKE and more.")
     (source
      (origin
       (method url-fetch)
-
-      (uri (string-append "mirror://sourceforge/mhash/mhash-"
-                          version ".tar.bz2"))
+      (uri (string-append "mirror://sourceforge/mhash/mhash/" version
+                          "/mhash-" version ".tar.bz2"))
       (sha256
        (base32
         "1w7yiljan8gf1ibiypi6hm3r363imm3sxl1j8hapjdq3m591qljn"))

@@ -90,6 +90,21 @@
           (options "trans=virtio")
           (check? #f))))
 
+(define %vm-module-closure
+  ;; The closure of (gnu build vm), roughly.
+  ;; FIXME: Compute it automatically.
+  '((gnu build vm)
+    (gnu build install)
+    (gnu build linux-boot)
+    (gnu build linux-modules)
+    (gnu build file-systems)
+    (guix elf)
+    (guix records)
+    (guix build utils)
+    (guix build syscalls)
+    (guix build bournish)
+    (guix build store-copy)))
+
 (define* (expression->derivation-in-linux-vm name exp
                                              #:key
                                              (system (%current-system))
@@ -97,18 +112,6 @@
                                              initrd
                                              (qemu qemu-minimal)
                                              (env-vars '())
-                                             (modules
-                                              '((gnu build vm)
-                                                (gnu build install)
-                                                (gnu build linux-boot)
-                                                (gnu build linux-modules)
-                                                (gnu build file-systems)
-                                                (guix elf)
-                                                (guix records)
-                                                (guix build utils)
-                                                (guix build syscalls)
-                                                (guix build bournish)
-                                                (guix build store-copy)))
                                              (guile-for-build
                                               (%guile-for-build))
 
@@ -128,23 +131,13 @@ When MAKE-DISK-IMAGE? is true, then create a QEMU disk image of type
 DISK-IMAGE-FORMAT (e.g., 'qcow2' or 'raw'), of DISK-IMAGE-SIZE bytes and
 return it.
 
-MODULES is the set of modules imported in the execution environment of EXP.
-
 When REFERENCES-GRAPHS is true, it must be a list of file name/store path
 pairs, as for `derivation'.  The files containing the reference graphs are
 made available under the /xchg CIFS share."
   (mlet* %store-monad
-      ((module-dir   (imported-modules modules))
-       (compiled     (compiled-modules modules))
-       (user-builder (gexp->file "builder-in-linux-vm" exp))
+      ((user-builder (gexp->file "builder-in-linux-vm" exp))
        (loader       (gexp->file "linux-vm-loader"
-                                 #~(begin
-                                     (set! %load-path
-                                           (cons #$module-dir %load-path))
-                                     (set! %load-compiled-path
-                                           (cons #$compiled
-                                                 %load-compiled-path))
-                                     (primitive-load #$user-builder))))
+                                 #~(primitive-load #$user-builder)))
        (coreutils -> (canonical-package coreutils))
        (initrd       (if initrd                   ; use the default initrd?
                          (return initrd)
@@ -155,34 +148,34 @@ made available under the /xchg CIFS share."
 
     (define builder
       ;; Code that launches the VM that evaluates EXP.
-      #~(begin
-          (use-modules (guix build utils)
-                       (gnu build vm))
+      (with-imported-modules %vm-module-closure
+        #~(begin
+            (use-modules (guix build utils)
+                         (gnu build vm))
 
-          (let ((inputs  '#$(list qemu coreutils))
-                (linux   (string-append #$linux "/bzImage"))
-                (initrd  (string-append #$initrd "/initrd"))
-                (loader  #$loader)
-                (graphs  '#$(match references-graphs
-                              (((graph-files . _) ...) graph-files)
-                              (_ #f))))
+            (let ((inputs  '#$(list qemu coreutils))
+                  (linux   (string-append #$linux "/bzImage"))
+                  (initrd  (string-append #$initrd "/initrd"))
+                  (loader  #$loader)
+                  (graphs  '#$(match references-graphs
+                                (((graph-files . _) ...) graph-files)
+                                (_ #f))))
 
-            (set-path-environment-variable "PATH" '("bin") inputs)
+              (set-path-environment-variable "PATH" '("bin") inputs)
 
-            (load-in-linux-vm loader
-                              #:output #$output
-                              #:linux linux #:initrd initrd
-                              #:memory-size #$memory-size
-                              #:make-disk-image? #$make-disk-image?
-                              #:disk-image-format #$disk-image-format
-                              #:disk-image-size #$disk-image-size
-                              #:references-graphs graphs))))
+              (load-in-linux-vm loader
+                                #:output #$output
+                                #:linux linux #:initrd initrd
+                                #:memory-size #$memory-size
+                                #:make-disk-image? #$make-disk-image?
+                                #:disk-image-format #$disk-image-format
+                                #:disk-image-size #$disk-image-size
+                                #:references-graphs graphs)))))
 
     (gexp->derivation name builder
                       ;; TODO: Require the "kvm" feature.
                       #:system system
                       #:env-vars env-vars
-                      #:modules modules
                       #:guile-for-build guile-for-build
                       #:references-graphs references-graphs)))
 
@@ -212,45 +205,46 @@ register INPUTS in the store database of the image so that Guix can be used in
 the image."
   (expression->derivation-in-linux-vm
    name
-   #~(begin
-       (use-modules (gnu build vm)
-                    (guix build utils))
+   (with-imported-modules %vm-module-closure
+     #~(begin
+         (use-modules (gnu build vm)
+                      (guix build utils))
 
-       (let ((inputs
-              '#$(append (list qemu parted grub e2fsprogs)
-                         (map canonical-package
-                              (list sed grep coreutils findutils gawk))
-                         (if register-closures? (list guix) '())))
+         (let ((inputs
+                '#$(append (list qemu parted grub e2fsprogs)
+                           (map canonical-package
+                                (list sed grep coreutils findutils gawk))
+                           (if register-closures? (list guix) '())))
 
-             ;; This variable is unused but allows us to add INPUTS-TO-COPY
-             ;; as inputs.
-             (to-register
-              '#$(map (match-lambda
-                       ((name thing) thing)
-                       ((name thing output) `(,thing ,output)))
-                      inputs)))
+               ;; This variable is unused but allows us to add INPUTS-TO-COPY
+               ;; as inputs.
+               (to-register
+                '#$(map (match-lambda
+                          ((name thing) thing)
+                          ((name thing output) `(,thing ,output)))
+                        inputs)))
 
-         (set-path-environment-variable "PATH" '("bin" "sbin") inputs)
+           (set-path-environment-variable "PATH" '("bin" "sbin") inputs)
 
-         (let* ((graphs     '#$(match inputs
-                                 (((names . _) ...)
-                                  names)))
-                (initialize (root-partition-initializer
-                             #:closures graphs
-                             #:copy-closures? #$copy-inputs?
-                             #:register-closures? #$register-closures?
-                             #:system-directory #$os-derivation))
-                (partitions (list (partition
-                                   (size #$(- disk-image-size
-                                              (* 10 (expt 2 20))))
-                                   (label #$file-system-label)
-                                   (file-system #$file-system-type)
-                                   (bootable? #t)
-                                   (initializer initialize)))))
-           (initialize-hard-disk "/dev/vda"
-                                 #:partitions partitions
-                                 #:grub.cfg #$grub-configuration)
-           (reboot))))
+           (let* ((graphs     '#$(match inputs
+                                   (((names . _) ...)
+                                    names)))
+                  (initialize (root-partition-initializer
+                               #:closures graphs
+                               #:copy-closures? #$copy-inputs?
+                               #:register-closures? #$register-closures?
+                               #:system-directory #$os-derivation))
+                  (partitions (list (partition
+                                     (size #$(- disk-image-size
+                                                (* 10 (expt 2 20))))
+                                     (label #$file-system-label)
+                                     (file-system #$file-system-type)
+                                     (bootable? #t)
+                                     (initializer initialize)))))
+             (initialize-hard-disk "/dev/vda"
+                                   #:partitions partitions
+                                   #:grub.cfg #$grub-configuration)
+             (reboot)))))
    #:system system
    #:make-disk-image? #t
    #:disk-image-size disk-image-size

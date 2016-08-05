@@ -37,6 +37,7 @@
             dovecot-configuration-error?
 
             dovecot-service
+            dovecot-service-type
             dovecot-configuration
             opaque-dovecot-configuration
 

@@ -135,14 +135,14 @@
                                      (replacement fake)))
                          (drv     (gexp->derivation
                                    "to-graft"
-                                   #~(begin
-                                       (use-modules (guix build utils))
-                                       (mkdir-p (string-append #$output
-                                                               "/a/b/c/d"))
-                                       (symlink #$%bash
-                                                (string-append #$output
-                                                               "/bash")))
-                                   #:modules '((guix build utils))))
+                                   (with-imported-modules '((guix build utils))
+                                     #~(begin
+                                         (use-modules (guix build utils))
+                                         (mkdir-p (string-append #$output
+                                                                 "/a/b/c/d"))
+                                         (symlink #$%bash
+                                                  (string-append #$output
+                                                                 "/bash"))))))
                          (grafted ((store-lift graft-derivation) drv
                                    (list graft)))
                          (_       (built-derivations (list grafted)))

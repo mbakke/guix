@@ -343,7 +343,7 @@ runs Word\".")
               (method url-fetch)
               (uri
                (string-append
-                "mirror://sourceforge/project/utfcpp/utf8cpp_2x/Release%20"
+                "mirror://sourceforge/utfcpp/utf8cpp_2x/Release%20"
                 version "/utf8_v"
                 (string-map (lambda (x) (if (eq? x #\.) #\_ x)) version)
                 ".zip"))

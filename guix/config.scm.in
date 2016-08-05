@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,12 +21,20 @@
             %guix-version
             %guix-bug-report-address
             %guix-home-page-url
+
+            %storedir
+            %localstatedir
+            %sysconfdir
+            %sbindir
+
             %store-directory
             %state-directory
             %config-directory
             %guix-register-program
+
             %system
             %libgcrypt
+            %libz
             %nix-instantiate
             %gzip
             %bzip2
@@ -34,7 +42,8 @@
 
 ;;; Commentary:
 ;;;
-;;; Compile-time configuration of Guix.
+;;; Compile-time configuration of Guix.  When adding a substitution variable
+;;; here, make sure to equip (guix scripts pull) to substitute it.
 ;;;
 ;;; Code:
 
@@ -50,27 +59,45 @@
 (define %guix-home-page-url
   "@PACKAGE_URL@")
 
+(define %storedir
+  "@storedir@")
+
+(define %localstatedir
+  "@guix_localstatedir@")
+
+(define %sysconfdir
+  "@guix_sysconfdir@")
+
+(define %sbindir
+  "@guix_sbindir@")
+
 (define %store-directory
   (or (and=> (getenv "NIX_STORE_DIR") canonicalize-path)
-      "@storedir@"))
+      %storedir))
 
 (define %state-directory
   ;; This must match `NIX_STATE_DIR' as defined in `nix/local.mk'.
-  (or (getenv "NIX_STATE_DIR") "@guix_localstatedir@/guix"))
+  (or (getenv "NIX_STATE_DIR")
+      (string-append %localstatedir "/guix")))
 
 (define %config-directory
   ;; This must match `GUIX_CONFIGURATION_DIRECTORY' as defined in `nix/local.mk'.
-  (or (getenv "GUIX_CONFIGURATION_DIRECTORY") "@guix_sysconfdir@/guix"))
+  (or (getenv "GUIX_CONFIGURATION_DIRECTORY")
+      (string-append %sysconfdir "/guix")))
 
 (define %guix-register-program
   ;; The 'guix-register' program.
-  (or (getenv "GUIX_REGISTER") "@guix_sbindir@/guix-register"))
+  (or (getenv "GUIX_REGISTER")
+      (string-append %sbindir "/guix-register")))
 
 (define %system
   "@guix_system@")
 
 (define %libgcrypt
   "@LIBGCRYPT@")
+
+(define %libz
+  "@LIBZ@")
 
 (define %nix-instantiate
   "@NIX_INSTANTIATE@")

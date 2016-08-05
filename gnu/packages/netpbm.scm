@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,6 +27,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages xml)
+  #:use-module (gnu packages xorg)
   #:use-module (guix build-system gnu)
   #:use-module ((guix licenses) #:select (gpl2))
   #:use-module (guix packages)
@@ -54,9 +55,8 @@
             (file-name (string-append name "-" version "-checkout"))
             (modules '((guix build utils)))
             (snippet
-             ;; Remove non-FSDG-compliant code.
              '(begin
-                (use-modules (guix build utils))
+                ;; Remove non-FSDG-compliant code.
 
                 (define-syntax drop
                   (syntax-rules (in)
@@ -84,13 +84,22 @@
                 (drop "pbmto4425" "pbmtoln03" "pbmtolps" "pbmtopk" "pktopbm"
                       in "converter/pbm")
                 (drop "spottopgm" in "converter/pgm")
-                (drop "ppmtopjxl" in "converter/ppm")))))
+                (drop "ppmtopjxl" in "converter/ppm")
+
+                ;; Remove timestamps from the generated code.
+                (substitute* "buildtools/stamp-date"
+                  (("^DATE=.*")
+                   "DATE=\"Thu Jan 01 00:00:00+0000 1970\"\n")
+                  (("^USER=.*")
+                   "USER=Guix\n"))))))
+
    (build-system gnu-build-system)
    (inputs `(("ghostscript" ,ghostscript)
              ("libjpeg" ,libjpeg)
              ("libpng" ,libpng)
              ("libtiff" ,libtiff)
              ("libxml2" ,libxml2)
+             ("xorg-rgb" ,xorg-rgb)
              ("zlib" ,zlib)))
    (native-inputs
      `(("flex" ,flex)
@@ -99,50 +108,62 @@
        ("python" ,python-wrapper)))
    (arguments
     `(#:phases
-      (alist-replace
-       'configure
-       (lambda _
-        (copy-file "config.mk.in" "config.mk")
-        (chmod "config.mk" #o664)
-        (let ((f (open-file "config.mk" "a")))
-         (display "CC=gcc\n" f)
-         (display "CFLAGS_SHLIB += -fPIC\n" f)
-         (display "TIFFLIB = libtiff.so\n" f)
-         (display "JPEGLIB = libjpeg.so\n" f)
-         (display "ZLIB = libz.so\n" f)
-         (display (string-append "LDFLAGS += -Wl,-rpath=" %output "/lib") f)
-         (close-port f)))
-      (alist-cons-before
-       'check 'setup-check
-       (lambda _
-         ;; install temporarily into /tmp/netpbm
-         (system* "make" "package")
-         ;; remove test requiring X
-         (substitute* "test/all-in-place.test" (("pamx") ""))
-         ;; do not worry about non-existing file
-         (substitute* "test/all-in-place.test" (("^rm ") "rm -f "))
-         ;; remove four tests that fail for unknown reasons
-         (substitute* "test/Test-Order"
-           (("all-in-place.test") "")
-           (("pnmpsnr.test") "")
-           (("pnmremap1.test") "")
-           (("gif-roundtrip.test") "")))
-      (alist-replace
-       'install
-       (lambda* (#:key outputs make-flags #:allow-other-keys)
-        (let ((out (assoc-ref outputs "out")))
-         (apply system* "make" "package"
-                        (string-append "pkgdir=" out) make-flags)
-         ;; copy static library
-         (copy-file (string-append out "/link/libnetpbm.a")
-                    (string-append out "/lib/libnetpbm.a"))
-         ;; remove superfluous folders and files
-         (system* "rm" "-r" (string-append out "/link"))
-         (system* "rm" "-r" (string-append out "/misc"))
-         (with-directory-excursion out
-           (for-each delete-file
-                     '("config_template" "pkginfo" "README" "VERSION")))))
-      %standard-phases)))))
+      (modify-phases %standard-phases
+       (replace 'configure
+         (lambda* (#:key inputs outputs #:allow-other-keys)
+           (copy-file "config.mk.in" "config.mk")
+           (chmod "config.mk" #o664)
+           (let ((f (open-file "config.mk" "a")))
+             (display "CC=gcc\n" f)
+             (display "CFLAGS_SHLIB += -fPIC\n" f)
+             (display "TIFFLIB = libtiff.so\n" f)
+             (display "JPEGLIB = libjpeg.so\n" f)
+             (display "ZLIB = libz.so\n" f)
+             (display (string-append "LDFLAGS += -Wl,-rpath=" %output "/lib") f)
+             (close-port f))
+
+           (let ((rgb (string-append (assoc-ref inputs "xorg-rgb")
+                                     "/share/X11/rgb.txt")))
+             (substitute* "pm_config.in.h"
+               (("/usr/share/X11/rgb.txt") rgb))
+
+             ;; Our Ghostscript no longer provides the 'gs' command, only
+             ;; 'gsc', so look for that instead.
+             (substitute* "converter/other/pstopnm.c"
+               (("\"%s/gs\"")
+                "\"%s/gsc\"")))
+           #t))
+       (add-before 'check 'setup-check
+         (lambda _
+           ;; install temporarily into /tmp/netpbm
+           (system* "make" "package")
+           ;; remove test requiring X
+           (substitute* "test/all-in-place.test" (("pamx") ""))
+           ;; do not worry about non-existing file
+           (substitute* "test/all-in-place.test" (("^rm ") "rm -f "))
+           ;; remove four tests that fail for unknown reasons
+           (substitute* "test/Test-Order"
+             (("all-in-place.test") "")
+             (("pnmpsnr.test") "")
+             (("pnmremap1.test") "")
+             (("gif-roundtrip.test") ""))
+           #t))
+       (replace 'install
+         (lambda* (#:key outputs make-flags #:allow-other-keys)
+           (let ((out (assoc-ref outputs "out")))
+             (apply system* "make" "package"
+                    (string-append "pkgdir=" out) make-flags)
+             ;; copy static library
+             (copy-file (string-append out "/link/libnetpbm.a")
+                        (string-append out "/lib/libnetpbm.a"))
+             ;; remove superfluous folders and files
+             (system* "rm" "-r" (string-append out "/link"))
+             (system* "rm" "-r" (string-append out "/misc"))
+             (with-directory-excursion out
+               (for-each delete-file
+                         '("config_template" "pkginfo" "README"
+                           "VERSION")))
+             #t))))))
    (synopsis "Toolkit for manipulation of images")
    (description
     "Netpbm is a toolkit for the manipulation of graphic images, including

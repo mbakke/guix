@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015, 2016 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,6 +27,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages llvm)
@@ -262,6 +264,7 @@
        ("mpfr" ,mpfr)
        ("wget" ,wget)
        ("which" ,which)
+       ("zlib" ,zlib)
        ("gmp" ,gmp)
        ;; FIXME: The following inputs are downloaded from upstream to allow us
        ;; to use the lightweight Julia release tarball.  Ideally, these inputs

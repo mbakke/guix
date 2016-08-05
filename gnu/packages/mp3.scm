@@ -290,8 +290,8 @@ This package contains the binary.")
     (version "1.22.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/mpg123/mpg123-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/mpg123/mpg123/" version
+                                  "/mpg123-" version ".tar.bz2"))
               (sha256
                (base32
                 "1lj0xv0b6sgqsbhx10dg60cnzgz98i76gxy51kqh11hka0pf0sah"))))
@@ -314,7 +314,7 @@ command-line tool as well as a C library, libmpg123.")
     (version "0.3.1")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/mpg321/"
+             (uri (string-append "mirror://sourceforge/mpg321/mpg321/"
                                  version "/mpg321-" version ".tar.gz"))
              (sha256
               (base32

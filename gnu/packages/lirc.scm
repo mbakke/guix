@@ -35,8 +35,8 @@
     (version "0.9.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lirc/lirc-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/lirc/LIRC/" version
+                                  "/lirc-" version ".tar.bz2"))
               (sha256
                (base32
                 "1l2xzhnm4hrla51ik09hcafki0y8wnww7svfm7j63zbl2rssc66x"))

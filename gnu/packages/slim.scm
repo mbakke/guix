@@ -40,7 +40,7 @@
 	     (method url-fetch)
              ;; Used to be available from download.berlios.de.
 	     (uri (string-append
-                   "mirror://sourceforge/project/slim.berlios/slim-"
+                   "mirror://sourceforge/slim.berlios/slim-"
                    version ".tar.gz"))
 	     (sha256
 	      (base32 "1pqhk22jb4aja4hkrm7rjgbgzjyh7i4zswdgf5nw862l2znzxpi1"))

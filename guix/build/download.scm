@@ -737,7 +737,8 @@ or #f."
     (append-map (lambda (make-url)
                   (filter-map (match-lambda
                                 ((hash-algo . hash)
-                                 (string->uri (make-url hash-algo hash))))
+                                 (let ((file (strip-store-file-name file)))
+                                   (string->uri (make-url file hash-algo hash)))))
                               hashes))
                 content-addressed-mirrors))
 

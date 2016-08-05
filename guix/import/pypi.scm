@@ -33,6 +33,9 @@
   #:use-module (web uri)
   #:use-module (guix ui)
   #:use-module (guix utils)
+  #:use-module ((guix build utils)
+                #:select ((package-name->name+version
+                           . hyphen-package-name->name+version)))
   #:use-module (guix import utils)
   #:use-module ((guix download) #:prefix download:)
   #:use-module (guix import json)
@@ -41,7 +44,8 @@
   #:use-module (guix licenses)
   #:use-module (guix build-system python)
   #:use-module (gnu packages python)
-  #:export (pypi->guix-package
+  #:export (guix-package->pypi-name
+            pypi->guix-package
             %pypi-updater))
 
 (define (pypi-fetch name)
@@ -92,11 +96,8 @@ package."
   "Given a Python PACKAGE built from pypi.python.org, return the name of the
 package on PyPI."
   (let ((source-url (and=> (package-source package) origin-uri)))
-    ;; The URL has the form:
-    ;; 'https://pypi.python.org/packages/source/' +
-    ;; first letter of the package name +
-    ;; '/' + package name + '/' + ...
-    (substring source-url 42 (string-rindex source-url #\/))))
+    (hyphen-package-name->name+version
+     (basename (file-sans-extension source-url)))))
 
 (define (wheel-url->extracted-directory wheel-url)
   (match (string-split (basename wheel-url) #\-)

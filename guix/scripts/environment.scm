@@ -90,8 +90,9 @@ existing enviroment variables with additional search paths."
             (evaluate-profile-search-paths profile paths))
 
   ;; Give users a way to know that they're in 'guix environment', so they can
-  ;; adjust 'PS1' accordingly, for instance.
-  (setenv "GUIX_ENVIRONMENT" "t"))
+  ;; adjust 'PS1' accordingly, for instance.  Set it to PROFILE so users can
+  ;; conveniently access its contents.
+  (setenv "GUIX_ENVIRONMENT" profile))
 
 (define (show-search-paths profile search-paths pure?)
   "Display SEARCH-PATHS applied to PROFILE.  When PURE? is #t, do not augment

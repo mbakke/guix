@@ -26,14 +26,19 @@
   #:use-module (guix utils)
   #:use-module (guix hash)
   #:use-module (guix store)
+  #:use-module (guix derivations)
+  #:use-module (guix gexp)
   #:use-module (guix base32)
   #:use-module (guix base64)
+  #:use-module ((guix records) #:select (recutils->alist))
   #:use-module ((guix serialization) #:select (restore-file))
   #:use-module (guix pk-crypto)
+  #:use-module (guix zlib)
   #:use-module (web uri)
   #:use-module (web client)
   #:use-module (web response)
   #:use-module (rnrs bytevectors)
+  #:use-module (ice-9 binary-ports)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-64)
@@ -52,20 +57,48 @@
   (call-with-values (lambda () (http-get uri))
     (lambda (response body) body)))
 
+(define (http-get-port uri)
+  (let ((socket (open-socket-for-uri uri)))
+    ;; Make sure to use an unbuffered port so that we can then peek at the
+    ;; underlying file descriptor via 'call-with-gzip-input-port'.
+    (setvbuf socket _IONBF)
+    (call-with-values
+        (lambda ()
+          (http-get uri #:port socket #:streaming? #t))
+      (lambda (response port)
+        ;; Don't (setvbuf port _IONBF) because of <http://bugs.gnu.org/19610>
+        ;; (PORT might be a custom binary input port).
+        port))))
+
 (define (publish-uri route)
   (string-append "http://localhost:6789" route))
 
-;; Run a local publishing server in a separate thread.
-(call-with-new-thread
- (lambda ()
-   (guix-publish "--port=6789"))) ; attempt to avoid port collision
+(define-syntax-rule (with-separate-output-ports exp ...)
+  ;; Since ports aren't thread-safe in Guile 2.0, duplicate the output and
+  ;; error ports to make sure the two threads don't end up stepping on each
+  ;; other's toes.
+  (with-output-to-port (duplicate-port (current-output-port) "w")
+    (lambda ()
+      (with-error-to-port (duplicate-port (current-error-port) "w")
+        (lambda ()
+          exp ...)))))
 
-;; Wait until the server is accepting connections.
-(let ((conn (socket PF_INET SOCK_STREAM 0)))
-  (let loop ()
-    (unless (false-if-exception
-             (connect conn AF_INET (inet-pton AF_INET "127.0.0.1") 6789))
-      (loop))))
+;; Run a local publishing server in a separate thread.
+(with-separate-output-ports
+ (call-with-new-thread
+  (lambda ()
+    (guix-publish "--port=6789" "-C0"))))     ;attempt to avoid port collision
+
+(define (wait-until-ready port)
+  ;; Wait until the server is accepting connections.
+  (let ((conn (socket PF_INET SOCK_STREAM 0)))
+    (let loop ()
+      (unless (false-if-exception
+               (connect conn AF_INET (inet-pton AF_INET "127.0.0.1") port))
+        (loop)))))
+
+;; Wait until the two servers are ready.
+(wait-until-ready 6789)
 
 
 (test-begin "publish")
@@ -145,6 +178,55 @@ References: ~%"
        (call-with-input-string nar (cut restore-file <> temp)))
      (call-with-input-file temp read-string))))
 
+(unless (zlib-available?)
+  (test-skip 1))
+(test-equal "/nar/gzip/*"
+  "bar"
+  (call-with-temporary-output-file
+   (lambda (temp port)
+     (let ((nar (http-get-port
+                 (publish-uri
+                  (string-append "/nar/gzip/" (basename %item))))))
+       (call-with-gzip-input-port nar
+         (cut restore-file <> temp)))
+     (call-with-input-file temp read-string))))
+
+(unless (zlib-available?)
+  (test-skip 1))
+(test-equal "/*.narinfo with compression"
+  `(("StorePath" . ,%item)
+    ("URL" . ,(string-append "nar/gzip/" (basename %item)))
+    ("Compression" . "gzip"))
+  (let ((thread (with-separate-output-ports
+                 (call-with-new-thread
+                  (lambda ()
+                    (guix-publish "--port=6799" "-C5"))))))
+    (wait-until-ready 6799)
+    (let* ((url  (string-append "http://localhost:6799/"
+                                (store-path-hash-part %item) ".narinfo"))
+           (body (http-get-port url)))
+      (filter (lambda (item)
+                (match item
+                  (("Compression" . _) #t)
+                  (("StorePath" . _)  #t)
+                  (("URL" . _) #t)
+                  (_ #f)))
+              (recutils->alist body)))))
+
+(unless (zlib-available?)
+  (test-skip 1))
+(test-equal "/*.narinfo for a compressed file"
+  '("none" "nar")          ;compression-less nar
+  ;; Assume 'guix publish -C' is already running on port 6799.
+  (let* ((item (add-text-to-store %store "fake.tar.gz"
+                                  "This is a fake compressed file."))
+         (url  (string-append "http://localhost:6799/"
+                              (store-path-hash-part item) ".narinfo"))
+         (body (http-get-port url))
+         (info (recutils->alist body)))
+    (list (assoc-ref info "Compression")
+          (dirname (assoc-ref info "URL")))))
+
 (test-equal "/nar/ with properly encoded '+' sign"
   "Congrats!"
   (let ((item (add-text-to-store %store "fake-gtk+" "Congrats!")))
@@ -164,5 +246,37 @@ References: ~%"
       (lambda (port)
         (display "This file is not a valid store item." port)))
     (response-code (http-get (publish-uri (string-append "/nar/invalid"))))))
+
+(test-equal "/file/NAME/sha256/HASH"
+  "Hello, Guix world!"
+  (let* ((data "Hello, Guix world!")
+         (hash (call-with-input-string data port-sha256))
+         (drv  (run-with-store %store
+                 (gexp->derivation "the-file.txt"
+                                   #~(call-with-output-file #$output
+                                       (lambda (port)
+                                         (display #$data port)))
+                                   #:hash-algo 'sha256
+                                   #:hash hash)))
+         (out  (build-derivations %store (list drv))))
+    (utf8->string
+     (http-get-body
+      (publish-uri
+       (string-append "/file/the-file.txt/sha256/"
+                      (bytevector->nix-base32-string hash)))))))
+
+(test-equal "/file/NAME/sha256/INVALID-NIX-BASE32-STRING"
+  404
+  (let ((uri (publish-uri
+              "/file/the-file.txt/sha256/not-a-nix-base32-string")))
+    (response-code (http-get uri))))
+
+(test-equal "/file/NAME/sha256/INVALID-HASH"
+  404
+  (let ((uri (publish-uri
+              (string-append "/file/the-file.txt/sha256/"
+                             (bytevector->nix-base32-string
+                              (call-with-input-string "" port-sha256))))))
+    (response-code (http-get uri))))
 
 (test-end "publish")

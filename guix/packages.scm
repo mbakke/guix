@@ -56,7 +56,6 @@
             origin-patch-guile
             origin-snippet
             origin-modules
-            origin-imported-modules
             base32
 
             package
@@ -82,6 +81,8 @@
             package-maintainers
             package-properties
             package-location
+            hidden-package
+            hidden-package?
             package-field-location
 
             package-direct-sources
@@ -164,8 +165,7 @@
                 (default #f))
   (modules      origin-modules                    ; list of module names
                 (default '()))
-  (imported-modules origin-imported-modules       ; list of module names
-                    (default '()))
+
   (patch-guile origin-patch-guile                 ; package or #f
                (default #f)))
 
@@ -292,6 +292,19 @@ name of its URI."
                                                        package)
                                                       16)))))
 
+(define (hidden-package p)
+  "Return a \"hidden\" version of P--i.e., one that 'fold-packages' and thus,
+user interfaces, ignores."
+  (package
+    (inherit p)
+    (properties `((hidden? . #t)
+                  ,@(package-properties p)))))
+
+(define (hidden-package? p)
+  "Return true if P is \"hidden\"--i.e., must not be visible to user
+interfaces."
+  (assoc-ref (package-properties p) 'hidden?))
+
 (define (package-field-location package field)
   "Return the source code location of the definition of FIELD for PACKAGE, or
 #f if it could not be determined."
@@ -381,14 +394,13 @@ the build code of derivation."
                            (snippet #f)
                            (flags '("-p1"))
                            (modules '())
-                           (imported-modules '())
                            (guile-for-build (%guile-for-build))
                            (system (%current-system)))
   "Unpack SOURCE (a derivation or store path), apply all of PATCHES, and
 repack the tarball using the tools listed in INPUTS.  When SNIPPET is true,
 it must be an s-expression that will run from within the directory where
-SOURCE was unpacked, after all of PATCHES have been applied.  MODULES and
-IMPORTED-MODULES specify modules to use/import for use by SNIPPET."
+SOURCE was unpacked, after all of PATCHES have been applied.  MODULES
+specifies modules in scope when evaluating SNIPPET."
   (define source-file-name
     ;; SOURCE is usually a derivation, but it could be a store file.
     (if (derivation? source)
@@ -449,107 +461,107 @@ IMPORTED-MODULES specify modules to use/import for use by SNIPPET."
                       (patches    (sequence %store-monad
                                             (map instantiate-patch patches))))
     (define build
-      #~(begin
-          (use-modules (ice-9 ftw)
-                       (srfi srfi-1)
-                       (guix build utils))
+      (with-imported-modules '((guix build utils))
+        #~(begin
+            (use-modules (ice-9 ftw)
+                         (srfi srfi-1)
+                         (guix build utils))
 
-          ;; The --sort option was added to GNU tar in version 1.28, released
-          ;; 2014-07-28.  During bootstrap we must cope with older versions.
-          (define tar-supports-sort?
-            (zero? (system* (string-append #+tar "/bin/tar")
-                            "cf" "/dev/null" "--files-from=/dev/null"
-                            "--sort=name")))
+            ;; The --sort option was added to GNU tar in version 1.28, released
+            ;; 2014-07-28.  During bootstrap we must cope with older versions.
+            (define tar-supports-sort?
+              (zero? (system* (string-append #+tar "/bin/tar")
+                              "cf" "/dev/null" "--files-from=/dev/null"
+                              "--sort=name")))
 
-          (define (apply-patch patch)
-            (format (current-error-port) "applying '~a'...~%" patch)
+            (define (apply-patch patch)
+              (format (current-error-port) "applying '~a'...~%" patch)
 
-            ;; Use '--force' so that patches that do not apply perfectly are
-            ;; rejected.
-            (zero? (system* (string-append #+patch "/bin/patch")
-                            "--force" #+@flags "--input" patch)))
+              ;; Use '--force' so that patches that do not apply perfectly are
+              ;; rejected.
+              (zero? (system* (string-append #+patch "/bin/patch")
+                              "--force" #+@flags "--input" patch)))
 
-          (define (first-file directory)
-            ;; Return the name of the first file in DIRECTORY.
-            (car (scandir directory
-                          (lambda (name)
-                            (not (member name '("." "..")))))))
+            (define (first-file directory)
+              ;; Return the name of the first file in DIRECTORY.
+              (car (scandir directory
+                            (lambda (name)
+                              (not (member name '("." "..")))))))
 
-          ;; Encoding/decoding errors shouldn't be silent.
-          (fluid-set! %default-port-conversion-strategy 'error)
+            ;; Encoding/decoding errors shouldn't be silent.
+            (fluid-set! %default-port-conversion-strategy 'error)
 
-          (when #+locales
-            ;; First of all, install a UTF-8 locale so that UTF-8 file names
-            ;; are correctly interpreted.  During bootstrap, LOCALES is #f.
-            (setenv "LOCPATH"
-                    (string-append #+locales "/lib/locale/"
-                                   #+(and locales
-                                          (package-version locales))))
-            (setlocale LC_ALL "en_US.utf8"))
+            (when #+locales
+              ;; First of all, install a UTF-8 locale so that UTF-8 file names
+              ;; are correctly interpreted.  During bootstrap, LOCALES is #f.
+              (setenv "LOCPATH"
+                      (string-append #+locales "/lib/locale/"
+                                     #+(and locales
+                                            (package-version locales))))
+              (setlocale LC_ALL "en_US.utf8"))
 
-          (setenv "PATH" (string-append #+xz "/bin" ":"
-                                        #+decomp "/bin"))
+            (setenv "PATH" (string-append #+xz "/bin" ":"
+                                          #+decomp "/bin"))
 
-          ;; SOURCE may be either a directory or a tarball.
-          (and (if (file-is-directory? #+source)
-                   (let* ((store     (%store-directory))
-                          (len       (+ 1 (string-length store)))
-                          (base      (string-drop #+source len))
-                          (dash      (string-index base #\-))
-                          (directory (string-drop base (+ 1 dash))))
-                     (mkdir directory)
-                     (copy-recursively #+source directory)
-                     #t)
-                   #+(if (string=? decompression-type "unzip")
-                         #~(zero? (system* "unzip" #+source))
-                         #~(zero? (system* (string-append #+tar "/bin/tar")
-                                           "xvf" #+source))))
-               (let ((directory (first-file ".")))
-                 (format (current-error-port)
-                         "source is under '~a'~%" directory)
-                 (chdir directory)
+            ;; SOURCE may be either a directory or a tarball.
+            (and (if (file-is-directory? #+source)
+                     (let* ((store     (%store-directory))
+                            (len       (+ 1 (string-length store)))
+                            (base      (string-drop #+source len))
+                            (dash      (string-index base #\-))
+                            (directory (string-drop base (+ 1 dash))))
+                       (mkdir directory)
+                       (copy-recursively #+source directory)
+                       #t)
+                     #+(if (string=? decompression-type "unzip")
+                           #~(zero? (system* "unzip" #+source))
+                           #~(zero? (system* (string-append #+tar "/bin/tar")
+                                             "xvf" #+source))))
+                 (let ((directory (first-file ".")))
+                   (format (current-error-port)
+                           "source is under '~a'~%" directory)
+                   (chdir directory)
 
-                 (and (every apply-patch '#+patches)
-                      #+@(if snippet
-                             #~((let ((module (make-fresh-user-module)))
-                                  (module-use-interfaces! module
-                                                          (map resolve-interface
-                                                               '#+modules))
-                                  ((@ (system base compile) compile)
-                                   '#+snippet
-                                   #:to 'value
-                                   #:opts %auto-compilation-options
-                                   #:env module)))
-                             #~())
+                   (and (every apply-patch '#+patches)
+                        #+@(if snippet
+                               #~((let ((module (make-fresh-user-module)))
+                                    (module-use-interfaces!
+                                     module
+                                     (map resolve-interface '#+modules))
+                                    ((@ (system base compile) compile)
+                                     '#+snippet
+                                     #:to 'value
+                                     #:opts %auto-compilation-options
+                                     #:env module)))
+                               #~())
 
-                      (begin (chdir "..") #t)
+                        (begin (chdir "..") #t)
 
-                      (unless tar-supports-sort?
-                        (call-with-output-file ".file_list"
-                          (lambda (port)
-                            (for-each (lambda (name) (format port "~a~%" name))
-                                      (find-files directory
-                                                  #:directories? #t
-                                                  #:fail-on-error? #t)))))
-                      (zero? (apply system* (string-append #+tar "/bin/tar")
-                                    "cvfa" #$output
-                                    ;; avoid non-determinism in the archive
-                                    "--mtime=@0"
-                                    "--owner=root:0"
-                                    "--group=root:0"
-                                    (if tar-supports-sort?
-                                        `("--sort=name"
-                                          ,directory)
-                                        '("--no-recursion"
-                                          "--files-from=.file_list")))))))))
+                        (unless tar-supports-sort?
+                          (call-with-output-file ".file_list"
+                            (lambda (port)
+                              (for-each (lambda (name)
+                                          (format port "~a~%" name))
+                                        (find-files directory
+                                                    #:directories? #t
+                                                    #:fail-on-error? #t)))))
+                        (zero? (apply system*
+                                      (string-append #+tar "/bin/tar")
+                                      "cvfa" #$output
+                                      ;; avoid non-determinism in the archive
+                                      "--mtime=@0"
+                                      "--owner=root:0"
+                                      "--group=root:0"
+                                      (if tar-supports-sort?
+                                          `("--sort=name"
+                                            ,directory)
+                                          '("--no-recursion"
+                                            "--files-from=.file_list"))))))))))
 
-    (let ((name    (tarxz-name original-file-name))
-          (modules (delete-duplicates (cons '(guix build utils)
-                                            imported-modules))))
+    (let ((name (tarxz-name original-file-name)))
       (gexp->derivation name build
                         #:graft? #f
                         #:system system
-                        #:modules modules
                         #:guile-for-build guile-for-build))))
 
 (define (transitive-inputs inputs)
@@ -1138,8 +1150,7 @@ cross-compilation target triplet."
      ;; No patches, no snippet: this is a fixed-output derivation.
      (method uri 'sha256 sha256 name #:system system))
     (($ <origin> uri method sha256 name (= force (patches ...)) snippet
-        (flags ...) inputs (modules ...) (imported-modules ...)
-        guile-for-build)
+        (flags ...) inputs (modules ...) guile-for-build)
      ;; Patches and/or a snippet.
      (mlet %store-monad ((source (method uri 'sha256 sha256 name
                                          #:system system))
@@ -1153,7 +1164,6 @@ cross-compilation target triplet."
                          #:flags flags
                          #:system system
                          #:modules modules
-                         #:imported-modules imported-modules
                          #:guile-for-build guile)))))
 
 (define-gexp-compiler (origin-compiler (origin origin?) system target)

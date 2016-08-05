@@ -36,7 +36,7 @@
   #:use-module (gnu packages readline)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages python)
-  #:use-module (gnu packages tcsh)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xorg)
@@ -202,7 +202,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
 (define-public giac-xcas
   (package
     (name "giac-xcas")
-    (version "1.2.2-59")
+    (version "1.2.2-75")
     (source (origin
               (method url-fetch)
               ;; "~parisse/giac" is not used because the maintainer regularly
@@ -214,7 +214,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
                                   "source/giac_" version ".tar.gz"))
               (sha256
                (base32
-                "02s774v2zg2ya43rm8s7bcwzrmp4wlmn8h2rlg4816zpfrjkrdn4"))))
+                "0vs111fkd900wkm7yypaxmplc8i8j63d9shc3fbdhddn7cdj70b1"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases

@@ -218,7 +218,8 @@ output is indexed in many ways to simplify browsing.")
                "0dl6vfi2lzz8alnklwxzfz624b95hb1ipjvd3mk177flmddcf24r"))
              (patches
               (search-patches "automake-regexp-syntax.patch"
-                              "automake-skip-amhello-tests.patch"))))
+                              "automake-skip-amhello-tests.patch"
+                              "automake-test-gzip-warning.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("autoconf" ,(autoconf-wrapper))

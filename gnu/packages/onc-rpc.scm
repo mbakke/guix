@@ -28,7 +28,7 @@
     (version "0.2.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/libtirpc/"
+              (uri (string-append "mirror://sourceforge/libtirpc/libtirpc/"
                                   version "/libtirpc-"
                                   version ".tar.bz2"))
               (sha256

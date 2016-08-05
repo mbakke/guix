@@ -26,7 +26,8 @@
   #:use-module (gnu packages admin)
   #:use-module (guix records)
   #:use-module (guix gexp)
-  #:export (avahi-service
+  #:export (avahi-configuration
+            avahi-service
             avahi-service-type))
 
 ;;; Commentary:

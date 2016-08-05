@@ -26,10 +26,9 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages indent)
-  #:use-module (srfi srfi-1)
-  #:export (flex))
+  #:use-module (srfi srfi-1))
 
-(define flex
+(define-public flex
   (package
     (name "flex")
     (version "2.6.0")
@@ -79,4 +78,3 @@ regular expressions for each rule.  Whenever it finds a match, it
 executes the corresponding C code.")
     (license (non-copyleft "file://COPYING"
                         "See COPYING in the distribution."))))
-

@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -17,14 +18,22 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu services ssh)
-  #:use-module (guix gexp)
-  #:use-module (guix records)
+  #:use-module (gnu packages ssh)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system pam)
-  #:use-module (gnu packages lsh)
+  #:use-module (guix gexp)
+  #:use-module (guix records)
   #:use-module (srfi srfi-26)
-  #:export (lsh-service))
+  #:export (lsh-configuration
+            lsh-configuration?
+            lsh-service
+            lsh-service-type
+
+            dropbear-configuration
+            dropbear-configuration?
+            dropbear-service-type
+            dropbear-service))
 
 ;;; Commentary:
 ;;;
@@ -234,5 +243,86 @@ The other options should be self-descriptive."
                               (public-key-authentication?
                                public-key-authentication?)
                               (initialize? initialize?))))
+
+
+;;;
+;;; Dropbear.
+;;;
+
+(define-record-type* <dropbear-configuration>
+  dropbear-configuration make-dropbear-configuration
+  dropbear-configuration?
+  (dropbear               dropbear-configuration-dropbear
+                          (default dropbear))
+  (port-number            dropbear-configuration-port-number
+                          (default 22))
+  (syslog-output?         dropbear-configuration-syslog-output?
+                          (default #t))
+  (pid-file               dropbear-configuration-pid-file
+                          (default "/var/run/dropbear.pid"))
+  (root-login?            dropbear-configuration-root-login?
+                          (default #f))
+  (allow-empty-passwords? dropbear-configuration-allow-empty-passwords?
+                          (default #f))
+  (password-authentication? dropbear-configuration-password-authentication?
+                            (default #t)))
+
+(define (dropbear-activation config)
+  "Return the activation gexp for CONFIG."
+  #~(begin
+      (mkdir-p "/etc/dropbear")))
+
+(define (dropbear-shepherd-service config)
+  "Return a <shepherd-service> for dropbear with CONFIG."
+  (define dropbear
+    (dropbear-configuration-dropbear config))
+
+  (define pid-file
+    (dropbear-configuration-pid-file config))
+
+  (define dropbear-command
+    #~(list (string-append #$dropbear "/sbin/dropbear")
+
+            ;; '-R' allows host keys to be automatically generated upon first
+            ;; connection, at a time when /dev/urandom is more likely securely
+            ;; seeded.
+            "-F" "-R"
+
+            "-p" #$(number->string (dropbear-configuration-port-number config))
+            "-P" #$pid-file
+            #$@(if (dropbear-configuration-syslog-output? config) '() '("-E"))
+            #$@(if (dropbear-configuration-root-login? config) '() '("-w"))
+            #$@(if (dropbear-configuration-password-authentication? config)
+                   '()
+                   '("-s" "-g"))
+            #$@(if (dropbear-configuration-allow-empty-passwords? config)
+                   '("-B")
+                   '())))
+
+  (define requires
+    (if (dropbear-configuration-syslog-output? config)
+        '(networking syslogd) '(networking)))
+
+  (list (shepherd-service
+         (documentation "Dropbear SSH server.")
+         (requirement requires)
+         (provision '(ssh-daemon))
+         (start #~(make-forkexec-constructor #$dropbear-command
+                                             #:pid-file #$pid-file))
+         (stop #~(make-kill-destructor)))))
+
+(define dropbear-service-type
+  (service-type (name 'dropbear)
+                (extensions
+                 (list (service-extension shepherd-root-service-type
+                                          dropbear-shepherd-service)
+                       (service-extension activation-service-type
+                                          dropbear-activation)))))
+
+(define* (dropbear-service #:optional (config (dropbear-configuration)))
+  "Run the @uref{https://matt.ucc.asn.au/dropbear/dropbear.html,Dropbear SSH
+daemon} with the given @var{config}, a @code{<dropbear-configuration>}
+object."
+  (service dropbear-service-type config))
 
 ;;; ssh.scm ends here

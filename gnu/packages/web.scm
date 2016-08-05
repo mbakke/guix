@@ -85,10 +85,10 @@
               (base32
                "0n2yx3gjlpr4kgqx845fj6amnmg25r2l6a7rzab5hxnpmar985hc"))))
     (build-system gnu-build-system)
+    (native-inputs `(("pcre" ,pcre "bin")))       ;for 'pcre-config'
     (inputs `(("apr" ,apr)
               ("apr-util" ,apr-util)
               ("openssl" ,openssl)
-              ("pcre" ,pcre)
               ("perl" ,perl))) ; needed to run bin/apxs
     (arguments
      `(#:test-target "test"
@@ -283,7 +283,7 @@ parse JSON formatted strings back into the C representation of JSON objects.")
 (define-public krona-tools
   (package
    (name "krona-tools")
-   (version "2.6.1")
+   (version "2.7")
    (source (origin
              (method url-fetch)
              (uri (string-append
@@ -291,24 +291,14 @@ parse JSON formatted strings back into the C representation of JSON objects.")
                    version "/KronaTools-" version ".tar"))
              (sha256
               (base32
-               "1fj5mf6wbwz7v74n2safbw7fpw32fik19vf0wdbc2srn82i8fiwz"))))
+               "0wvgllcqscsfb4xc09y3fqhx8i38pmr4w55vjs5y79wx56n710iq"))))
    (build-system perl-build-system)
    (arguments
      `(#:phases
        (modify-phases %standard-phases
          ;; There is no configure or build steps.
          (delete 'configure)
-         (replace 'build
-           ;; Remove 'use lib' statements from scripts as PERL5LIB is set
-           ;; correctly during installation.
-           (lambda _
-             (for-each
-              (lambda (executable)
-                (display executable)(display "\n")
-                (substitute* executable
-                  (("use lib \\(`ktGetLibPath`\\);") "")))
-              (find-files "scripts/" ".*"))
-             #t))
+         (delete 'build)
          ;; Install script "install.pl" expects the build directory to remain
          ;; after installation, creating symlinks etc., so re-implement it
          ;; here.
@@ -325,7 +315,9 @@ parse JSON formatted strings back into the C representation of JSON objects.")
                     (copy-file executable (string-append bin "/kt" script))))
                 '("ClassifyBLAST"
                   "GetContigMagnitudes"
-                  "GetTaxIDFromGI"
+                  "GetLCA"
+                  "GetTaxIDFromAcc"
+                  "GetTaxInfo"
                   "ImportBLAST"
                   "ImportDiskUsage"
                   "ImportEC"
@@ -341,13 +333,11 @@ parse JSON formatted strings back into the C representation of JSON objects.")
                   "ImportTaxonomy"
                   "ImportText"
                   "ImportXML"))
-               (copy-recursively "data" (string-append perl "/../data"))
-               (copy-recursively "img" (string-append perl "/../img"))
-               (copy-recursively "taxonomy" (string-append perl "/../taxonomy"))
-               (install-file "src/krona-2.0.js" (string-append perl "/../src"))
-               (substitute* "lib/KronaTools.pm"
-                 (("`ktGetLibPath`")
-                  (string-append "\"" perl "\"")))
+               (for-each 
+                (lambda (directory)
+                  (copy-recursively directory
+                                    (string-append perl "/../" directory)))
+                (list "data" "img" "taxonomy" "src"))
                (install-file "lib/KronaTools.pm" perl))))
          (add-after 'install 'wrap-program
            (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -636,7 +626,8 @@ of people.")
      (origin
        (method url-fetch)
        (uri (string-append
-             "mirror://sourceforge/quvi/libquvi-scripts-" version ".tar.xz"))
+             "mirror://sourceforge/quvi/" (version-major+minor version) "/"
+             name "/" name "-" version ".tar.xz"))
        (sha256
         (base32 "0d0giry6bb57pnidymvdl7i5x9bq3ljk3g4bs294hcr5mj3cq0kw"))))
     (build-system gnu-build-system)
@@ -654,7 +645,8 @@ parse media stream properties.")
      (origin
        (method url-fetch)
        (uri (string-append
-             "mirror://sourceforge/quvi/libquvi-" version ".tar.xz"))
+             "mirror://sourceforge/quvi/" (version-major+minor version) "/" name "/"
+             name "-" version ".tar.xz"))
        (sha256
         (base32 "00x9gbmzc5cns0gnfag0hsphcr3cb33vbbb9s7ppvvd6bxz2z1mm"))))
     (build-system gnu-build-system)
@@ -687,7 +679,8 @@ URLs and extracting their actual media files.")
      (origin
        (method url-fetch)
        (uri (string-append
-             "mirror://sourceforge/quvi/quvi-" version ".tar.xz"))
+             "mirror://sourceforge/" name "/"  (version-major+minor version)
+             "/" name "/" name "-" version ".tar.xz"))
        (sha256
         (base32 "09lhl6dv5zpryasx7yjslfrcdcqlsbwapvd5lg7w6sm5x5n3k8ci"))))
     (build-system gnu-build-system)
@@ -2387,18 +2380,21 @@ and IPv6 sockets, intended as a replacement for IO::Socket::INET.")
 (define-public perl-io-socket-ssl
   (package
     (name "perl-io-socket-ssl")
-    (version "2.002")
+    (version "2.033")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://cpan/authors/id/S/SU/SULLR/"
                                   "IO-Socket-SSL-" version ".tar.gz"))
               (sha256
                (base32
-                "1mph52lw6x5v44wf8mw00llzi8pp6k5c4jnrnrvlacrlfv260jb8"))
+                "01qggwmc97kpzx49fp4fxysrjyq8mpnx54nrb087ridj0ch3cf46"))
               (patches (search-patches
                         "perl-io-socket-ssl-openssl-1.0.2f-fix.patch"))))
     (build-system perl-build-system)
-    (propagated-inputs `(("perl-net-ssleay" ,perl-net-ssleay)))
+    (propagated-inputs
+     `(("perl-net-ssleay" ,perl-net-ssleay)
+       ;; for IDN support
+       ("perl-uri" ,perl-uri)))
     (synopsis "Nearly transparent SSL encapsulation for IO::Socket::INET")
     (description
      "IO::Socket::SSL makes using SSL/TLS much easier by wrapping the

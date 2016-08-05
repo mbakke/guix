@@ -31,6 +31,7 @@
   #:use-module (guix scripts lint)
   #:use-module (guix ui)
   #:use-module (gnu packages)
+  #:use-module (gnu packages glib)
   #:use-module (gnu packages pkg-config)
   #:use-module (web server)
   #:use-module (web server http)
@@ -102,14 +103,14 @@
   http-write
   (@@ (web server http) http-close))
 
-(define (call-with-http-server code thunk)
-  "Call THUNK with an HTTP server running and returning CODE on HTTP
-requests."
+(define (call-with-http-server code data thunk)
+  "Call THUNK with an HTTP server running and returning CODE and DATA (a
+string) on HTTP requests."
   (define (server-body)
     (define (handle request body)
       (values (build-response #:code code
                               #:reason-phrase "Such is life")
-              "Hello, world."))
+              data))
 
     (catch 'quit
       (lambda ()
@@ -123,8 +124,11 @@ requests."
       ;; Normally SERVER exits automatically once it has received a request.
       (thunk))))
 
-(define-syntax-rule (with-http-server code body ...)
-  (call-with-http-server code (lambda () body ...)))
+(define-syntax-rule (with-http-server code data body ...)
+  (call-with-http-server code data (lambda () body ...)))
+
+(define %long-string
+  (make-string 2000 #\a))
 
 
 (test-begin "lint")
@@ -316,7 +320,16 @@ requests."
        (let ((pkg (dummy-package "x"
                     (inputs `(("pkg-config" ,pkg-config))))))
          (check-inputs-should-be-native pkg)))
-         "pkg-config should probably be a native input")))
+         "'pkg-config' should probably be a native input")))
+
+(test-assert "inputs: glib:bin is probably a native input"
+  (->bool
+    (string-contains
+      (with-warnings
+        (let ((pkg (dummy-package "x"
+                     (inputs `(("glib" ,glib "bin"))))))
+          (check-inputs-should-be-native pkg)))
+          "'glib:bin' should probably be a native input")))
 
 (test-assert "patches: file names"
   (->bool
@@ -402,18 +415,30 @@ requests."
 (test-equal "home-page: 200"
   ""
   (with-warnings
-   (with-http-server 200
+   (with-http-server 200 %long-string
      (let ((pkg (package
                   (inherit (dummy-package "x"))
                   (home-page %local-url))))
        (check-home-page pkg)))))
 
 (test-skip (if %http-server-socket 0 1))
+(test-assert "home-page: 200 but short length"
+  (->bool
+   (string-contains
+    (with-warnings
+      (with-http-server 200 "This is too small."
+        (let ((pkg (package
+                     (inherit (dummy-package "x"))
+                     (home-page %local-url))))
+          (check-home-page pkg))))
+    "suspiciously small")))
+
+(test-skip (if %http-server-socket 0 1))
 (test-assert "home-page: 404"
   (->bool
    (string-contains
     (with-warnings
-      (with-http-server 404
+      (with-http-server 404 %long-string
         (let ((pkg (package
                      (inherit (dummy-package "x"))
                      (home-page %local-url))))
@@ -501,7 +526,7 @@ requests."
 (test-equal "source: 200"
   ""
   (with-warnings
-   (with-http-server 200
+   (with-http-server 200 %long-string
      (let ((pkg (package
                   (inherit (dummy-package "x"))
                   (source (origin
@@ -511,11 +536,26 @@ requests."
        (check-source pkg)))))
 
 (test-skip (if %http-server-socket 0 1))
+(test-assert "source: 200 but short length"
+  (->bool
+   (string-contains
+    (with-warnings
+      (with-http-server 200 "This is too small."
+        (let ((pkg (package
+                     (inherit (dummy-package "x"))
+                     (source (origin
+                               (method url-fetch)
+                               (uri %local-url)
+                               (sha256 %null-sha256))))))
+          (check-source pkg))))
+    "suspiciously small")))
+
+(test-skip (if %http-server-socket 0 1))
 (test-assert "source: 404"
   (->bool
    (string-contains
     (with-warnings
-      (with-http-server 404
+      (with-http-server 404 %long-string
         (let ((pkg (package
                      (inherit (dummy-package "x"))
                      (source (origin
@@ -617,6 +657,6 @@ requests."
 (test-end "lint")
 
 ;; Local Variables:
-;; eval: (put 'with-http-server 'scheme-indent-function 1)
+;; eval: (put 'with-http-server 'scheme-indent-function 2)
 ;; eval: (put 'with-warnings 'scheme-indent-function 0)
 ;; End:

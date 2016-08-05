@@ -48,6 +48,7 @@ gnu/packages/scanner.scm
 gnu/packages/scheme.scm
 gnu/packages/search.scm
 gnu/packages/serveez.scm
+gnu/packages/shells.scm
 gnu/packages/telephony.scm
 gnu/packages/tex.scm
 gnu/packages/texinfo.scm
@@ -58,4 +59,3 @@ gnu/packages/web.scm
 gnu/packages/wordnet.scm
 gnu/packages/xiph.scm
 gnu/packages/zip.scm
-gnu/packages/zsh.scm

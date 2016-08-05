@@ -1,0 +1,24 @@
+--- tuxpaint-0.9.22/src/tuxpaint.c
++++ tuxpaint-0.9.22/src/tuxpaint.c
+@@ -7474,11 +7474,21 @@
+ static void load_stamps(SDL_Surface * screen)
+ {
+   char *homedirdir = get_fname("stamps", DIR_DATA);
++  char *stamps_path = getenv("TUXPAINT_STAMPS_PATH");
+ 
+   default_stamp_size = compute_default_scale_factor(1.0);
+ 
+   load_stamp_dir(screen, homedirdir);
+   load_stamp_dir(screen, DATA_PREFIX "stamps");
++  /* Load any stamps in TUXPAINT_STAMPS_PATH */
++  if (stamps_path) {
++    char *token;
++    token = strtok(stamps_path, ":");
++    while (token != NULL) {
++      load_stamp_dir(screen, token);
++      token = strtok(NULL, ":");
++    }
++  }
+ #ifdef __APPLE__
+   load_stamp_dir(screen, "/Library/Application Support/TuxPaint/stamps");
+ #endif

@@ -1,0 +1,66 @@
+Disable some image comparison tests on architectures such as i686
+where intermediate floating-point operations are done with 80-bit long
+doubles, and typically later rounded to 64-bit doubles.  This double
+rounding causes small differences in the resulting pixel values
+compared with other architectures, causing the image comparisons to
+fail.
+
+Patch by Mark H Weaver <mhw@netris.org>.
+
+diff -ru libgd-2.2.3.orig/tests/gdimagecopyresampled/basic_alpha.c libgd-2.2.3/tests/gdimagecopyresampled/basic_alpha.c
+--- libgd-2.2.3.orig/tests/gdimagecopyresampled/basic_alpha.c	2016-07-21 04:06:42.000000000 -0400
++++ libgd-2.2.3/tests/gdimagecopyresampled/basic_alpha.c	2016-07-29 13:50:56.214877446 -0400
+@@ -1,5 +1,6 @@
+ /* Testing basic gdImageCopyResampled() functionality with alpha channel */
+ 
++#include <float.h>
+ #include "gd.h"
+ #include "gdtest.h"
+ 
+@@ -33,7 +34,8 @@
+ 	gdImageCopyResampled(copy, im, 0,0, 0,0, 200,200, 400,300);
+ 	gdImageDestroy(im);
+ 
+-	gdAssertImageEqualsToFile("gdimagecopyresampled/basic_alpha_exp.png", copy);
++	if (FLT_EVAL_METHOD != 2)
++		gdAssertImageEqualsToFile("gdimagecopyresampled/basic_alpha_exp.png", copy);
+ 
+ 	gdImageDestroy(copy);
+ 	return gdNumFailures();
+diff -ru libgd-2.2.3.orig/tests/gdimagecopyresampled/bug00201.c libgd-2.2.3/tests/gdimagecopyresampled/bug00201.c
+--- libgd-2.2.3.orig/tests/gdimagecopyresampled/bug00201.c	2016-07-21 04:06:42.000000000 -0400
++++ libgd-2.2.3/tests/gdimagecopyresampled/bug00201.c	2016-07-29 13:50:30.638559003 -0400
+@@ -1,3 +1,4 @@
++#include <float.h>
+ #include "gd.h"
+ #include "gdtest.h"
+ 
+@@ -65,7 +66,8 @@
+     gdImageDestroy(background);
+     gdImageDestroy(scaled_logo);
+     
+-    gdAssertImageEqualsToFile("gdimagecopyresampled/bug00201_exp.png", img);
++    if (FLT_EVAL_METHOD != 2)
++        gdAssertImageEqualsToFile("gdimagecopyresampled/bug00201_exp.png", img);
+     gdImageDestroy(img);
+     return gdNumFailures();
+ }
+diff -ru libgd-2.2.3.orig/tests/gdimagerotate/bug00067.c libgd-2.2.3/tests/gdimagerotate/bug00067.c
+--- libgd-2.2.3.orig/tests/gdimagerotate/bug00067.c	2016-06-18 05:42:16.000000000 -0400
++++ libgd-2.2.3/tests/gdimagerotate/bug00067.c	2016-07-29 13:50:07.566271765 -0400
+@@ -1,5 +1,6 @@
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <float.h>
+ #include "gd.h"
+ 
+ #include "gdtest.h"
+@@ -43,7 +44,7 @@
+ 
+ 		sprintf(filename, "bug00067_%03d_exp.png", angle);
+ 		path = gdTestFilePath2("gdimagerotate", filename);
+-		if (!gdAssertImageEqualsToFile(path, exp)) {
++		if (FLT_EVAL_METHOD != 2 && !gdAssertImageEqualsToFile(path, exp)) {
+ 			gdTestErrorMsg("comparing rotated image to %s failed.\n", path);
+ 			error += 1;
+ 		}

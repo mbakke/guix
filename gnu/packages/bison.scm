@@ -24,10 +24,9 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages flex)
-  #:use-module (srfi srfi-1)
-  #:export (bison))
+  #:use-module (srfi srfi-1))
 
-(define bison
+(define-public bison
   (package
     (name "bison")
     (version "3.0.4")
@@ -65,4 +64,3 @@ simple tools through complex programming languages.")
       (sha256
        (base32
         "1zd77ilmpv5mi3kr55jrj6ncqlcnyhpianhrwzak2q28cv2cbn23"))))))
-

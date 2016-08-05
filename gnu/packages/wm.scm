@@ -336,7 +336,7 @@ drags, snap-to-border support, and virtual desktops.")
     (synopsis "Small and fast window manager")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/fluxbox/"
+              (uri (string-append "mirror://sourceforge/fluxbox/fluxbox/"
                                   version "/fluxbox-" version ".tar.xz"))
               (sha256
                (base32
@@ -393,7 +393,6 @@ experience.")
                "1m910lr7wkw2dgzmirfvz7dasfswhhccdf65l21iiciv24c3w1bb"))
              (modules '((guix build utils)
                         (srfi srfi-19)))
-             (imported-modules '((guix build utils)))
              (snippet
               ;; Remove non-reproducible timestamp and use the date of the
               ;; source file instead.

@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,7 +44,8 @@
               (base32
                "04pjks075x20d19l623mj50bw64g8i41s63z4kzzqcbg9qg96x64"))
              (patches (search-patches "cpio-gets-undeclared.patch"
-                                      "dico-libtool-deterministic.patch"))))
+                                      "dico-libtool-deterministic.patch"
+                                      "dico-idxgcide-bug.patch"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags (list (string-append "--with-guile-site-dir=" %output

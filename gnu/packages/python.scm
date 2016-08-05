@@ -101,7 +101,7 @@
 (define-public python-2.7
   (package
     (name "python")
-    (version "2.7.10")
+    (version "2.7.11")
     (source
      (origin
       (method url-fetch)
@@ -109,56 +109,44 @@
                           version "/Python-" version ".tar.xz"))
       (sha256
        (base32
-        "1h7zbrf9pkj29hlm18b10548ch9757f75m64l47sy75rh43p7lqw"))
-      (patches (search-patches
-                "python-2.7-search-paths.patch"
-                "python-2-deterministic-build-info.patch"
-                "python-2.7-source-date-epoch.patch"))))
+        "0iiz844riiznsyhhyy962710pz228gmhv8qi3yk4w4jhmx2lqawn"))
+      (patches (search-patches "python-2.7-search-paths.patch"
+                               "python-2-deterministic-build-info.patch"
+                               "python-2.7-source-date-epoch.patch"))
+      (modules '((guix build utils)))
+      ;; suboptimal to delete failing tests here, but if we delete them in the
+      ;; arguments then we need to make sure to strip out that phase when it
+      ;; gets inherited by python and python-minimal.
+      (snippet
+       '(begin
+          (for-each delete-file
+                    '("Lib/test/test_compileall.py"
+                      "Lib/test/test_distutils.py"
+                      "Lib/test/test_import.py"
+                      "Lib/test/test_shutil.py"
+                      "Lib/test/test_socket.py"
+                      "Lib/test/test_subprocess.py"))
+          #t))))
     (outputs '("out"
                "tk"))                     ;tkinter; adds 50 MiB to the closure
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f
-       ;; 268 tests OK.
-       ;; 103 tests failed:
-       ;;     test_distutils test_shutil test_signal test_site test_slice
-       ;;     test_smtplib test_smtpnet test_socket test_socketserver
-       ;;     test_softspace test_sort test_spwd test_sqlite test_ssl
-       ;;     test_startfile test_stat test_str test_strftime test_string
-       ;;     test_stringprep test_strop test_strptime test_strtod test_struct
-       ;;     test_structmembers test_structseq test_subprocess test_sunau
-       ;;     test_sunaudiodev test_sundry test_symtable test_syntax test_sys
-       ;;     test_sys_setprofile test_sys_settrace test_sysconfig test_tarfile
-       ;;     test_tcl test_telnetlib test_tempfile test_textwrap test_thread
-       ;;     test_threaded_import test_threadedtempfile test_threading
-       ;;     test_threading_local test_threadsignals test_time test_timeit
-       ;;     test_timeout test_tk test_tokenize test_tools test_trace
-       ;;     test_traceback test_transformer test_ttk_guionly test_ttk_textonly
-       ;;     test_tuple test_typechecks test_ucn test_unary
-       ;;     test_undocumented_details test_unicode test_unicode_file
-       ;;     test_unicodedata test_univnewlines test_univnewlines2k test_unpack
-       ;;     test_urllib test_urllib2 test_urllib2_localnet test_urllib2net
-       ;;     test_urllibnet test_urlparse test_userdict test_userlist
-       ;;     test_userstring test_uu test_uuid test_wait3 test_wait4
-       ;;     test_warnings test_wave test_weakref test_weakset test_whichdb
-       ;;     test_winreg test_winsound test_with test_wsgiref test_xdrlib
-       ;;     test_xml_etree test_xml_etree_c test_xmllib test_xmlrpc
-       ;;     test_xpickle test_xrange test_zipfile test_zipfile64
-       ;;     test_zipimport test_zipimport_support test_zlib
-       ;; 30 tests skipped:
+     `(;; 356 tests OK.
+       ;; 6 tests failed:
+       ;;     test_compileall test_distutils test_import test_shutil test_socket
+       ;;     test_subprocess
+       ;; 39 tests skipped:
        ;;     test_aepack test_al test_applesingle test_bsddb test_bsddb185
        ;;     test_bsddb3 test_cd test_cl test_codecmaps_cn test_codecmaps_hk
-       ;;     test_codecmaps_jp test_codecmaps_kr test_codecmaps_tw test_crypt
-       ;;     test_curses test_dl test_gdb test_gl test_idle test_imageop
-       ;;     test_imgfile test_ioctl test_kqueue test_linuxaudiodev test_macos
-       ;;     test_macostools test_msilib test_nis test_ossaudiodev
-       ;;     test_scriptpackages
-       ;; 6 skips unexpected on linux2:
-       ;;     test_bsddb test_bsddb3 test_crypt test_gdb test_idle test_ioctl
-       ;; One of the typical errors:
-       ;; test_unicode
-       ;; test test_unicode crashed -- <type 'exceptions.OSError'>: [Errno 2] No
-       ;; such file or directory
+       ;;     test_codecmaps_jp test_codecmaps_kr test_codecmaps_tw test_curses
+       ;;     test_dl test_gdb test_gl test_imageop test_imgfile test_ioctl
+       ;;     test_kqueue test_linuxaudiodev test_macos test_macostools
+       ;;     test_msilib test_ossaudiodev test_scriptpackages test_smtpnet
+       ;;     test_socketserver test_startfile test_sunaudiodev test_timeout
+       ;;     test_tk test_ttk_guionly test_urllib2net test_urllibnet
+       ;;     test_winreg test_winsound test_zipfile64
+       ;; 4 skips unexpected on linux2:
+       ;;     test_bsddb test_bsddb3 test_gdb test_ioctl
        #:test-target "test"
        #:configure-flags
        (list "--enable-shared"                    ;allow embedding
@@ -208,6 +196,13 @@
            (lambda _
              ;; 'Lib/test/test_site.py' needs a valid $HOME
              (setenv "HOME" (getcwd))
+             ,@(if (string-prefix? "mips64el" (%current-system))
+
+                   ;; XXX: The following test fails on mips64el.
+                   '((false-if-exception
+                      (delete-file "Lib/test/test_ctypes.py")))
+
+                   '())
              #t))
           (add-after
            'unpack 'set-source-file-times-to-1980
@@ -221,6 +216,37 @@
                           (utime file circa-1980 circa-1980)
                           #t))
                #t)))
+          (add-after 'install 'remove-tests
+            ;; Remove 25 MiB of unneeded unit tests.  Keep test_support.*
+            ;; because these files are used by some libraries out there.
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (match (scandir (string-append out "/lib")
+                                (lambda (name)
+                                  (string-prefix? "python" name)))
+                  ((pythonX.Y)
+                   (let ((testdir (string-append out "/lib/" pythonX.Y
+                                                 "/test")))
+                     (with-directory-excursion testdir
+                       (for-each delete-file-recursively
+                                 (scandir testdir
+                                          (match-lambda
+                                            ((or "." "..") #f)
+                                            (file
+                                             (not
+                                              (string-prefix? "test_support."
+                                                              file))))))
+                       (call-with-output-file "__init__.py" (const #t))
+                       #t)))))))
+          (add-before 'strip 'make-libraries-writable
+            (lambda* (#:key outputs #:allow-other-keys)
+              ;; Make .so files writable so they can be stripped.
+              (let ((out (assoc-ref outputs "out")))
+                (for-each (lambda (file)
+                            (chmod file #o755))
+                          (find-files (string-append out "/lib")
+                                      "\\.so"))
+                #t)))
           (add-after 'install 'move-tk-inter
             (lambda* (#:key outputs #:allow-other-keys)
               ;; When Tkinter support is built move it to a separate output so
@@ -353,8 +379,8 @@ data types.")
                   (lambda (old new)
                     (symlink (string-append python old)
                              (string-append bin "/" new)))
-                  `("python3" ,"pydoc3" ,"idle3")
-                  `("python"  ,"pydoc"  ,"idle"))))))
+                  '("python3" "pydoc3" "idle3")
+                  '("python"  "pydoc"  "idle"))))))
     (synopsis "Wrapper for the Python 3 commands")
     (description
      "This package provides wrappers for the commands of Python@tie{}3.x such
@@ -1120,15 +1146,14 @@ after Andy Lester’s Perl module WWW::Mechanize.")
 (define-public python-simplejson
   (package
     (name "python-simplejson")
-    (version "3.3.0")
+    (version "3.8.2")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "https://pypi.python.org/packages/source/s/simplejson/simplejson-"
-                          version ".tar.gz"))
+      (uri (pypi-uri "simplejson" version))
       (sha256
        (base32
-        "07wsry5j44l5zzm74l4j2bvasiq8n5m32f31n2p7c68i5vc6p2ks"))))
+        "0zylrnax8b6r0ndgni4w9c599fi6wm9vx5g6k3ddqfj3932kk16m"))))
     (build-system python-build-system)
     (home-page "http://simplejson.readthedocs.org/en/latest/")
     (synopsis
@@ -1374,8 +1399,8 @@ syntax.")
     (version "2.3.4")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/scons/scons-"
-                                 version ".tar.gz"))
+             (uri (string-append "mirror://sourceforge/scons/scons/" version
+                                 "/scons-" version ".tar.gz"))
              (sha256
               (base32
                "0hdlci43wjz8maryj83mz04ir6rwcdrrzpd7cpzvdlzycqhdfmsb"))))
@@ -2010,14 +2035,14 @@ have failed since the last commit or what tests are currently failing.")
 (define-public python-coverage
   (package
     (name "python-coverage")
-    (version "4.0.3")
+    (version "4.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "coverage" version))
        (sha256
         (base32
-         "0qjlja8ny4gcfp8abqfwdrvr8qw9kr69lkja0b4cqqbsdmdjgcc5"))))
+         "01rbr4br4lsk0lwn8fb96zwd2xr4f0mg1w7iq3j11i8f5ig2nqs1"))))
     (build-system python-build-system)
     (inputs
      `(("python-setuptools" ,python-setuptools)))
@@ -2063,14 +2088,13 @@ backported from Python 2.7 for Python 2.4+.")
 (define-public behave
   (package
     (name "behave")
-    (version "1.2.4")
+    (version "1.2.5")
     (source (origin
              (method url-fetch)
-             (uri (string-append "https://pypi.python.org/packages/source/b/"
-                                 name "/" name "-" version ".tar.gz"))
+             (uri (pypi-uri "behave" version ".tar.bz2"))
              (sha256
               (base32
-               "1v2rfy8xnf0rk7cj4cgr7lam4015d458i7bg0xqs9czfv6njlm14"))))
+               "1iypp6z46r19n4xmgx6m1lwmlpfjh8vapq8izigrqlaarvp2y64c"))))
     (build-system python-build-system)
     (inputs
      `(("python-setuptools" ,python-setuptools)
@@ -3023,7 +3047,7 @@ writing C extensions for Python as easy as Python itself.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/numpy"
+       (uri (string-append "mirror://sourceforge/numpy/NumPy/" version
                            "/numpy-" version ".tar.gz"))
        (sha256
         (base32
@@ -3186,7 +3210,8 @@ association studies (GWAS) on extremely large data sets.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/pyparsing"
+       (uri (string-append "mirror://sourceforge/pyparsing/pyparsing"
+                           "/pyparsing-" version
                            "/pyparsing-" version ".tar.gz"))
        (sha256
         (base32
@@ -3307,7 +3332,8 @@ transcendental functions).")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/matplotlib"
+       (uri (string-append "mirror://sourceforge/matplotlib/matplotlib"
+                           "/matplotlib-" version
                            "/matplotlib-" version ".tar.gz"))
        (sha256
         (base32
@@ -3517,7 +3543,8 @@ functions.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/scipy"
+; http://downloads.sourceforge.net/project/scipy/scipy/0.16.1/scipy-0.16.1.tar.gz
+       (uri (string-append "mirror://sourceforge/scipy/scipy/" version
                            "/scipy-" version ".tar.xz"))
        (sha256
         (base32
@@ -3646,14 +3673,14 @@ simple and Pythonic domain language.")
 (define-public python-alembic
   (package
     (name "python-alembic")
-    (version "0.8.4")
+    (version "0.8.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "alembic" version))
        (sha256
         (base32
-         "0jk23a852l3ybv7gfz81xzslyrnqnpjds5x15zd234y9rh9gq1w5"))))
+         "0ias6fdzwr2s220fnjspkdgm9510bd0cnap0hx5y4zy4srba9f3z"))))
     (build-system python-build-system)
     (native-inputs
      `(("python-mock" ,python-mock)
@@ -4115,13 +4142,13 @@ child application and control it as if a human were typing commands.")
 (define-public python-setuptools-scm
   (package
     (name "python-setuptools-scm")
-    (version "1.9.0")
+    (version "1.11.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "setuptools_scm" version))
               (sha256
                (base32
-                "0y24bl893zk6nrklbvdrlmpkalf214zjn6k1xrglljd29rrn4wxi"))))
+                "1gqr73i150yzj3mz32854vj93x07yr52kn8fdckwa41ll8wgficc"))))
     (build-system python-build-system)
     (native-inputs `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pypa/setuptools_scm/")
@@ -4598,14 +4625,14 @@ translate the complete SQLite API into Python.")
 (define-public python-lxml
   (package
     (name "python-lxml")
-    (version "3.5.0")
+    (version "3.6.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "lxml" version))
         (sha256
-          (base32
-            "0y7m2s8ci6q642zl85y5axkj8z827l0vhjl532acb75hlkir77rl"))))
+         (base32
+          "1pvbmiy2m7jwv493kilbghhj2pkh8wy1na3ji350vhzhlwlclx4w"))))
     (build-system python-build-system)
     (inputs
       `(("libxml2" ,libxml2)
@@ -4627,14 +4654,14 @@ libxml2 and libxslt.")
 (define-public python-beautifulsoup4
   (package
     (name "python-beautifulsoup4")
-    (version "4.4.1")
+    (version "4.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "beautifulsoup4" version))
        (sha256
         (base32
-         "1d36lc4pfkvl74fmzdib2nqnvknm0jddgf2n9yd7im150qyh3m47"))))
+         "1rf94360s8pmn37vxqjl0g74krq2p6nj3wbn6pj94ik6ny44q24f"))))
     (build-system python-build-system)
     (home-page
      "http://www.crummy.com/software/BeautifulSoup/bs4/")
@@ -4658,17 +4685,14 @@ converts incoming documents to Unicode and outgoing documents to UTF-8.")
 (define-public python2-cssutils
   (package
     (name "python2-cssutils")
-    (version "1.0")
+    (version "1.0.1")
     (source
       (origin
         (method url-fetch)
-        (uri (string-append
-              "https://pypi.python.org/packages/source/c/cssutils/cssutils-"
-              version
-              ".zip"))
+        (uri (pypi-uri "cssutils" version))
         (sha256
-          (base32
-            "1bwim1353r4hqiir73sn4sc43y7ymh09qx0kly7vj048blppc125"))))
+         (base32
+          "0qwha9x1wml2qmipbcz03gndnlwhzrjdvw9i09si247a90l8p8fq"))))
     (build-system python-build-system)
     (native-inputs
       `(("python2-mock" ,python2-mock) ; for the tests
@@ -4691,17 +4715,14 @@ options.")
 (define-public python-cssselect
   (package
     (name "python-cssselect")
-    (version "0.9.1")
+    (version "0.9.2")
     (source
       (origin
         (method url-fetch)
-        (uri (string-append
-              "https://pypi.python.org/packages/source/c/cssselect/cssselect-"
-              version
-              ".tar.gz"))
+        (uri (pypi-uri "cssselect" version))
         (sha256
-          (base32
-            "10h623qnp6dp1191jri7lvgmnd4yfkl36k9smqklp1qlf3iafd85"))))
+         (base32
+          "1xg6gbva1yswghiycmgincv6ab4bn7hpm720ndbj40h8xycmnfvi"))))
     (build-system python-build-system)
     (inputs
       `(("python-setuptools" ,python-setuptools)))
@@ -4902,7 +4923,8 @@ as possible in order to be comprehensible and easily extensible.")
     (version "0.14")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/python-xlib/"
+              (uri (string-append "mirror://sourceforge/python-xlib/python-xlib"
+                                  "/" version "/"
                                   "python-xlib-" version ".tar.gz"))
               (sha256
                (base32
@@ -5002,7 +5024,7 @@ connection to each user.")
     (inputs
      `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/cython/backports_abc")
-    (synopsis "Backport of additions to the 'collections.abc' module.")
+    (synopsis "Backport of additions to the 'collections.abc' module")
     (description
      "Python-backports-abc provides a backport of additions to the
 'collections.abc' module in Python-3.5.")
@@ -5014,14 +5036,14 @@ connection to each user.")
 (define-public python-waf
   (package
     (name "python-waf")
-    (version "1.8.8")
+    (version "1.9.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://waf.io/"
                                   "waf-" version ".tar.bz2"))
               (sha256
                (base32
-                "0b5q307fgn6a5d8yjia2d1l4bk1q3ilvc0w8k4isfrrx2gbcw8wn"))))
+                "1nc4qaqx2vsanlpp9mcwvf91xjqpkvcc6fcxd5sb4fwvaxamw5v6"))))
     (build-system python-build-system)
     (arguments
      '(#:phases
@@ -5613,17 +5635,14 @@ and MAC network addresses.")
 (define-public python-iso8601
   (package
   (name "python-iso8601")
-  (version "0.1.10")
+  (version "0.1.11")
   (source
     (origin
       (method url-fetch)
-      (uri (string-append
-             "https://pypi.python.org/packages/source/i/iso8601/iso8601-"
-             version
-             ".tar.gz"))
+      (uri (pypi-uri "iso8601" version))
       (sha256
-        (base32
-          "1qf01afxh7j4gja71vxv345if8avg6nnm0ry0zsk6j3030xgy4p7"))))
+       (base32
+        "0c7gh3lsdjds262h0v1sqc66l7hqgfwbakn96qrhdbl0i3vm5yz8"))))
   (build-system python-build-system)
   (inputs
     `(("python-setuptools" ,python-setuptools)))
@@ -5980,7 +5999,7 @@ responses, rather than doing any computation.")
     (native-inputs
      `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pyca/cryptography")
-    (synopsis "Test vectors for the cryptography package.")
+    (synopsis "Test vectors for the cryptography package")
     (description
       "This package contains test vectors for the cryptography package.")
     ;; Distributed under either BSD-3 or ASL2.0
@@ -6915,13 +6934,13 @@ WebSocket usage in Python programs.")
 (define-public python-atomicwrites
   (package
     (name "python-atomicwrites")
-    (version "1.0.0")
+    (version "1.1.0")
     (source (origin
              (method url-fetch)
              (uri (pypi-uri "atomicwrites" version))
              (sha256
               (base32
-               "019fa4771q7fb1167yfbh6msdzcqini6v7i59rmf72mzdjd7x5qv"))))
+               "1s01dci8arsl9d9vr5nz1fk9znldp1z3l4yl43f0c27z12b8yxl0"))))
     (build-system python-build-system)
     (synopsis "Atomic file writes in Python")
     (description "Library for atomic file writes using platform dependent tools
@@ -7977,14 +7996,14 @@ layouts.")
 (define-public python-pyquery
   (package
     (name "python-pyquery")
-    (version "1.2.11")
+    (version "1.2.13")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyquery" version))
        (sha256
         (base32
-         "1ikz1387nsp0pp7mzzr6ip9n5gr67acpap24yn33987v7fkjp0sa"))))
+         "0j9fsisip21qv4xljsg5dmni1pgpvwrjyyhhql0glydc4bs5rjgv"))))
     (build-system python-build-system)
     (propagated-inputs
      `(("python-lxml" ,python-lxml)
@@ -8725,7 +8744,7 @@ the same purpose: to provide Python bindings for libmagic.")
     (source
       (origin
         (method url-fetch)
-        (uri (string-append "mirror://sourceforge/s3tools/"
+        (uri (string-append "mirror://sourceforge/s3tools/s3cmd/" version "/"
                             "s3cmd-" version ".tar.gz"))
         (sha256
           (base32
@@ -8815,12 +8834,7 @@ LDFLAGS and parse the output to build extensions with setup.py.")
          "126s53fkpx04f33a829yqqk8fj4png3qwg4m66cvlmhmwc8zihb4"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; python setup.py test does not work as of 0.98
-         ;; but there is only the one test file
-         (replace 'check
-           (lambda _ (zero? (system* "python" "test_bz2file.py")))))))
+     `(#:tests? #f)) ; Tests use deprecated python modules.
     (home-page "https://github.com/nvawda/bz2file")
     (synopsis "Read and write bzip2-compressed files")
     (description
@@ -8837,7 +8851,16 @@ development version of CPython that are not available in older releases.")
     (package
       (inherit base)
       (native-inputs
-       `(("python2-setuptools" ,python2-setuptools))))))
+       `(("python2-setuptools" ,python2-setuptools)))
+      (arguments
+       `(#:python ,python-2
+         #:phases
+         (modify-phases %standard-phases
+           ;; 'python setup.py test' does not work as of 0.98.
+           ;; There is only the one test file, so we run it directly.
+           (replace 'check
+                    (lambda _ (zero? (system* "python"
+                                              "test_bz2file.py"))))))))))
 
 (define-public python-cysignals
   (package
@@ -9276,7 +9299,7 @@ are optionally backed by a C extension built on librdkafka.")
           "02wjrpf001gjdjsaxxbzcwfg19crlk2dbddayrfc2v06f53yrcyw"))))
   (build-system python-build-system)
   (home-page "https://github.com/jquast/wcwidth")
-  (synopsis "Measure number of terminal column cells of wide-character codes.")
+  (synopsis "Measure number of terminal column cells of wide-character codes")
   (description "Wcwidth measures the number of terminal column cells of
 wide-character codes.  It is useful for those implementing a terminal emulator,
 or programs that carefully produce output to be interpreted by one.  It is a
@@ -9825,3 +9848,37 @@ Snowball algorithms.")
 
 (define-public python2-snowballstemmer
   (package-with-python2 python-snowballstemmer))
+
+(define-public ptpython
+  (package
+    (name "ptpython")
+    (version "0.34")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "ptpython" version))
+              (sha256
+               (base32
+                "1mmbiyzf0n8hm7z2a562x7w5cbl6jc0zsk6vp40q1z4cyblv1k13"))))
+    (build-system python-build-system)
+    (inputs
+     `(("python-docopt" ,python-docopt)
+       ("python-jedi" ,python-jedi)
+       ("python-prompt-toolkit" ,python-prompt-toolkit)
+       ("python-pygments" ,python-pygments)
+       ("python-setuptools" ,python-setuptools)))
+    (home-page "https://github.com/jonathanslenders/ptpython")
+    (synopsis "Python Read-Eval-Print-Loop with nice IDE-like features")
+    (description
+     "ptpython is a Python read-eval-print loop with IDE-like features.
+It supports syntax highlighting, multiline editing, autocompletion, mouse,
+color schemes, bracketed paste, Vi and Emacs keybindings, Chinese characters
+etc.")
+    (license bsd-3)
+    (properties `((python2-variant . ,(delay ptpython-2))))))
+
+(define-public ptpython-2
+  (let ((base (package-with-python2 (strip-python2-variant ptpython))))
+    (package
+      (inherit base)
+      (name "ptpython2"))))
+

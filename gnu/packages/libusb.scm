@@ -138,7 +138,7 @@ version of libusb to run with newer libusb.")
     (version "1.1.11")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/libmtp/" version
+             (uri (string-append "mirror://sourceforge/libmtp/libmtp/" version
                                  "/libmtp-" version ".tar.gz"))
              (sha256
               (base32
@@ -174,7 +174,7 @@ proposed for standardization.")
     (version "1.3.10")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/gmtp/" version
+              (uri (string-append "mirror://sourceforge/gmtp/gMTP-" version
                                   "/gmtp-" version ".tar.gz"))
               (sha256
                (base32

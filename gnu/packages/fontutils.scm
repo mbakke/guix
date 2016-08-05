@@ -245,10 +245,10 @@ fonts to/from the WOFF2 format.")
                            (assoc-ref %build-inputs "gs-fonts")
                            "/share/fonts")
 
-            ;; register fonts from user profile
-            ;; TODO: Add /run/current-system/profile/share/fonts and remove
-            ;; the skeleton that works around it from 'default-skeletons'.
-            "--with-add-fonts=~/.guix-profile/share/fonts"
+            ;; Register fonts from user and system profiles.
+            (string-append "--with-add-fonts="
+                           "~/.guix-profile/share/fonts,"
+                           "/run/current-system/profile/share/fonts")
 
             ;; python is not actually needed
             "PYTHON=false")
@@ -397,8 +397,8 @@ and returns a sequence of positioned glyphids from the font.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/potrace/potrace-"
-                          version ".tar.gz"))
+      (uri (string-append "mirror://sourceforge/potrace/" version
+                          "/potrace-" version ".tar.gz"))
       (sha256
        (base32
         "115p2vgyq7p2mf4nidk2x3aa341nvv2v8ml056vbji36df5l6lk2"))))

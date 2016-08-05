@@ -344,7 +344,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                   (libdir (string-append out "/lib"))
                   (incdir (string-append out "/include"))
                   (libc   (assoc-ref %build-inputs "libc"))
-                  (linux  (assoc-ref %build-inputs "linux-headers")))
+                  (linux  (assoc-ref %build-inputs "kernel-headers")))
              (mkdir-p libdir)
              (for-each (lambda (file)
                          (let ((target (string-append libdir "/"
@@ -379,7 +379,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                                 (parameterize ((%current-target-system #f))
                                   (cross-libc target)))
                                glibc)))
-                ("linux-headers" ,linux-libre-headers)))
+                ("kernel-headers" ,linux-libre-headers)))
 
       ;; Only one output.
       (outputs '("out")))))

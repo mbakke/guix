@@ -13,6 +13,7 @@
 ;;; Copyright © 2016 Matthew Jordan <matthewjordandevops@yandex.com>
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -109,14 +110,6 @@
              (substitute* (find-files "." "^Makefile\\.in$")
                (("/bin/pwd")
                 "pwd"))))
-         (add-after 'install 'remove-info.info
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Remove 'info.info', which is provided by Texinfo <= 6.0.
-             ;; TODO: Remove this phase when we switch to Texinfo 6.1.
-             (let ((out (assoc-ref outputs "out")))
-               (delete-file
-                (string-append out "/share/info/info.info.gz"))
-               #t)))
          (add-after 'install 'install-site-start
            ;; Copy guix-emacs.el from Guix and add it to site-start.el.  This
            ;; way, Emacs packages provided by Guix and installed in
@@ -125,9 +118,7 @@
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((guix-src (assoc-ref inputs "guix-src"))
                     (out      (assoc-ref outputs "out"))
-                    (lisp-dir (string-append out "/share/emacs/"
-                                             ,(version-major+minor version)
-                                             "/site-lisp"))
+                    (lisp-dir (string-append out "/share/emacs/site-lisp"))
                     (unpack   (assoc-ref %standard-phases 'unpack)))
                (mkdir "guix")
                (with-directory-excursion "guix"
@@ -456,7 +447,9 @@ on stdout instead of using a socket as the Emacsclient does.")
     (build-system gnu-build-system)
     (native-inputs `(("texinfo" ,texinfo)
                      ("emacs" ,emacs-minimal)))
-    (inputs `(("git" ,git)))
+    (inputs
+     `(("git" ,git)
+       ("perl" ,perl)))
     (propagated-inputs
      `(("dash" ,emacs-dash)
        ("with-editor" ,emacs-with-editor)))
@@ -489,9 +482,12 @@ on stdout instead of using a socket as the Emacsclient does.")
          (add-before
           'build 'patch-exec-paths
           (lambda* (#:key inputs #:allow-other-keys)
-            (let ((git (assoc-ref inputs "git")))
+            (let ((git  (assoc-ref inputs "git"))
+                  (perl (assoc-ref inputs "perl")))
               (emacs-substitute-variables "lisp/magit-git.el"
                 ("magit-git-executable" (string-append git "/bin/git")))
+              (substitute* "lisp/magit-sequence.el"
+                (("perl") (string-append perl "/bin/perl")))
               #t))))))
     (home-page "http://magit.github.io/")
     (synopsis "Emacs interface for the Git version control system")
@@ -710,7 +706,8 @@ the body are let-bound and this search is done at compile time.")
     (build-system emacs-build-system)
     (propagated-inputs
      `(("emacs-dash" ,emacs-dash)
-       ("emacs-let-alist" ,let-alist)))
+       ("emacs-let-alist" ,let-alist)
+       ("emacs-seq" ,emacs-seq)))
     (home-page "https://www.flycheck.org")
     (synopsis "On-the-fly syntax checking")
     (description
@@ -1282,6 +1279,317 @@ strings.")
 files and directories.")
     (license license:gpl3+)))
 
+(define-public emacs-el-mock
+  (package
+    (name "emacs-el-mock")
+    (version "1.25.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/rejeep/el-mock.el/"
+                           "archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "16xw94n58xxn3zvgyj72bmzs0k5lkvswjmzs79ws9n7rzdivb38b"))))
+    (build-system emacs-build-system)
+    (home-page "http://github.com/rejeep/el-mock.el")
+    (synopsis "Tiny mock and stub framework in Emacs Lisp")
+    (description
+     "Emacs Lisp Mock is a library for mocking and stubbing using readable
+syntax.  Most commonly Emacs Lisp Mock is used in conjunction with Emacs Lisp
+Expectations, but it can be used in other contexts.")
+    (license license:gpl3+)))
+
+(define-public emacs-espuds
+  (package
+    (name "emacs-espuds")
+    (version "0.3.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/ecukes/espuds/"
+                           "archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0xv551376pbmh735a3zjwc9z4qdx6ngj1vpq3xqjpn0a1rwjyn4k"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-s" ,emacs-s)
+       ("emacs-dash" ,emacs-dash)
+       ("emacs-f" ,emacs-f)))
+    (home-page "http://github.com/ecukes/espuds")
+    (synopsis "Common step definitions for Ecukes")
+    (description "Espuds is a collection of the most commonly used step
+definitions for testing with the Ecukes framework.")
+    (license license:gpl3+)))
+
+(define-public emacs-expand-region
+  (package
+    (name "emacs-expand-region")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/magnars/expand-region.el"
+                           "/archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1zfiaqyb3zqiyqjkpqsjw660j09805nqsg25q6ars2h8gs0rnvxb"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/magnars/expand-region.el")
+    (synopsis "Increase selected region by semantic units")
+    (description
+     "Expand region increases the selected region by semantic units.  Just
+keep pressing the key until it selects what you want.  There's also
+@code{er/contract-region} if you expand too far.")
+    (license license:gpl3+)))
+
+(define-public emacs-fill-column-indicator
+  (package
+    (name "emacs-fill-column-indicator")
+    (version "1.81")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/alpaker/Fill-Column-Indicator"
+                           "/archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1xwyqbjbbicmvhlb85vg4j5snwy1vd7rfk89ws4viws5ljkhhyg8"))))
+    (build-system emacs-build-system)
+    (home-page "https://www.emacswiki.org/emacs/FillColumnIndicator")
+    (synopsis "Graphically indicate the fill column")
+    (description
+     "Fill-column-indicator graphically indicates the location of the fill
+column by drawing a thin line down the length of the editing window.")
+    (license license:gpl3+)))
+
+(define-public emacs-znc
+  (package
+    (name "emacs-znc")
+    (version "0.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://marmalade-repo.org/packages/znc-"
+                           version ".el"))
+       (sha256
+        (base32
+         "1d8lqvybgyazin5z0g1c4l3rg1vzrrvf0saqs53jr1zcdg0lianh"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/sshirokov/ZNC.el")
+    (synopsis "Make ERC and ZNC get along better")
+    (description
+     "This is a thin wrapper around @code{erc} that enables one to use the ZNC
+IRC bouncer with ERC.")
+    (license license:expat)))
+
+(define-public emacs-shut-up
+  (package
+    (name "emacs-shut-up")
+    (version "0.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/cask/shut-up/"
+                           "archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "09kzrjdkb569iviyg7ydwq44yh84m3f9hkl7jizfrlk0w4gz67d1"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/cask/shut-up")
+    (synopsis "Silence Emacs")
+    (description "This package silences most output of Emacs when running an
+Emacs shell script.")
+    (license license:expat)))
+
+(define-public emacs-undercover
+  (package
+    (name "emacs-undercover")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/sviridov/undercover.el/"
+                           "archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0f48fi0xnbsqs382rgh85m9mq1wdnr0yib7as9xhwzvq0hsr5m0a"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-dash" ,emacs-dash)
+       ("emacs-shut-up" ,emacs-shut-up)))
+    (home-page "https://github.com/sviridov/undercover.el")
+    (synopsis "Test coverage library for Emacs Lisp")
+    (description
+     "Undercover is a test coverage library for software written in Emacs
+Lisp.")
+    (license license:expat)))
+
+(define-public emacs-paren-face
+  (package
+    (name "emacs-paren-face")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/tarsius/paren-face/archive/"
+                           version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0y4qrhxa9332vsvr999jg7qj1ymnfgwpf591yi4a4jgg90pm7qnn"))))
+    (build-system emacs-build-system)
+    (home-page "http://github.com/tarsius/paren-face")
+    (synopsis "Face for parentheses in lisp modes")
+    (description
+     "This library defines a face named @code{parenthesis} used just for
+parentheses.  The intended purpose of this face is to make parentheses less
+visible in Lisp code by dimming them.  Lispers probably don't need to be
+constantly made aware of the existence of the parentheses.  Dimming them might
+be even more useful for people new to lisp who have not yet learned to
+subconsciously blend out the parentheses.")
+    (license license:gpl3+)))
+
+(define-public emacs-page-break-lines
+  (package
+    (name "emacs-page-break-lines")
+    (version "0.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/purcell/page-break-lines/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1zzhziq5kbrm9rxk30kx2glz455fp1blqxg8cpcf6l8xl3w8z4pg"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/purcell/page-break-lines")
+    (synopsis "Display page breaks as tidy horizontal lines")
+    (description
+     "This library provides a global mode which displays form feed characters
+as horizontal rules.")
+    (license license:gpl3+)))
+
+(define-public emacs-simple-httpd
+  (package
+    (name "emacs-simple-httpd")
+    (version "1.4.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/skeeto/emacs-web-server/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "01r7h3imnj4qx1m53a2wjafvbylcyz5f9r2rg2cs7ky3chlg220r"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/skeeto/emacs-http-server")
+    (synopsis "HTTP server in pure Emacs Lisp")
+    (description
+     "This package provides a simple HTTP server written in Emacs Lisp to
+serve files and directory listings.")
+    (license license:unlicense)))
+
+(define-public emacs-skewer-mode
+  (package
+    (name "emacs-skewer-mode")
+    (version "1.6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/skeeto/skewer-mode/archive/"
+                           version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "07jpz374j0j964szy3zznrkyja2kpdl3xa87wh7349mzxivqxdx0"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-simple-httpd" ,emacs-simple-httpd)
+       ("emacs-js2-mode" ,emacs-js2-mode)))
+    (home-page "https://github.com/skeeto/skewer-mode")
+    (synopsis "Live web development in Emacs")
+    (description
+     "Skewer-mode provides live interaction with JavaScript, CSS, and HTML in
+a web browser.  Expressions are sent on-the-fly from an editing buffer to be
+evaluated in the browser, just like Emacs does with an inferior Lisp process
+in Lisp modes.")
+    (license license:unlicense)))
+
+(define-public emacs-rich-minority
+  (package
+    (name "emacs-rich-minority")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/Malabarba/rich-minority/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1l0cb0q7kyi88nwfqd542psnkgwnjklpzc5rx32gzd3lkwkrbr8v"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/Malabarba/rich-minority")
+    (synopsis "Clean-up and beautify the list of minor modes")
+    (description
+     "This Emacs package hides and/or highlights minor modes in the
+mode-line.")
+    (license license:gpl2+)))
+
+(define-public emacs-smart-mode-line
+  (package
+    (name "emacs-smart-mode-line")
+    (version "2.10.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/Malabarba/smart-mode-line/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0i9wajabrrsjzwd842q0m2611kf0q31p9hg1pdj81177gynkw8l8"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-rich-minority" ,emacs-rich-minority)))
+    (home-page "http://github.com/Malabarba/smart-mode-line")
+    (synopsis "Color-coded smart mode-line")
+    (description
+     "Smart Mode Line is a mode-line theme for Emacs.  It aims to be easy to
+read from small to large monitors by using colors, a prefix feature, and smart
+truncation.")
+    (license license:gpl2+)))
+
+(define-public emacs-shell-switcher
+  (package
+    (name "emacs-shell-switcher")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/DamienCassou/shell-switcher"
+                           "/archive/v" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1c23mfkdqz2g9rixd9smm323vzlvhzz3ng34ambcqjfq309qb2nz"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/DamienCassou/shell-switcher")
+    (synopsis "Provide fast switching between shell buffers")
+    (description
+     "This package provides commands to quickly switch between shell buffers.")
+    (license license:gpl3+)))
+
 (define-public emacs-ob-ipython
   (package
     (name "emacs-ob-ipython")
@@ -1539,6 +1847,30 @@ identifiers in the MIT-Scheme documentation.")
 constants and units into an Emacs buffer.")
     (license license:gpl2+)))
 
+(define-public emacs-tagedit
+  (package
+    (name "emacs-tagedit")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/magnars/tagedit/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1apfnann4qklfdsmdi7icjsj18x7gwx8d83iqr4z25clszz95xfq"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-s" ,emacs-s)
+       ("emacs-dash" ,emacs-dash)))
+    (home-page "https://github.com/magnars/tagedit")
+    (synopsis "Some paredit-like features for html-mode")
+    (description
+     "This package provides a collection of paredit-like functions for editing
+in @code{html-mode}.")
+    (license license:gpl3+)))
+
 (define-public emacs-slime
   (package
     (name "emacs-slime")
@@ -1737,6 +2069,28 @@ number.")
 It is built on top of the custom theme support in Emacs 24 or later.")
     (license license:gpl3+)))
 
+(define-public emacs-solarized-theme
+  (package
+    (name "emacs-solarized-theme")
+    (version "1.2.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/bbatsov/solarized-emacs/"
+                                  "archive/v"  version ".tar.gz"))
+              (file-name (string-append name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1ha3slc6d9wi9ilkhmwrzkvf308n6ph7b0k69pk369s9304awxzx"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("emacs-dash" ,emacs-dash)))
+    (home-page "http://github.com/bbatsov/solarized-emacs")
+    (synopsis "Port of the Solarized theme for Emacs")
+    (description
+     "Solarized for Emacs is a port of the Solarized theme for Vim.  This
+package provides a light and a dark variant.")
+    (license license:gpl3+)))
+
 (define-public emacs-smartparens
   (package
     (name "emacs-smartparens")
@@ -1786,6 +2140,33 @@ well as completely new features.")
 keywords in comments and strings.  This package also provides commands for
 moving to the next or previous keyword and to invoke @code{occur} with a
 regexp that matches all known keywords.")
+    (license license:gpl3+)))
+
+(define-public emacs-perspective
+  (package
+    (name "emacs-perspective")
+    (version "1.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/nex3/perspective-el/"
+                           "archive/" version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "078ahh0kmhdylq5ib9c81c76kz1n02xwc83pm729d00i84ibviic"))))
+    (build-system emacs-build-system)
+    (home-page "http://github.com/nex3/perspective-el")
+    (synopsis "Switch between named \"perspectives\"")
+    (description
+     "This package provides tagged workspaces in Emacs, similar to workspaces in
+windows managers such as Awesome and XMonad.  @code{perspective.el} provides
+multiple workspaces (or \"perspectives\") for each Emacs frame.  Each
+perspective is composed of a window configuration and a set of buffers.
+Switching to a perspective activates its window configuration, and when in a
+perspective only its buffers are available by default.")
+    ;; This package is released under the same license as Emacs (GPLv3+) or
+    ;; the Expat license.
     (license license:gpl3+)))
 
 (define-public emacs-hydra
@@ -2315,6 +2696,30 @@ are at a given level.")
 identifiers based on their names.  Each identifier gets a color based on a hash
 of its name.")
     (license license:bsd-2)))
+
+(define-public emacs-visual-fill-column
+  (package
+    (name "emacs-visual-fill-column")
+    (version "1.7")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://codeload.github.com/joostkremers/"
+                                  "visual-fill-column/tar.gz/" version))
+              (file-name (string-append name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "12vn7kdq2mpz9hgibbn1vhpf23lcm7c26k3fkz8nidhygwl5x5lq"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/joostkremers/visual-fill-column")
+    (synopsis "Fill-column for visual-line-mode")
+    (description
+     "@code{visual-fill-column-mode} is a small Emacs minor mode that mimics
+the effect of @code{fill-column} in @code{visual-line-mode}.  Instead of
+wrapping lines at the window edge, which is the standard behaviour of
+@code{visual-line-mode}, it wraps lines at @code{fill-column}.  If
+@code{fill-column} is too large for the window, the text is wrapped at the
+window edge.")
+    (license license:gpl3+)))
 
 (define-public emacs-ido-completing-read+
   (package

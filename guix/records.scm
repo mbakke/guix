@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41,6 +41,15 @@
      (syntax-violation constructor
                        (format #f fmt args ...)
                        form))))
+
+(define (report-invalid-field-specifier name bindings)
+  "Report the first invalid binding among BINDINGS."
+  (let loop ((bindings bindings))
+    (syntax-case bindings ()
+      (((field value) rest ...)                   ;good
+       (loop #'(rest ...)))
+      ((weird _ ...)                              ;weird!
+       (syntax-violation name "invalid field specifier" #'weird)))))
 
 (define-syntax make-syntactic-constructor
   (syntax-rules ()
@@ -147,7 +156,13 @@ fields, and DELAYED is the list of identifiers of delayed fields."
                                      "missing field initializers ~a"
                                      (lset-difference eq?
                                                       '(expected ...)
-                                                      fields)))))))))))))
+                                                      fields)))))))
+           ((_ bindings (... ...))
+            ;; One of BINDINGS doesn't match the (field value) pattern.
+            ;; Report precisely which one is faulty, instead of letting the
+            ;; "source expression failed to match any pattern" error.
+            (report-invalid-field-specifier 'name
+                                            #'(bindings (... ...))))))))))
 
 (define-syntax-rule (define-field-property-predicate predicate property)
   "Define PREDICATE as a procedure that takes a syntax object and, when passed

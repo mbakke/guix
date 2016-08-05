@@ -43,8 +43,8 @@
     (version "8.6.9")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/asciidoc/asciidoc-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/asciidoc/asciidoc/"
+                                  version "/asciidoc-" version ".tar.gz"))
               (sha256
                (base32
                 "1w71nk527lq504njmaf0vzr93pgahkgzzxzglrq6bay8cw2rvnvq"))))
@@ -126,8 +126,8 @@ or Java class files.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/scrollkeeper/scrollkeeper-"
-                           version ".tar.gz"))
+       (uri (string-append "mirror://sourceforge/scrollkeeper/scrollkeeper/"
+                           version "/scrollkeeper-" version ".tar.gz"))
        (sha256
         (base32 "1bfxwxc1ngh11v36z899sz9qam366r050fhkyb5adv65lb1x62sa"))))
     (build-system gnu-build-system)

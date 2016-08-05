@@ -13,6 +13,7 @@
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -64,14 +65,14 @@
 (define-public arandr
   (package
     (name "arandr")
-    (version "0.1.8")
+    (version "0.1.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://christian.amsuess.com/tools/" name
                                   "/files/" name "-" version ".tar.gz"))
               (sha256
                (base32
-                "0d574mbmhaqmh7kivaryj2hpghz6xkvic9ah43s1hf385y7c33kd"))))
+                "1i3f1agixxbfy4kxikb2b241p7c2lg73cl9wqfvlwz3q6zf5faxv"))))
     (build-system python-build-system)
     (arguments
      `(#:python ,python-2     ;incompatible with python 3
@@ -108,7 +109,8 @@ program.")
       (origin
         (method url-fetch)
         (uri (string-append
-              "mirror://sourceforge/" name "/" name "-" version ".tar.gz"))
+              "mirror://sourceforge/" name "/" name "/" version "/"
+              name "-" version ".tar.gz"))
         (sha256
           (base32
            "0ibcf46rldnv0r424qcnai1fa5iq3lm5q5rdd7snsi5sb78gmixp"))))
@@ -127,14 +129,14 @@ avoiding password prompts when X11 forwarding has already been setup.")
 (define-public libxkbcommon
   (package
     (name "libxkbcommon")
-    (version "0.5.0")
+    (version "0.6.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "http://xkbcommon.org/download/" name "-"
                                  version ".tar.xz"))
              (sha256
               (base32
-               "176ii5dn2wh74q48sd8ac37ljlvgvp5f506glr96z6ibfhj7igch"))))
+               "0q47xa1szlxwgvwmhv4b7xwawnykz1hnc431d84nj8dlh2q8f22v"))))
     (build-system gnu-build-system)
     (inputs
      `(("libx11" ,libx11)
@@ -262,7 +264,7 @@ rasterisation.")
 (define-public libdrm
   (package
     (name "libdrm")
-    (version "2.4.65")
+    (version "2.4.67")
     (source
       (origin
         (method url-fetch)
@@ -272,7 +274,7 @@ rasterisation.")
                ".tar.bz2"))
         (sha256
           (base32
-            "1i4n7mz49l0j4kr0dg9n1j3hlc786ncqgj0v5fci1mz7pp40m5ki"))
+            "1gnf206zs8dwszvkv4z2hbvh23045z0q29kms127bqrv27hp2nzf"))
         (patches (search-patches "libdrm-symbol-check.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -297,7 +299,7 @@ and Matrox.")
 (define-public mtdev
   (package
     (name "mtdev")
-    (version "1.1.3")
+    (version "1.1.5")
     (source
       (origin
         (method url-fetch)
@@ -305,8 +307,8 @@ and Matrox.")
                "http://bitmath.org/code/mtdev/mtdev-"
                version ".tar.bz2"))
         (sha256
-          (base32
-            "159ndzwfpw0xr8mw4lhl47w9c2krshlfrscs7k6n186vknv2hk3d"))))
+         (base32
+          "0zxs7shzgbalkvlaiibi25bd902rbmkv9n1lww6q8j3ri9qdaxv6"))))
     (build-system gnu-build-system)
     (home-page "http://bitmath.org/code/mtdev/")
     (synopsis "Multitouch protocol translation library")
@@ -584,8 +586,8 @@ X Window System.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/libxosd/xosd-"
-                    version ".tar.gz"))
+                    "mirror://sourceforge/libxosd/libxosd/xosd-" version "/"
+                    name "-" version ".tar.gz"))
               (sha256
                (base32
                 "025m7ha89q29swkc7s38knnbn8ysl24g2h5s7imfxflm91psj7sg"))))
@@ -639,7 +641,7 @@ Guile will work for XBindKeys.")
 (define-public sxhkd
   (package
     (name "sxhkd")
-    (version "0.5.5")
+    (version "0.5.6")
     (source
      (origin
        (file-name (string-append name "-" version ".tar.gz"))
@@ -649,7 +651,7 @@ Guile will work for XBindKeys.")
              version ".tar.gz"))
        (sha256
         (base32
-         "04s3y2bq9502gw72jj3y2zsh96yj3qg2av3zsa8ahd2farvrysg6"))))
+         "15grmzpxz5fqlbfg2slj7gb7r6nzkvjmflmbkqx7mlby9pm6wdkj"))))
     (build-system gnu-build-system)
     (inputs
      `(("asciidoc" ,asciidoc)
@@ -849,7 +851,7 @@ color temperature should be set to match the lamps in your room.")
 (define-public xscreensaver
   (package
     (name "xscreensaver")
-    (version "5.34")
+    (version "5.35")
     (source
      (origin
        (method url-fetch)
@@ -858,7 +860,7 @@ color temperature should be set to match the lamps in your room.")
                        version ".tar.gz"))
        (sha256
         (base32
-         "09sy5v8bn62hiq4ib3jyvp8lipqcvn3rdsj74q25qgklpv27xzvg"))))
+         "08kbb0ry7ih436ab4i5g6lnhaaz13zkcdmbdibrn4j5gm5qq8v0y"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f  ; no check target
@@ -911,6 +913,28 @@ demos.  It also acts as a nice screen locker.")
               (string-append
                "http://metadata.ftp-master.debian.org/changelogs/"
                "/main/x/xscreensaver/xscreensaver_5.34-2_copyright")))))
+
+(define-public xdpyprobe
+  (package
+    (name "xdpyprobe")
+    (version "0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/alezost/" name
+                                  "/releases/download/v" version
+                                  "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1h09wd2qcg08rj5hcakvdh9q01hkrj8vxly94ax3ch2x06lm0zq8"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("libx11" ,libx11)))
+    (home-page "https://github.com/alezost/xdpyprobe")
+    (synopsis "Probe X server for connectivity")
+    (description
+     "Xdpyprobe is a tiny C program whose only purpose is to probe a
+connectivity of the X server running on a particular @code{DISPLAY}.")
+    (license license:gpl3+)))
 
 (define-public rofi
   (package

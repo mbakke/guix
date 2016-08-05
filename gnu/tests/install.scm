@@ -32,7 +32,8 @@
   #:use-module (guix grafts)
   #:use-module (guix gexp)
   #:use-module (guix utils)
-  #:export (%test-installed-os))
+  #:export (%test-installed-os
+            %test-encrypted-os))
 
 ;;; Commentary:
 ;;;
@@ -91,7 +92,33 @@
 
 (define MiB (expt 2 20))
 
-(define* (run-install #:key
+(define %simple-installation-script
+  ;; Shell script of a simple installation.
+  "\
+. /etc/profile
+set -e -x
+guix --version
+
+export GUIX_BUILD_OPTIONS=--no-grafts
+guix build isc-dhcp
+parted --script /dev/vdb mklabel gpt \\
+  mkpart primary ext2 1M 3M \\
+  mkpart primary ext2 3M 1G \\
+  set 1 boot on \\
+  set 1 bios_grub on
+mkfs.ext4 -L my-root /dev/vdb2
+mount /dev/vdb2 /mnt
+df -h /mnt
+herd start cow-store /mnt
+mkdir /mnt/etc
+cp /etc/target-config.scm /mnt/etc/config.scm
+guix system init /mnt/etc/config.scm /mnt --no-substitutes
+sync
+reboot\n")
+
+(define* (run-install target-os target-os-source
+                      #:key
+                      (script %simple-installation-script)
                       (os (marionette-operating-system
                            ;; Since the image has no network access, use the
                            ;; current Guix so the store items we need are in
@@ -103,12 +130,13 @@
                            #:imported-modules '((gnu services herd)
                                                 (guix combinators))))
                       (target-size (* 1200 MiB)))
-  "Run the GuixSD installation procedure from OS and return a VM image of
-TARGET-SIZE bytes containing the installed system."
+  "Run SCRIPT (a shell script following the GuixSD installation procedure) in
+OS to install TARGET-OS.  Return a VM image of TARGET-SIZE bytes containing
+the installed system."
 
   (mlet* %store-monad ((_      (set-grafting #f))
                        (system (current-system))
-                       (target (operating-system-derivation %minimal-os))
+                       (target (operating-system-derivation target-os))
 
                        ;; Since the installation system has no network access,
                        ;; we cheat a little bit by adding TARGET to its GC
@@ -119,72 +147,67 @@ TARGET-SIZE bytes containing the installed system."
                                  os (list target))
                                 #:disk-image-size (* 1500 MiB))))
     (define install
-      #~(begin
-          (use-modules (guix build utils)
-                       (gnu build marionette))
+      (with-imported-modules '((guix build utils)
+                               (gnu build marionette))
+        #~(begin
+            (use-modules (guix build utils)
+                         (gnu build marionette))
 
-          (set-path-environment-variable "PATH" '("bin")
-                                         (list #$qemu-minimal))
+            (set-path-environment-variable "PATH" '("bin")
+                                           (list #$qemu-minimal))
 
-          (system* "qemu-img" "create" "-f" "qcow2"
-                   #$output #$(number->string target-size))
+            (system* "qemu-img" "create" "-f" "qcow2"
+                     #$output #$(number->string target-size))
 
-          (define marionette
-            (make-marionette
-             (cons (which #$(qemu-command system))
-                   (cons* "-no-reboot" "-m" "800"
-                          "-drive"
-                          (string-append "file=" #$image
-                                         ",if=virtio,readonly")
-                          "-drive"
-                          (string-append "file=" #$output ",if=virtio")
-                          (if (file-exists? "/dev/kvm")
-                              '("-enable-kvm")
-                              '())))))
+            (define marionette
+              (make-marionette
+               (cons (which #$(qemu-command system))
+                     (cons* "-no-reboot" "-m" "800"
+                            "-drive"
+                            (string-append "file=" #$image
+                                           ",if=virtio,readonly")
+                            "-drive"
+                            (string-append "file=" #$output ",if=virtio")
+                            (if (file-exists? "/dev/kvm")
+                                '("-enable-kvm")
+                                '())))))
 
-          (pk 'uname (marionette-eval '(uname) marionette))
+            (pk 'uname (marionette-eval '(uname) marionette))
 
-          ;; Wait for tty1.
-          (marionette-eval '(begin
-                              (use-modules (gnu services herd))
-                              (start 'term-tty1))
-                           marionette)
+            ;; Wait for tty1.
+            (marionette-eval '(begin
+                                (use-modules (gnu services herd))
+                                (start 'term-tty1))
+                             marionette)
 
-          (marionette-eval '(call-with-output-file "/etc/litl-config.scm"
-                              (lambda (port)
-                                (write '#$%minimal-os-source port)))
-                           marionette)
+            (marionette-eval '(call-with-output-file "/etc/target-config.scm"
+                                (lambda (port)
+                                  (write '#$target-os-source port)))
+                             marionette)
 
-          (exit (marionette-eval '(zero? (system "
-. /etc/profile
-set -e -x;
-guix --version
-guix gc --list-live | grep isc-dhcp
+            (exit (marionette-eval '(zero? (system #$script))
+                                   marionette)))))
 
-export GUIX_BUILD_OPTIONS=--no-grafts
-guix build isc-dhcp
-parted --script /dev/vdb mklabel gpt \\
-  mkpart primary ext2 1M 3M \\
-  mkpart primary ext2 3M 1G \\
-  set 1 boot on \\
-  set 1 bios_grub on
-mkfs.ext4 -L my-root /dev/vdb2
-ls -l /dev/vdb
-mount /dev/vdb2 /mnt
-df -h /mnt
-herd start cow-store /mnt
-mkdir /mnt/etc
-cp /etc/litl-config.scm /mnt/etc/config.scm
-guix system init /mnt/etc/config.scm /mnt --no-substitutes
-sync
-reboot\n"))
-                                 marionette))))
+    (gexp->derivation "installation" install)))
 
-    (gexp->derivation "installation" install
-                      #:modules '((guix build utils)
-                                  (gnu build marionette)))))
+(define (qemu-command/writable-image image)
+  "Return as a monadic value the command to run QEMU on a writable copy of
+IMAGE, a disk image."
+  (mlet %store-monad ((system (current-system)))
+    (return #~(let ((image #$image))
+                ;; First we need a writable copy of the image.
+                (format #t "copying image '~a'...~%" image)
+                (copy-file image "disk.img")
+                (chmod "disk.img" #o644)
+                `(,(string-append #$qemu-minimal "/bin/"
+                                  #$(qemu-command system))
+                  ,@(if (file-exists? "/dev/kvm")
+                        '("-enable-kvm")
+                        '())
+                  "-no-reboot" "-m" "256"
+                  "-drive" "file=disk.img,if=virtio")))))
 
-
+
 (define %test-installed-os
   (system-test
    (name "installed-os")
@@ -193,21 +216,89 @@ reboot\n"))
 This test is expensive in terms of CPU and storage usage since we need to
 build (current-guix) and then store a couple of full system images.")
    (value
-    (mlet %store-monad ((image  (run-install))
-                        (system (current-system)))
-      (run-basic-test %minimal-os
-                      #~(let ((image #$image))
-                          ;; First we need a writable copy of the image.
-                          (format #t "copying image '~a'...~%" image)
-                          (copy-file image "disk.img")
-                          (chmod "disk.img" #o644)
-                          `(,(string-append #$qemu-minimal "/bin/"
-                                            #$(qemu-command system))
-                            ,@(if (file-exists? "/dev/kvm")
-                                  '("-enable-kvm")
-                                  '())
-                            "-no-reboot" "-m" "256"
-                            "-drive" "file=disk.img,if=virtio"))
+    (mlet* %store-monad ((image   (run-install %minimal-os %minimal-os-source))
+                         (command (qemu-command/writable-image image)))
+      (run-basic-test %minimal-os command
                       "installed-os")))))
+
+
+(define-os-with-source (%encrypted-root-os %encrypted-root-os-source)
+  ;; The OS we want to install.
+  (use-modules (gnu) (gnu tests) (srfi srfi-1))
+
+  (operating-system
+    (host-name "liberigilo")
+    (timezone "Europe/Paris")
+    (locale "en_US.UTF-8")
+
+    (bootloader (grub-configuration (device "/dev/vdb")))
+    (kernel-arguments '("console=ttyS0"))
+    (file-systems (cons (file-system
+                          (device "/dev/mapper/the-root-device")
+                          (title 'device)
+                          (mount-point "/")
+                          (type "ext4"))
+                        %base-file-systems))
+    (mapped-devices (list (mapped-device
+                           (source "REPLACE-WITH-LUKS-UUID")
+                           (target "the-root-device")
+                           (type luks-device-mapping))))
+    (users (cons (user-account
+                  (name "charlie")
+                  (group "users")
+                  (home-directory "/home/charlie")
+                  (supplementary-groups '("wheel" "audio" "video")))
+                 %base-user-accounts))
+    (services (cons (service marionette-service-type
+                             (marionette-configuration
+                              (imported-modules '((gnu services herd)
+                                                  (guix combinators)))))
+                    %base-services))))
+
+(define %encrypted-root-installation-script
+  ;; Shell script of a simple installation.
+  "\
+. /etc/profile
+set -e -x
+guix --version
+
+export GUIX_BUILD_OPTIONS=--no-grafts
+ls -l /run/current-system/gc-roots
+parted --script /dev/vdb mklabel gpt \\
+  mkpart primary ext2 1M 3M \\
+  mkpart primary ext2 3M 1G \\
+  set 1 boot on \\
+  set 1 bios_grub on
+echo -n thepassphrase | cryptsetup luksFormat -q /dev/vdb2 -
+echo -n thepassphrase | \\
+  cryptsetup open --type luks --key-file - /dev/vdb2 the-root-device
+mkfs.ext4 -L my-root /dev/mapper/the-root-device
+mount LABEL=my-root /mnt
+herd start cow-store /mnt
+mkdir /mnt/etc
+cp /etc/target-config.scm /mnt/etc/config.scm
+cat /mnt/etc/config
+luks_uuid=`cryptsetup luksUUID /dev/vdb2`
+sed -i /mnt/etc/config.scm \\
+    -e \"s/\\\"REPLACE-WITH-LUKS-UUID\\\"/(uuid \\\"$luks_uuid\\\")/g\"
+guix system build /mnt/etc/config.scm
+guix system init /mnt/etc/config.scm /mnt --no-substitutes
+sync
+reboot\n")
+
+(define %test-encrypted-os
+  (system-test
+   (name "encrypted-root-os")
+   (description
+    "Test basic functionality of an OS installed like one would do by hand.
+This test is expensive in terms of CPU and storage usage since we need to
+build (current-guix) and then store a couple of full system images.")
+   (value
+    (mlet* %store-monad ((image   (run-install %encrypted-root-os
+                                               %encrypted-root-os-source
+                                               #:script
+                                               %encrypted-root-installation-script))
+                         (command (qemu-command/writable-image image)))
+      (run-basic-test %encrypted-root-os command "encrypted-root-os")))))
 
 ;;; install.scm ends here

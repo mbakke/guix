@@ -207,6 +207,16 @@
                                        #:hooks '())))
     (return (derivation-inputs drv))))
 
+(test-assert "package->manifest-entry defaults to \"out\""
+  (let ((outputs (package-outputs packages:glibc)))
+    (equal? (manifest-entry-output
+             (package->manifest-entry (package
+                                        (inherit packages:glibc)
+                                        (outputs (reverse outputs)))))
+            (manifest-entry-output
+             (package->manifest-entry packages:glibc))
+            "out")))
+
 (test-assertm "profile-manifest, search-paths"
   (mlet* %store-monad
       ((guile ->   (package

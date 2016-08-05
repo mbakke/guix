@@ -10,6 +10,7 @@
 ;;; Copyright © 2015, 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
+;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,6 +36,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system perl)
   #:use-module (gnu packages)
+  #:use-module (gnu packages assembly)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
@@ -148,14 +150,14 @@ adding and extracting files to/from a tar archive.")
 (define-public gzip
   (package
    (name "gzip")
-   (version "1.6")
+   (version "1.8")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/gzip/gzip-"
-                                version ".tar.gz"))
+                                version ".tar.xz"))
             (sha256
              (base32
-              "0zlgdm4v3dndrbiz7b67mbbj25dpwqbmbzjiycssvrfrcfvq7swp"))))
+              "1lxv3p4iyx7833mlihkn5wfwmz4cys5nybwpz3dfawag8kn6f5zz"))))
    (build-system gnu-build-system)
    (synopsis "General file (de)compression (using lzw)")
    (arguments
@@ -633,7 +635,8 @@ time for compression ratio.")
     (version "4.3")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/squashfs/"
+              (uri (string-append "mirror://sourceforge/squashfs/squashfs/"
+                                  "squashfs" version "/"
                                   "squashfs" version ".tar.gz"))
               (sha256
                (base32
@@ -796,3 +799,75 @@ respectively, based on the reference implementation from Google.")
     (description "Extracts files out of Microsoft Cabinet (.cab) archives")
     ;; Some source files specify gpl2+, lgpl2+, however COPYING is gpl3.
     (license license:gpl3+)))
+
+(define-public xdelta
+  (package
+    (name "xdelta")
+    (version "3.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/jmacd/xdelta/archive/v"
+                           version ".tar.gz"))
+       (sha256
+        (base32
+         "17g2pbbqy6h20qgdjq7ykib7kg5ajh8fwbsfgyjqg8pwg19wy5bm"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (snippet
+        ;; This file isn't freely distributable and has no effect on building.
+        '(delete-file "xdelta3/draft-korn-vcdiff.txt"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'enter-build-directory
+           (lambda _ (chdir "xdelta3")))
+         (add-before 'configure 'autoconf
+           (lambda _ (zero? (system* "autoreconf" "-vfi")))))))
+    (home-page "http://xdelta.com")
+    (synopsis "Delta encoder for binary files")
+    (description "xdelta encodes only the differences between two binary files
+using the VCDIFF algorithm and patch file format described in RFC 3284.  It can
+also be used to apply such patches.  xdelta is similar to @command{diff} and
+@command{patch}, but is not limited to plain text and does not generate
+human-readable output.")
+    (license license:asl2.0)))
+
+(define-public lrzip
+  (package
+    (name "lrzip")
+    (version "0.630")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "http://ck.kolivas.org/apps/lrzip/lrzip-" version ".tar.bz2"))
+       (sha256
+        (base32
+         "01ykxliqw4cavx9f2gawxfa9wf52cjy1qx28cnkrh6i3lfzzcq94"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(;; nasm is only required when building for 32-bit x86 platforms
+       ,@(if (string-prefix? "i686" (or (%current-target-system)
+                                        (%current-system)))
+             `(("nasm" ,nasm))
+             '())
+       ("perl" ,perl)))
+    (inputs
+     `(("bzip2" ,bzip2)
+       ("lzo" ,lzo)
+       ("zlib" ,zlib)))
+    (home-page "http://ck.kolivas.org/apps/lrzip/")
+    (synopsis "Large file compressor with a very high compression ratio")
+    (description "lrzip is a compression utility that uses long-range
+redundancy reduction to improve the subsequent compression ratio of
+larger files.  It can then further compress the result with the ZPAQ or
+LZMA algorithms for maximum compression, or LZO for maximum speed.  This
+choice between size or speed allows for either better compression than
+even LZMA can provide, or a higher speed than gzip while compressing as
+well as bzip2.")
+    (license (list license:gpl3+
+                   license:public-domain)))) ; most files in lzma/

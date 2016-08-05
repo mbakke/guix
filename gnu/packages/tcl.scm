@@ -227,8 +227,8 @@ interfaces (GUIs) in the Tcl language.")
     (version "1.18")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/" name "/"
-                                  name "-" version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                                  version "/" name "-" version ".tar.gz"))
               (sha256
                (base32
                 "05dmrk9qsryah2n17z6z85dj9l9lfyvnsd7faw0p9bs1pp5pwrkj"))))
@@ -252,8 +252,8 @@ utility functions and modules all written in high-level Tcl.")
     (version "3.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/" name "/"
-                                  name "-" version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/" name "/TclXML/"
+                                  version "/" name "-" version ".tar.gz"))
               (sha256
                (base32
                 "0ffb4aw63inig3aql33g4pk0kjk14dv238anp1scwjdjh1k6n4gl"))

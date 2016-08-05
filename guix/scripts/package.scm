@@ -225,7 +225,8 @@ specified in MANIFEST, a manifest object."
                               "~a packages in profile~%"
                               count)
                        count)
-               (display-search-paths entries (list profile)))))))))
+               (display-search-paths entries (list profile)
+                                     #:kind 'prefix))))))))
 
 
 ;;;

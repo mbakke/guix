@@ -73,6 +73,7 @@
             derivation-name
             derivation-output-names
             fixed-output-derivation?
+            fixed-output-path
             offloadable-derivation?
             substitutable-derivation?
             substitution-oracle
@@ -676,7 +677,11 @@ the derivation called NAME with hash HASH."
                   name
                   (string-append name "-" output))))
 
-(define (fixed-output-path output hash-algo hash recursive? name)
+(define* (fixed-output-path name hash
+                            #:key
+                            (output "out")
+                            (hash-algo 'sha256)
+                            (recursive? #t))
   "Return an output path for the fixed output OUTPUT defined by HASH of type
 HASH-ALGO, of the derivation NAME.  RECURSIVE? has the same meaning as for
 'add-to-store'."
@@ -736,12 +741,14 @@ output should not be used."
               (outputs  (map (match-lambda
                               ((output-name . ($ <derivation-output>
                                                  _ algo hash rec?))
-                               (let ((path (if hash
-                                               (fixed-output-path output-name
-                                                                  algo hash
-                                                                  rec? name)
-                                               (output-path output-name
-                                                            drv-hash name))))
+                               (let ((path
+                                      (if hash
+                                          (fixed-output-path name hash
+                                                             #:hash-algo algo
+                                                             #:output output-name
+                                                             #:recursive? rec?)
+                                          (output-path output-name
+                                                       drv-hash name))))
                                  (cons output-name
                                        (make-derivation-output path algo
                                                                hash rec?)))))

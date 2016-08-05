@@ -38,17 +38,9 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xorg)
-  #:export (sdl
-            sdl2
-            libmikmod
-            sdl-gfx
-            sdl-image
-            sdl-mixer
-            sdl-net
-            sdl-ttf
-            sdl-union))
+  #:export (sdl-union))
 
-(define sdl
+(define-public sdl
   (package
     (name "sdl")
     (version "1.2.15")
@@ -92,7 +84,7 @@ joystick, and graphics hardware.")
     (home-page "http://libsdl.org/")
     (license lgpl2.1)))
 
-(define sdl2
+(define-public sdl2
   (package (inherit sdl)
     (name "sdl2")
     (version "2.0.4")
@@ -106,7 +98,7 @@ joystick, and graphics hardware.")
                "0jqp46mxxbh9lhpx1ih6sp93k752j2smhpc0ad0q4cb3px0famfs"))))
     (license bsd-3)))
 
-(define libmikmod
+(define-public libmikmod
   (package
     (name "libmikmod")
     (version "3.3.7")
@@ -131,7 +123,7 @@ system, such as sound redirection over the network.")
     (license lgpl2.1)
     (home-page "http://mikmod.sourceforge.net/")))
 
-(define sdl-gfx
+(define-public sdl-gfx
   (package
     (name "sdl-gfx")
     (version "2.0.24")
@@ -155,7 +147,7 @@ other supporting functions for SDL.")
     ;; MIPS, at least.
     (supported-systems '("i686-linux" "x86_64-linux"))))
 
-(define sdl-image
+(define-public sdl-image
   (package
     (name "sdl-image")
     (version "1.2.12")
@@ -191,7 +183,7 @@ WEBP, XCF, XPM, and XV.")
     (home-page "http://www.libsdl.org/projects/SDL_image/")
     (license zlib)))
 
-(define sdl-mixer
+(define-public sdl-mixer
   (package
     (name "sdl-mixer")
     (version "1.2.12")
@@ -229,7 +221,7 @@ MIDI, Ogg Vorbis, and MP3.")
     (home-page "http://www.libsdl.org/projects/SDL_mixer/")
     (license zlib)))
 
-(define sdl-net
+(define-public sdl-net
   (package
     (name "sdl-net")
     (version "1.2.8")
@@ -250,7 +242,7 @@ SDL.")
     (home-page "http://www.libsdl.org/projects/SDL_net/")
     (license zlib)))
 
-(define sdl-ttf
+(define-public sdl-ttf
   (package
     (name "sdl-ttf")
     (version "2.0.11")

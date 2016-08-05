@@ -6,6 +6,7 @@
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Erik Edrosa <erik.edrosa@gmail.com>
 ;;; Copyright © 2016 Eraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -50,6 +51,8 @@
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages xdisorg)
+  #:use-module (gnu packages xorg)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -163,7 +166,8 @@ without requiring the source code to be rewritten.")
    (outputs '("out" "debug"))
 
    (arguments
-    `(#:phases (alist-cons-before
+    `(#:configure-flags '("--disable-static")     ;saves 3MiB
+      #:phases (alist-cons-before
                 'configure 'pre-configure
                 (lambda* (#:key inputs #:allow-other-keys)
                   ;; Tell (ice-9 popen) the file name of Bash.
@@ -1131,5 +1135,84 @@ It currently supports MySQL, Postgres and SQLite3.")
      "guile-dbi is a library for Guile that provides a convenient interface to
 SQL databases.  This package implements the interface for SQLite.")
     (license gpl2+)))
+
+(define-public guile-xosd
+  (package
+    (name "guile-xosd")
+    (version "0.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/alezost/" name
+                                  "/releases/download/v" version
+                                  "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1j0b07kycccfslp5n6q0hz7adwc7k41fpzds2dvrly67gavjqljv"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-2.0)
+       ("libx11" ,libx11)
+       ("libxext" ,libxext)
+       ("libxinerama" ,libxinerama)
+       ("xosd" ,xosd)))
+    (home-page "https://github.com/alezost/guile-xosd")
+    (synopsis "XOSD bindings for Guile")
+    (description
+     "Guile-XOSD provides Guile bindings for @code{libxosd},
+@uref{http://sourceforge.net/projects/libxosd/, the X On Screen Display
+library}.")
+    (license gpl3+)))
+
+(define-public guile-daemon
+  (package
+    (name "guile-daemon")
+    (version "0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/alezost/" name
+                                  "/releases/download/v" version
+                                  "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1s90h8qhblhhz4ahn3p5d573a24px6cdjq2w311ibpgwnsni4qvq"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (inputs
+     `(("guile" ,guile-2.0)))
+    (home-page "https://github.com/alezost/guile-daemon")
+    (synopsis "Evaluate code in a running Guile process")
+    (description
+     "Guile-Daemon is a small Guile program that loads your initial
+configuration file, and then reads and evaluates Guile expressions that
+you send to a FIFO file.")
+    (license gpl3+)))
+
+(define-public guile-commonmark
+  (package
+    (name "guile-commonmark")
+    (version "0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/OrangeShark/" name
+                                  "/releases/download/v" version
+                                  "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "12cb5fqvvgc87f5xp0ih5az305wnjia89l5jba83d0r2p8bfy0b0"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("guile" ,guile-2.0)))
+    (synopsis "CommonMark parser for Guile")
+    (description
+     "guile-commonmark is a library for parsing CommonMark, a fully specified
+variant of Markdown.  The library is written in Guile Scheme and is designed
+to transform a CommonMark document to SXML.  guile-commonmark tries to closely
+follow the @uref{http://commonmark.org/, CommonMark spec}, the main difference
+is no support for parsing block and inline level HTML.")
+    (home-page "https://github.com/OrangeShark/guile-commonmark")
+    (license lgpl3+)))
 
 ;;; guile.scm ends here

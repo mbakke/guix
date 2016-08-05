@@ -610,7 +610,8 @@ if file doesn't exist, and the narinfo otherwise."
             (update-progress!)
             (cons narinfo result))
           (let* ((path      (uri-path (request-uri request)))
-                 (hash-part (string-drop-right path 8))) ; drop ".narinfo"
+                 (hash-part (basename
+                             (string-drop-right path 8)))) ;drop ".narinfo"
             (if len
                 (get-bytevector-n port len)
                 (read-to-eof port))

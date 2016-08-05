@@ -73,8 +73,8 @@ cameras (CRW/CR2, NEF, RAF, DNG, and others).")
     (version "0.6.21")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/libexif/libexif-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/libexif/libexif/"
+                                  version "/libexif-" version ".tar.bz2"))
               (sha256
                (base32
                 "06nlsibr3ylfwp28w8f5466l6drgrnydgxrm4jmxzrmk5svaxk8n"))))
@@ -92,8 +92,8 @@ data as produced by digital cameras.")
     (version "2.5.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/gphoto/libgphoto2-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/gphoto/libgphoto/"
+                                  version "/libgphoto2-" version ".tar.bz2"))
               (sha256
                (base32
                 "0f1818l1vs5fbmrihzyv3qasddbqi3r01jik5crrxddwalsi2bd3"))))
@@ -122,8 +122,8 @@ from digital cameras.")
     (version "2.5.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/gphoto/gphoto2-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/gphoto/gphoto/" version
+                                  "/gphoto2-" version ".tar.bz2"))
               (sha256
                (base32
                 "16c8k1cxfypg7v5h8xi87grclw7a5ayaamn548ys3zkj727r5fcf"))))

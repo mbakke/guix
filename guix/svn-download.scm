@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Sree Harsha Totakura <sreeharsha@totakura.in>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -59,14 +59,16 @@
 object.  The output is expected to have recursive hash HASH of type
 HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
   (define build
-    #~(begin
-        (use-modules (guix build svn))
-        (svn-fetch '#$(svn-reference-url ref)
-                   '#$(svn-reference-revision ref)
-                   #$output
-                   #:svn-command (string-append #+svn "/bin/svn")
-                   #:user-name #$(svn-reference-user-name ref)
-                   #:password #$(svn-reference-password ref))))
+    (with-imported-modules '((guix build svn)
+                             (guix build utils))
+      #~(begin
+          (use-modules (guix build svn))
+          (svn-fetch '#$(svn-reference-url ref)
+                     '#$(svn-reference-revision ref)
+                     #$output
+                     #:svn-command (string-append #+svn "/bin/svn")
+                     #:user-name #$(svn-reference-user-name ref)
+                     #:password #$(svn-reference-password ref)))))
 
   (mlet %store-monad ((guile (package->derivation guile system)))
     (gexp->derivation (or name "svn-checkout") build
@@ -74,8 +76,6 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
                       #:hash-algo hash-algo
                       #:hash hash
                       #:recursive? #t
-                      #:modules '((guix build svn)
-                                  (guix build utils))
                       #:guile-for-build guile
                       #:local-build? #t)))
 

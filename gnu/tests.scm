@@ -80,68 +80,68 @@
                        (srfi srfi-9 gnu)
                        (guix build syscalls)
                        (rnrs bytevectors)))
-            (imported-modules `((guix build syscalls)
-                                ,@imported-modules))
             (start
-             #~(lambda ()
-                 (define (clear-echo termios)
-                   (set-field termios (termios-local-flags)
-                              (logand (lognot (local-flags ECHO))
-                                      (termios-local-flags termios))))
+             (with-imported-modules `((guix build syscalls)
+                                      ,@imported-modules)
+               #~(lambda ()
+                   (define (clear-echo termios)
+                     (set-field termios (termios-local-flags)
+                                (logand (lognot (local-flags ECHO))
+                                        (termios-local-flags termios))))
 
-                 (define (self-quoting? x)
-                   (letrec-syntax ((one-of (syntax-rules ()
-                                             ((_) #f)
-                                             ((_ pred rest ...)
-                                              (or (pred x)
-                                                  (one-of rest ...))))))
-                     (one-of symbol? string? pair? null? vector?
-                             bytevector? number? boolean?)))
+                   (define (self-quoting? x)
+                     (letrec-syntax ((one-of (syntax-rules ()
+                                               ((_) #f)
+                                               ((_ pred rest ...)
+                                                (or (pred x)
+                                                    (one-of rest ...))))))
+                       (one-of symbol? string? pair? null? vector?
+                               bytevector? number? boolean?)))
 
-                 (match (primitive-fork)
-                   (0
-                    (dynamic-wind
-                      (const #t)
-                      (lambda ()
-                        (let* ((repl    (open-file #$device "r+0"))
-                               (termios (tcgetattr (fileno repl)))
-                               (console (open-file "/dev/console" "r+0")))
-                          ;; Don't echo input back.
-                          (tcsetattr (fileno repl) (tcsetattr-action TCSANOW)
-                                     (clear-echo termios))
+                   (match (primitive-fork)
+                     (0
+                      (dynamic-wind
+                        (const #t)
+                        (lambda ()
+                          (let* ((repl    (open-file #$device "r+0"))
+                                 (termios (tcgetattr (fileno repl)))
+                                 (console (open-file "/dev/console" "r+0")))
+                            ;; Don't echo input back.
+                            (tcsetattr (fileno repl) (tcsetattr-action TCSANOW)
+                                       (clear-echo termios))
 
-                          ;; Redirect output to the console.
-                          (close-fdes 1)
-                          (close-fdes 2)
-                          (dup2 (fileno console) 1)
-                          (dup2 (fileno console) 2)
-                          (close-port console)
+                            ;; Redirect output to the console.
+                            (close-fdes 1)
+                            (close-fdes 2)
+                            (dup2 (fileno console) 1)
+                            (dup2 (fileno console) 2)
+                            (close-port console)
 
-                          (display 'ready repl)
-                          (let loop ()
-                            (newline repl)
+                            (display 'ready repl)
+                            (let loop ()
+                              (newline repl)
 
-                            (match (read repl)
-                              ((? eof-object?)
-                               (primitive-exit 0))
-                              (expr
-                               (catch #t
-                                 (lambda ()
-                                   (let ((result (primitive-eval expr)))
-                                     (write (if (self-quoting? result)
-                                                result
-                                                (object->string result))
-                                            repl)))
-                                 (lambda (key . args)
-                                   (print-exception (current-error-port)
-                                                    (stack-ref (make-stack #t) 1)
-                                                    key args)
-                                   (write #f repl)))))
-                            (loop))))
-                      (lambda ()
-                        (primitive-exit 1))))
-                   (pid
-                    pid))))
+                              (match (read repl)
+                                ((? eof-object?)
+                                 (primitive-exit 0))
+                                (expr
+                                 (catch #t
+                                   (lambda ()
+                                     (let ((result (primitive-eval expr)))
+                                       (write (if (self-quoting? result)
+                                                  result
+                                                  (object->string result))
+                                              repl)))
+                                   (lambda (key . args)
+                                     (print-exception (current-error-port)
+                                                      (stack-ref (make-stack #t) 1)
+                                                      key args)
+                                     (write #f repl)))))
+                              (loop))))
+                        (lambda ()
+                          (primitive-exit 1))))
+                     (pid
+                      pid)))))
             (stop #~(make-kill-destructor)))))))
 
 (define marionette-service-type

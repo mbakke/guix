@@ -88,7 +88,10 @@
     `(#:tests? #f ; no test data provided with the tarball
       #:configure-flags
       '("--enable-xpdf-headers" ; to install header files
-        "--enable-zlib")
+        "--enable-zlib"
+
+        ;; Saves 8 MiB of .a files.
+        "--disable-static")
       #:phases
       (alist-cons-before
        'configure 'setenv
@@ -415,8 +418,8 @@ interaction.")
     (version "0.9.3")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/podofo/podofo-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/podofo/podofo/" version
+                                  "/podofo-" version ".tar.gz"))
               (sha256
                (base32
                 "1n12lbq9x15vqn7dc0hsccp56l5jdff1xrhvlfqlbklxx0qiw9pc"))))
@@ -506,30 +509,41 @@ and examining the file structure (pdfshow).")
    (version "5.1.3")
    (source (origin
             (method url-fetch)
-            (uri (string-append "mirror://sourceforge/qpdf/qpdf-"
-                                version ".tar.gz"))
+            (uri (string-append "mirror://sourceforge/qpdf/qpdf/" version
+                                "/qpdf-" version ".tar.gz"))
             (sha256 (base32
-                     "1lq1v7xghvl6p4hgrwbps3a13ad6lh4ib3myimb83hxgsgd4n5nm"))))
+                     "1lq1v7xghvl6p4hgrwbps3a13ad6lh4ib3myimb83hxgsgd4n5nm"))
+            (modules '((guix build utils)))
+            (snippet
+             ;; Replace shebang with the bi-lingual shell/Perl trick to remove
+             ;; dependency on Perl.
+             '(substitute* "qpdf/fix-qdf"
+                (("#!/usr/bin/env perl")
+                 "\
+eval '(exit $?0)' && eval 'exec perl -wS \"$0\" ${1+\"$@\"}'
+  & eval 'exec perl -wS \"$0\" $argv:q'
+    if 0;\n")))))
    (build-system gnu-build-system)
    (arguments
-      '(#:phases (alist-cons-before
-                  'configure 'patch-paths
-                  (lambda _
-                    (substitute* "make/libtool.mk"
-                      (("SHELL=/bin/bash")
-                       (string-append "SHELL=" (which "bash"))))
-                    (substitute* (append
-                                  '("qtest/bin/qtest-driver")
-                                  (find-files "." "\\.test"))
-                      (("/usr/bin/env") (which "env"))))
-                  %standard-phases)))
+    `(#:disallowed-references (,perl)
+      #:phases (alist-cons-before
+                'configure 'patch-paths
+                (lambda _
+                  (substitute* "make/libtool.mk"
+                    (("SHELL=/bin/bash")
+                     (string-append "SHELL=" (which "bash"))))
+                  (substitute* (append
+                                '("qtest/bin/qtest-driver")
+                                (find-files "." "\\.test"))
+                    (("/usr/bin/env") (which "env"))))
+                %standard-phases)))
    (native-inputs
-    `(("pkg-config" ,pkg-config)))
+    `(("pkg-config" ,pkg-config)
+      ("perl" ,perl)))
    (propagated-inputs
     `(("pcre" ,pcre)))
    (inputs
-    `(("zlib" ,zlib)
-      ("perl" ,perl)))
+    `(("zlib" ,zlib)))
    (synopsis "Command-line tools and library for transforming PDF files")
    (description
     "QPDF is a command-line program that does structural, content-preserving
@@ -547,8 +561,8 @@ program capable of converting PDF into other formats.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/xournal/xournal-"
-                           version ".tar.gz"))
+       (uri (string-append "mirror://sourceforge/xournal/xournal/" version
+                           "/xournal-" version ".tar.gz"))
        (sha256
         (base32
          "0c7gjcqhygiyp0ypaipdaxgkbivg6q45vhsj8v5jsi9nh6iqff13"))))

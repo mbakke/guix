@@ -45,18 +45,47 @@
   #:use-module (guix gexp)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
-  #:export (upower-service
+  #:export (upower-configuration
+            upower-configuration?
+            upower-service
+            upower-service-type
+
+            udisks-configuration
+            udisks-configuration?
             udisks-service
+            udisks-service-type
+
             colord-service
+
             geoclue-application
+            geoclue-configuration
+            geoclue-configuration?
             %standard-geoclue-applications
             geoclue-service
+            geoclue-service-type
+
             bluetooth-service
+
+            polkit-configuration
+            polkit-configuration?
             polkit-service
+            polkit-service-type
+
             elogind-configuration
+            elogind-configuration?
             elogind-service
+            elogind-service-type
+
+            gnome-desktop-configuration
+            gnome-desktop-configuration?
             gnome-desktop-service
+            gnome-desktop-service-type
+
+            xfce-desktop-configuration
+            xfce-desktop-configuration?
             xfce-desktop-service
+            xfce-desktop-service-type
+
             %desktop-services))
 
 ;;; Commentary:
@@ -91,30 +120,33 @@ is set to @var{value} when the bus daemon launches it."
                              (string-append #$service "/" #$program)
                              (cdr (command-line))))))
 
+  (define build
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+
+          (define service-directory
+            "/share/dbus-1/system-services")
+
+          (mkdir-p (dirname (string-append #$output
+                                           service-directory)))
+          (copy-recursively (string-append #$service
+                                           service-directory)
+                            (string-append #$output
+                                           service-directory))
+          (symlink (string-append #$service "/etc") ;for etc/dbus-1
+                   (string-append #$output "/etc"))
+
+          (for-each (lambda (file)
+                      (substitute* file
+                        (("Exec[[:blank:]]*=[[:blank:]]*([[:graph:]]+)(.*)$"
+                          _ original-program arguments)
+                         (string-append "Exec=" #$wrapper arguments
+                                        "\n"))))
+                    (find-files #$output "\\.service$")))))
+
   (computed-file (string-append (package-name service) "-wrapper")
-                 #~(begin
-                     (use-modules (guix build utils))
-
-                     (define service-directory
-                       "/share/dbus-1/system-services")
-
-                     (mkdir-p (dirname (string-append #$output
-                                                      service-directory)))
-                     (copy-recursively (string-append #$service
-                                                      service-directory)
-                                       (string-append #$output
-                                                      service-directory))
-                     (symlink (string-append #$service "/etc") ;for etc/dbus-1
-                              (string-append #$output "/etc"))
-
-                     (for-each (lambda (file)
-                                 (substitute* file
-                                   (("Exec[[:blank:]]*=[[:blank:]]*([[:graph:]]+)(.*)$"
-                                     _ original-program arguments)
-                                    (string-append "Exec=" #$wrapper arguments
-                                                   "\n"))))
-                               (find-files #$output "\\.service$")))
-                 #:modules '((guix build utils))))
+                 build))
 
 
 ;;;
@@ -408,15 +440,15 @@ Users need to be in the @code{lp} group to access the D-Bus service.
 (define (polkit-directory packages)
   "Return a directory containing an @file{actions} and possibly a
 @file{rules.d} sub-directory, for use as @file{/etc/polkit-1}."
-  (computed-file "etc-polkit-1"
-                 #~(begin
-                     (use-modules (guix build union) (srfi srfi-26))
+  (with-imported-modules '((guix build union))
+    (computed-file "etc-polkit-1"
+                   #~(begin
+                       (use-modules (guix build union) (srfi srfi-26))
 
-                     (union-build #$output
-                                  (map (cut string-append <>
-                                            "/share/polkit-1")
-                                       (list #$@packages))))
-                 #:modules '((guix build union))))
+                       (union-build #$output
+                                    (map (cut string-append <>
+                                              "/share/polkit-1")
+                                         (list #$@packages)))))))
 
 (define polkit-etc-files
   (match-lambda

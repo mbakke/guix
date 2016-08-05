@@ -119,8 +119,8 @@ interfaces for other technical domains.")
     (version "0.7.6")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/gts/gts-"
-                                 version ".tar.gz"))
+             (uri (string-append "mirror://sourceforge/gts/gts/" version
+                                 "/gts-" version ".tar.gz"))
              (sha256
               (base32
                "07mqx09jxh8cv9753y2d2jsv7wp8vjmrd7zcfpbrddz3wc9kx705"))))

@@ -51,8 +51,8 @@
     (version "1.3.2")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/libcddb/libcddb-"
-                                 version ".tar.bz2"))
+             (uri (string-append "mirror://sourceforge/libcddb/libcddb/" version
+                                 "/libcddb-" version ".tar.bz2"))
              (sha256
               (base32
                "0fr21a7vprdyy1bq6s99m0x420c9jm5fipsd63pqv8qyfkhhxkim"))))

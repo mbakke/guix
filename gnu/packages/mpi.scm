@@ -98,16 +98,16 @@ bind processes, and much more.")
 (define-public openmpi
   (package
     (name "openmpi")
-    (version "1.10.1")
+    (version "1.10.3")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "http://www.open-mpi.org/software/ompi/v"
+      (uri (string-append "https://www.open-mpi.org/software/ompi/v"
                           (version-major+minor version)
                           "/downloads/openmpi-" version ".tar.bz2"))
       (sha256
        (base32
-        "14p4px9a3qzjc22lnl6braxrcrmd9rgmy7fh4qpanawn2pgfq6br"))))
+        "0k95ri9f8kzx5vhzrdbzn59rn2324fs4a96w5v8jy20j8dkbp13l"))))
     (build-system gnu-build-system)
     (inputs
      `(("hwloc" ,hwloc)
@@ -128,7 +128,20 @@ bind processes, and much more.")
                            ,(string-append "--with-valgrind="
                                            (assoc-ref %build-inputs "valgrind"))
                            ,(string-append "--with-hwloc="
-                                           (assoc-ref %build-inputs "hwloc")))))
+                                           (assoc-ref %build-inputs "hwloc")))
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'scrub-timestamps ;reproducibility
+                    (lambda _
+                      (substitute* '("ompi/tools/ompi_info/param.c"
+                                     "orte/tools/orte-info/param.c"
+                                     "oshmem/tools/oshmem_info/param.c")
+                        ((".*(Built|Configured) on.*") ""))
+                      #t))
+                  (add-after 'install 'remove-logs ;reproducibility
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((out (assoc-ref outputs "out")))
+                        (for-each delete-file (find-files out "config.log"))
+                        #t))))))
     (home-page "http://www.open-mpi.org")
     (synopsis "MPI-2 implementation")
     (description

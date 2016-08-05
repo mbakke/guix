@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2014, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -36,7 +36,17 @@
 ;;; Code:
 
 (define* (build-guix out source
-                     #:key gcrypt
+                     #:key
+                     system
+                     storedir localstatedir sysconfdir sbindir
+
+                     (package-name "GNU Guix")
+                     (package-version "0")
+                     (bug-report-address "bug-guix@gnu.org")
+                     (home-page-url "https://gnu.org/s/guix")
+
+                     libgcrypt zlib gzip bzip2 xz
+
                      (debug-port (%make-void-port "w"))
                      (log-port (current-error-port)))
   "Build and install Guix in directory OUT using SOURCE, a directory
@@ -55,13 +65,26 @@ containing the source code.  Write any debugging output to DEBUG-PORT."
     (copy-file "guix.scm" (string-append out "/guix.scm"))
     (copy-file "gnu.scm" (string-append out "/gnu.scm"))
 
-    ;; Add a fake (guix config) module to allow the other modules to be
-    ;; compiled.  The user's (guix config) is the one that will be used.
+    ;; Instantiate a (guix config) module that preserves the original
+    ;; settings.
     (copy-file "guix/config.scm.in"
                (string-append out "/guix/config.scm"))
     (substitute* (string-append out "/guix/config.scm")
-      (("@LIBGCRYPT@")
-       (string-append gcrypt "/lib/libgcrypt")))
+      (("@PACKAGE_NAME@") package-name)
+      (("@PACKAGE_VERSION@") package-version)
+      (("@PACKAGE_BUGREPORT@") bug-report-address)
+      (("@PACKAGE_URL@") home-page-url)
+      (("@storedir@") storedir)
+      (("@guix_localstatedir@") localstatedir)
+      (("@guix_sysconfdir@") sysconfdir)
+      (("@guix_sbindir@") sbindir)
+      (("@guix_system@") system)
+      (("@LIBGCRYPT@") (string-append libgcrypt "/lib/libgcrypt"))
+      (("@LIBZ@") (string-append zlib "/lib/libz"))
+      (("@GZIP@") (string-append gzip "/bin/gzip"))
+      (("@BZIP2@") (string-append bzip2 "/bin/bzip2"))
+      (("@XZ@") (string-append xz "/bin/xz"))
+      (("@NIX_INSTANTIATE@") ""))                 ;remnants from the past
 
     ;; Augment the search path so Scheme code can be compiled.
     (set! %load-path (cons out %load-path))
@@ -118,10 +141,6 @@ containing the source code.  Write any debugging output to DEBUG-PORT."
            (with-mutex mutex
              (set! completed (+ 1 completed))))
          files))))
-
-  ;; Remove the "fake" (guix config).
-  (delete-file (string-append out "/guix/config.scm"))
-  (delete-file (string-append out "/guix/config.go"))
 
   (newline)
   #t)

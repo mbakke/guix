@@ -32,7 +32,8 @@
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/argtable/argtable"
+                    "mirror://sourceforge/argtable/argtable/"
+                    "argtable-" version "/argtable"
                     (string-join (string-split version #\.) "-")
                     ".tar.gz"))
              (sha256

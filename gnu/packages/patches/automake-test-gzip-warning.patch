@@ -1,0 +1,17 @@
+Adjust test to ignore gzip 1.8+ warnings.
+
+--- automake-1.15/t/distcheck-no-prefix-or-srcdir-override.sh	2016-06-14 00:36:26.554218552 +0200
++++ automake-1.15/t/distcheck-no-prefix-or-srcdir-override.sh	2016-06-14 00:37:52.903157770 +0200
+@@ -49,7 +49,11 @@ grep "cannot find sources.* in foobar" s
+ 
+ ./configure
+ run_make -E -O distcheck
+-test ! -s stderr
++
++# Gzip 1.8+ emits warnings like "gzip: warning: GZIP environment
++# variable is deprecated"; filter them out.
++test `grep -v '^gzip: warning' stderr | wc -l` -eq 0
++
+ # Sanity check: the flags have been actually seen.
+ $PERL -e 'undef $/; $_ = <>; s/ \\\n/ /g; print;' <stdout >t
+ grep '/configure .* --srcdir am-src'   t || exit 99

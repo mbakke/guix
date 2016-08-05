@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014 Raimon Grau <raimonster@gmail.com>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,16 +27,16 @@
 (define-public stalonetray
   (package
     (name "stalonetray")
-    (version "0.8.1")
+    (version "0.8.3")
     (source
      (origin
        (method url-fetch)
        (uri
-        (string-append "mirror://sourceforge/stalonetray/stalonetray-"
+        (string-append "mirror://sourceforge/stalonetray/stalonetray/stalonetray-"
                        version "/stalonetray-" version ".tar.bz2"))
        (sha256
         (base32
-         "1wp8pnlv34w7xizj1vivnc3fkwqq4qgb9dbrsg15598iw85gi8ll"))))
+         "0k7xnpdb6dvx25d67v0crlr32cdnzykdsi9j889njiididc8lm1n"))))
     (inputs `(("libx11" ,libx11)))
     (build-system gnu-build-system)
     (home-page "http://stalonetray.sourceforge.net")

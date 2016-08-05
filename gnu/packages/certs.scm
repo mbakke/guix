@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24,7 +25,6 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
-  #:use-module (gnu packages gnuzilla)
   #:use-module (gnu packages python)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages tls))
@@ -71,8 +71,20 @@
    (home-page "http://pkgs.fedoraproject.org/cgit/ca-certificates.git/")))
 
 (define-public nss-certs
-  (package (inherit nss) ; to reuse the source, version and some metadata
+  (package
     (name "nss-certs")
+    (version "3.23")
+    (source (origin
+              (method url-fetch)
+              (uri (let ((version-with-underscores
+                          (string-join (string-split version #\.) "_")))
+                     (string-append
+                      "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
+                      "releases/NSS_" version-with-underscores "_RTM/src/"
+                      "nss-" version ".tar.gz")))
+              (sha256
+               (base32
+                "1kqidv91icq96m9m8zx50n7px08km2l88458rkgyjwcn3kiq7cwl"))))
     (build-system gnu-build-system)
     (outputs '("out"))
     (native-inputs
@@ -123,5 +135,7 @@
                 '(set-paths install-locale unpack)))))
     (synopsis "CA certificates from Mozilla")
     (description
-      "This package provides certificates for Certification Authorities (CA)
-taken from the NSS package and thus ultimately from the Mozilla project.")))
+     "This package provides certificates for Certification Authorities (CA)
+taken from the NSS package and thus ultimately from the Mozilla project.")
+    (home-page "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS")
+    (license license:mpl2.0)))

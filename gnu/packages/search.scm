@@ -26,8 +26,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages check)
   #:use-module (gnu packages databases)
-  #:use-module (gnu packages linux)
-  #:export (xapian))
+  #:use-module (gnu packages linux))
 
 (define-public xapian
   (package

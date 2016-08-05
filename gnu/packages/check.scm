@@ -37,15 +37,15 @@
 (define-public check
   (package
     (name "check")
-    (version "0.9.14")
+    (version "0.10.0")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/check/check/"
-                          version "/check-" version ".tar.gz"))
+      (uri (string-append "https://github.com/libcheck/check/files/71408/"
+                          "/check-" version ".tar.gz"))
       (sha256
        (base32
-        "02l4g79d81s07hzywcv1knwj5dyrwjiq2pgxaz7kidxi8m364wn2"))))
+        "0lhhywf5nxl3dd0hdakra3aasl590756c9kmvyifb3vgm9k0gxgm"))))
     (build-system gnu-build-system)
     (home-page "https://libcheck.github.io/check/")
     (synopsis "Unit test framework for C")

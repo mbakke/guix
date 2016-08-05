@@ -59,6 +59,7 @@
 
             %gnu-updater
             %gnome-updater
+            %kde-updater
             %xorg-updater))
 
 ;;; Commentary:
@@ -500,6 +501,33 @@ elpa.gnu.org, and all the GNOME packages."
                        ;; checksums.
                        #:file->signature (const #f))))
 
+(define (kde-package? package)
+  "Return true if PACKAGE is a KDE package, developed by KDE.org."
+  (define kde-uri?
+    (match-lambda
+      ((? string? uri)
+       (string-prefix? "mirror://kde/" uri))
+      (_
+       #f)))
+
+  (match (package-source package)
+    ((? origin? origin)
+     (match (origin-uri origin)
+      ((? kde-uri?) #t)
+      (_             #f)))
+    (_ #f)))
+
+(define (latest-kde-release package)
+  "Return the latest release of PACKAGE, the name of an KDE.org package."
+  (let ((uri (string->uri (origin-uri (package-source package)))))
+    (false-if-ftp-error
+     (latest-ftp-release
+      (package-name package)
+      #:server "mirrors.mit.edu"
+      #:directory
+      (string-append "/kde" (dirname (dirname (uri-path uri))))
+      #:file->signature (const #f)))))
+
 (define (xorg-package? package)
   "Return true if PACKAGE is an X.org package, developed by X.org."
   (define xorg-uri?
@@ -539,6 +567,13 @@ elpa.gnu.org, and all the GNOME packages."
    (description "Updater for GNOME packages")
    (pred gnome-package?)
    (latest latest-gnome-release)))
+
+(define %kde-updater
+  (upstream-updater
+    (name 'kde)
+    (description "Updater for KDE packages")
+    (pred kde-package?)
+    (latest latest-kde-release)))
 
 (define %xorg-updater
   (upstream-updater

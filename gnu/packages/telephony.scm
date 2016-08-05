@@ -4,6 +4,7 @@
 ;;; Copyright © 2015 David Hashe <david.hashe@dhashe.com>
 ;;; Copyright © 2015 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
+;;; Copyright © 2016 Francesco Frassinelli <fraph24@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,8 +26,11 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages multiprecision)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages xiph)
   #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -252,3 +256,33 @@ Voice-over-IP (VoIP) communications.")
       ;; covered under the 'GPL'.
       ;; The package as a whole is distributed under the LGPL 2.0.
       (license (list lgpl2.0 public-domain gpl2+)))))
+
+(define-public seren
+  (package
+    (name "seren")
+    (version "0.0.21")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://holdenc.altervista.org/"
+                                  "seren/downloads/seren-" version
+                                  ".tar.gz"))
+              (sha256
+               (base32
+                "06mams6bng7ib7p2zpfq88kdr4ffril9svzc9lprkb0wjgmkglk9"))))
+    (build-system gnu-build-system)
+    (arguments '(#:tests? #f))  ; no "check" target
+    (inputs
+     `(("alsa-lib" ,alsa-lib)
+       ("gmp" ,gmp)
+       ("libogg" ,libogg)
+       ("ncurses" ,ncurses)
+       ("opus" ,opus)))
+    (synopsis "Simple VoIP program to create conferences from the terminal")
+    (description
+     "Seren is a simple VoIP program based on the Opus codec that allows you
+to create a voice conference from the terminal, with up to 10 participants,
+without having to register accounts, exchange emails, or add people to contact
+lists.  All you need to join an existing conference is the host name or IP
+address of one of the participants.")
+    (home-page "http://holdenc.altervista.org/seren/")
+    (license gpl3+)))

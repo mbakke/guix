@@ -60,7 +60,7 @@
 (define-public qt
   (package
     (name "qt")
-    (version "5.5.1")
+    (version "5.6.1-1")
     (source (origin
              (method url-fetch)
              (uri
@@ -72,7 +72,7 @@
                  version ".tar.xz"))
              (sha256
                (base32
-                 "0615cn4n3n78v48lnmapqz2jizm2pzrjwvsjlnsf4awrsiiqw0kg"))
+                 "1nrn2wivjwdxc9q03gpsi336gcl9l2axi0xjbzsha5v6akmsf26f"))
              (modules '((guix build utils)))
              (snippet
               '(begin
@@ -151,46 +151,53 @@
        ;; A more structural fix is needed.
        #:parallel-build? #f
        #:phases
-         (alist-replace
-          'configure
-          (lambda* (#:key outputs #:allow-other-keys)
-            (let ((out (assoc-ref outputs "out")))
-              (substitute* '("configure" "qtbase/configure")
-                (("/bin/pwd") (which "pwd")))
-              (substitute* "qtbase/src/corelib/global/global.pri"
-                (("/bin/ls") (which "ls")))
-              ;; do not pass "--enable-fast-install", which makes the
-              ;; configure process fail
-              (zero? (system*
-                      "./configure"
-                      "-verbose"
-                      "-prefix" out
-                      "-opensource"
-                      "-confirm-license"
-                      ;; Most "-system-..." are automatic, but some use
-                      ;; the bundled copy by default.
-                      "-system-sqlite"
-                      "-system-harfbuzz"
-                      ;; explicitly link with openssl instead of dlopening it
-                      "-openssl-linked"
-                      ;; explicitly link with dbus instead of dlopening it
-                      "-dbus-linked"
-                      ;; drop special machine instructions not supported
-                      ;; on all instances of the target
-                      ,@(if (string-prefix? "x86_64"
-                                            (or (%current-target-system)
-                                                (%current-system)))
-                            '()
-                            '("-no-sse2"))
-                      "-no-sse3"
-                      "-no-ssse3"
-                      "-no-sse4.1"
-                      "-no-sse4.2"
-                      "-no-avx"
-                      "-no-avx2"
-                      "-no-mips_dsp"
-                      "-no-mips_dspr2"))))
-          %standard-phases)))
+       (modify-phases %standard-phases
+         (add-after 'configure 'patch-bin-sh
+           (lambda _
+             (substitute* '("qtbase/config.status"
+                            "qtbase/configure"
+                            "qtbase/mkspecs/features/qt_functions.prf"
+                            "qtbase/qmake/library/qmakebuiltins.cpp")
+                          (("/bin/sh") (which "sh")))
+             #t))
+         (replace 'configure
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (substitute* '("configure" "qtbase/configure")
+                 (("/bin/pwd") (which "pwd")))
+               (substitute* "qtbase/src/corelib/global/global.pri"
+                 (("/bin/ls") (which "ls")))
+               ;; do not pass "--enable-fast-install", which makes the
+               ;; configure process fail
+               (zero? (system*
+                       "./configure"
+                       "-verbose"
+                       "-prefix" out
+                       "-opensource"
+                       "-confirm-license"
+                       ;; Most "-system-..." are automatic, but some use
+                       ;; the bundled copy by default.
+                       "-system-sqlite"
+                       "-system-harfbuzz"
+                       ;; explicitly link with openssl instead of dlopening it
+                       "-openssl-linked"
+                       ;; explicitly link with dbus instead of dlopening it
+                       "-dbus-linked"
+                       ;; drop special machine instructions not supported
+                       ;; on all instances of the target
+                       ,@(if (string-prefix? "x86_64"
+                                             (or (%current-target-system)
+                                                 (%current-system)))
+                             '()
+                             '("-no-sse2"))
+                       "-no-sse3"
+                       "-no-ssse3"
+                       "-no-sse4.1"
+                       "-no-sse4.2"
+                       "-no-avx"
+                       "-no-avx2"
+                       "-no-mips_dsp"
+                       "-no-mips_dspr2"))))))))
     (home-page "http://qt-project.org/")
     (synopsis "Cross-platform GUI library")
     (description "Qt is a cross-platform application and UI framework for
@@ -393,6 +400,13 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                  (("/bin/pwd") (which "pwd")))
                (substitute* "src/corelib/global/global.pri"
                  (("/bin/ls") (which "ls")))
+               ;; The configuration files for other Qt5 packages are searched
+               ;; through a call to "find_package" in Qt5Config.cmake, which
+               ;; disables the use of CMAKE_PREFIX_PATH via the parameter
+               ;; "NO_DEFAULT_PATH". Re-enable it so that the different
+               ;; components can be installed in different places.
+               (substitute* (find-files "." ".*\\.cmake")
+                 (("NO_DEFAULT_PATH") ""))
                ;; do not pass "--enable-fast-install", which makes the
                ;; configure process fail
                (zero? (system*
@@ -907,6 +921,33 @@ contain over 620 classes.")
     (native-inputs
      `(("python-sip" ,python2-sip)
        ("qtbase" ,qtbase)))
+    (inputs
+     `(("python" ,python-2)))))
+
+(define-public python-pyqt-5.5
+  (package (inherit python-pyqt)
+    (version "5.5")
+    (source
+      (origin
+        (method url-fetch)
+        (uri
+          (string-append "mirror://sourceforge/pyqt/PyQt5/"
+                         "PyQt-" version "/PyQt-gpl-"
+                         version ".tar.gz"))
+        (sha256
+         (base32
+          "056qmkv02wdcfblqdaxiswrgn4wa88sz22i1x58dpb1iniavplfd"))
+       (patches (search-patches "pyqt-configure.patch"))))
+    (native-inputs
+     `(("python-sip" ,python-sip)
+       ("qt" ,qt)))))
+
+(define-public python2-pyqt-5.5
+  (package (inherit python-pyqt-5.5)
+    (name "python2-pyqt")
+    (native-inputs
+     `(("python-sip" ,python2-sip)
+       ("qt" ,qt)))
     (inputs
      `(("python" ,python-2)))))
 

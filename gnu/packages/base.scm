@@ -44,7 +44,9 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix build-system trivial))
+  #:use-module (guix build-system trivial)
+  #:use-module (ice-9 match)
+  #:export (glibc))
 
 ;;; Commentary:
 ;;;
@@ -75,14 +77,14 @@ command-line arguments, multiple languages, and so on.")
 (define-public grep
   (package
    (name "grep")
-   (version "2.22")
+   (version "2.25")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/grep/grep-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "1srn321x7whlhs5ks36zlcrrmj4iahll8fxwsh1vbz3v04px54fa"))
+              "0c38b67cnwchwzv4wq2gpz6smkhdxrac2hhssv8f0l04qnx867p2"))
             (patches (search-patches "grep-timing-sensitive-test.patch"))))
    (build-system gnu-build-system)
    (native-inputs `(("perl" ,perl)))             ;some of the tests require it
@@ -137,17 +139,34 @@ implementation offers several extensions over the standard utility.")
 (define-public tar
   (package
    (name "tar")
-   (version "1.28")
+   (version "1.29")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/tar/tar-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "1wi2zwm4c9r3h3b8y4w0nm0qq897kn8kyj9k22ba0iqvxj48vvk4"))
-            (patches (search-patches "tar-d_ino_in_dirent-fix.patch"
-                                     "tar-skip-unreliable-tests.patch"))))
+              "097hx7sbzp8qirl4m930lw84kn0wmxhmq7v1qpra3mrg0b8cyba0"))
+            (patches (search-patches "tar-skip-unreliable-tests.patch"))))
    (build-system gnu-build-system)
+   ;; Note: test suite requires ~1GiB of disk space.
+   (arguments
+    '(#:phases (modify-phases %standard-phases
+                 (add-before 'build 'set-shell-file-name
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     ;; Do not use "/bin/sh" to run programs.
+                     (let ((bash (assoc-ref inputs "bash")))
+                       (substitute* "src/system.c"
+                         (("/bin/sh")
+                          (string-append bash "/bin/sh")))
+                       #t))))))
+
+   ;; When cross-compiling, the 'set-shell-file-name' phase needs to be able
+   ;; to refer to the target Bash.
+   (inputs (if (%current-target-system)
+               `(("bash" ,bash))
+               '()))
+
    (synopsis "Managing tar archives")
    (description
     "Tar provides the ability to create tar archives, as well as the
@@ -243,23 +262,14 @@ used to apply commands with arbitrarily long arguments.")
 (define-public coreutils
   (package
    (name "coreutils")
-   (version "8.24")
+   (version "8.25")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/coreutils/coreutils-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0w11jw3fb5sslf0f72kxy7llxgk1ia3a6bcw0c9kmvxrlj355mx2"))
-            (patches
-             (list (origin
-                     (method url-fetch)
-                     (uri "http://git.savannah.gnu.org/cgit/coreutils.git/\
-patch/?id=3ba68f9e64fa2eb8af22d510437a0c6441feb5e0")
-                     (sha256
-                      (base32
-                       "1dnlszhc8lihhg801i9sz896mlrgfsjfcz62636prb27k5hmixqz"))
-                     (file-name "coreutils-tail-inotify-race.patch"))))))
+              "11yfrnb94xzmvi4lhclkcmkqsbhww64wf234ya1aacjvg82prrii"))))
    (build-system gnu-build-system)
    (inputs `(("acl"  ,acl)                        ; TODO: add SELinux
              ("gmp"  ,gmp)                        ;bignums in 'expr', yay!
@@ -315,14 +325,14 @@ functionality beyond that which is outlined in the POSIX standard.")
 (define-public gnu-make
   (package
    (name "make")
-   (version "4.1")
+   (version "4.2")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/make/make-" version
                                 ".tar.bz2"))
             (sha256
              (base32
-              "19gwwhik3wdwn0r42b7xcihkbxvjl9r2bdal8nifc3k5i4rn3iqb"))
+              "0pv5rvz5pp4njxiz3syf786d2xp4j7gzddwjvgw5zmz55yvf6p2f"))
             (patches (search-patches "make-impure-dirs.patch"))))
    (build-system gnu-build-system)
    (native-inputs `(("pkg-config" ,pkg-config)))  ; to detect Guile
@@ -463,17 +473,17 @@ store.")
 
 (export make-ld-wrapper)
 
-(define-public glibc
+(define-public glibc/linux
   (package
    (name "glibc")
-   (version "2.22")
+   (version "2.23")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/glibc/glibc-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0j49682pm2nh4qbdw35bas82p1pgfnz4d2l7iwfyzvrvj0318wzb"))
+              "1s8krs3y2n6pzav7ic59dz41alqalphv7vww4138ag30wh0fpvwl"))
             (snippet
              ;; Disable 'ldconfig' and /etc/ld.so.cache.  The latter is
              ;; required on LFS distros to avoid loading the distro's libc.so
@@ -482,17 +492,14 @@ store.")
                 (("use_ldconfig=yes")
                  "use_ldconfig=no")))
             (modules '((guix build utils)))
-            (patches
-             (search-patches "glibc-ldd-x86_64.patch"
-                             "glibc-locale-incompatibility.patch"
-                             "glibc-versioned-locpath.patch"
-                             "glibc-o-largefile.patch"
-                             "glibc-CVE-2015-7547.patch"))))
+            (patches (search-patches "glibc-ldd-x86_64.patch"
+                                     "glibc-versioned-locpath.patch"
+                                     "glibc-o-largefile.patch"))))
    (build-system gnu-build-system)
 
    ;; Glibc's <limits.h> refers to <linux/limit.h>, for instance, so glibc
    ;; users should automatically pull Linux headers as well.
-   (propagated-inputs `(("linux-headers" ,linux-libre-headers)))
+   (propagated-inputs `(("kernel-headers" ,linux-libre-headers)))
 
    (outputs '("out" "debug"))
 
@@ -504,7 +511,7 @@ store.")
       #:parallel-build? #f
 
       ;; The libraries have an empty RUNPATH, but some, such as the versioned
-      ;; libraries (libdl-2.22.so, etc.) have ld.so marked as NEEDED.  Since
+      ;; libraries (libdl-2.23.so, etc.) have ld.so marked as NEEDED.  Since
       ;; these libraries are always going to be found anyway, just skip
       ;; RUNPATH checks.
       #:validate-runpath? #f
@@ -528,6 +535,7 @@ store.")
             ;;
             ;; `--localedir' is not honored, so work around it.
             ;; See <http://sourceware.org/ml/libc-alpha/2013-03/msg00093.html>.
+            ;; FIXME: This hack no longer works on 2.23!
             (string-append "libc_cv_localedir=/run/current-system/locale/"
                            ,version)
 
@@ -535,7 +543,7 @@ store.")
                            (assoc-ref ,(if (%current-target-system)
                                            '%build-target-inputs
                                            '%build-inputs)
-                                      "linux-headers")
+                                      "kernel-headers")
                            "/include")
 
             ;; This is the default for most architectures as of GNU libc 2.21,
@@ -549,7 +557,7 @@ store.")
                            "/bin/bash")
 
             ;; XXX: Work around "undefined reference to `__stack_chk_guard'".
-            "libc_cv_ssp=no")
+            "libc_cv_ssp=no" "libc_cv_ssp_strong=no")
 
       #:tests? #f                                 ; XXX
       #:phases (modify-phases %standard-phases
@@ -563,10 +571,6 @@ store.")
                            ;; but cross-base uses it as a native input.
                            (bash (or (assoc-ref inputs "static-bash")
                                      (assoc-ref native-inputs "static-bash"))))
-                      ;; Use `pwd', not `/bin/pwd'.
-                      (substitute* "configure"
-                        (("/bin/pwd") "pwd"))
-
                       ;; Install the rpc data base file under `$out/etc/rpc'.
                       ;; FIXME: Use installFlags = [ "sysconfdir=$(out)/etc" ];
                       (substitute* "sunrpc/Makefile"
@@ -647,11 +651,104 @@ with the Linux kernel.")
    (license lgpl2.0+)
    (home-page "http://www.gnu.org/software/libc/")))
 
-(define-public glibc-2.21
+(define-public glibc/hurd
+  ;; The Hurd's libc variant.
+  (package (inherit glibc/linux)
+    (name "glibc-hurd")
+    (version "2.19")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://alpha.gnu.org/gnu/hurd/glibc-"
+                                  version "-hurd+libpthread-20160518" ".tar.gz"))
+              (sha256
+               (base32
+                "12zmdjviybpsdb2kq4cg98rds7909f0cc96fzdahdfrzlxx1q0px"))))
+
+    ;; Libc provides <hurd.h>, which includes a bunch of Hurd and Mach headers,
+    ;; so both should be propagated.
+    (propagated-inputs `(("hurd-core-headers" ,hurd-core-headers)))
+    (native-inputs
+     `(,@(package-native-inputs glibc/linux)
+       ("mig" ,mig)
+       ("perl" ,perl)))
+
+    (arguments
+     (substitute-keyword-arguments (package-arguments glibc/linux)
+       ((#:phases original-phases)
+        ;; Add libmachuser.so and libhurduser.so to libc.so's search path.
+        ;; See <http://lists.gnu.org/archive/html/bug-hurd/2015-07/msg00051.html>.
+        `(alist-cons-after
+          'install 'augment-libc.so
+          (lambda* (#:key outputs #:allow-other-keys)
+            (let* ((out (assoc-ref outputs "out")))
+              (substitute* (string-append out "/lib/libc.so")
+                (("/[^ ]+/lib/libc.so.0.3")
+                 (string-append out "/lib/libc.so.0.3" " libmachuser.so" " libhurduser.so"))))
+            #t)
+          (alist-cons-after
+           'pre-configure 'pre-configure-set-pwd
+           (lambda _
+             ;; Use the right 'pwd'.
+             (substitute* "configure"
+               (("/bin/pwd") "pwd")))
+          ,original-phases)))
+        ((#:configure-flags original-configure-flags)
+        `(append (list "--host=i586-pc-gnu"
+
+                       ;; We need this to get a working openpty() function.
+                       "--enable-pt_chown"
+
+                       ;; nscd fails to build for GNU/Hurd:
+                       ;; <https://lists.gnu.org/archive/html/bug-hurd/2014-07/msg00006.html>.
+                       ;; Disable it.
+                       "--disable-nscd")
+                 (filter (lambda (flag)
+                           (not (string-prefix? "--enable-kernel=" flag)))
+                         ,original-configure-flags)))))
+    (synopsis "The GNU C Library (GNU Hurd variant)")
+    (supported-systems %hurd-systems)))
+
+(define* (glibc-for-target #:optional
+                           (target (or (%current-target-system)
+                                       (%current-system))))
+  "Return the glibc for TARGET, GLIBC/LINUX for a Linux host or
+GLIBC/HURD for a Hurd host"
+  (match target
+    ((or "i586-pc-gnu" "i586-gnu") glibc/hurd)
+    (_ glibc/linux)))
+
+(define-syntax glibc
+  (identifier-syntax (glibc-for-target)))
+
+(define-public glibc-2.22
   ;; The old libc, which we use mostly to build locale data in the old format
   ;; (which the new libc can cope with.)
   (package
     (inherit glibc)
+    (version "2.22")
+    (source (origin
+              (inherit (package-source glibc))
+              (uri (string-append "mirror://gnu/glibc/glibc-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "0j49682pm2nh4qbdw35bas82p1pgfnz4d2l7iwfyzvrvj0318wzb"))
+              (patches (search-patches "glibc-ldd-x86_64.patch"))))
+    (arguments
+      (substitute-keyword-arguments (package-arguments glibc)
+        ((#:phases phases)
+         `(modify-phases ,phases
+            (add-before 'configure 'fix-pwd
+              (lambda _
+                ;; Use `pwd' instead of `/bin/pwd' for glibc-2.21
+                (substitute* "configure"
+                  (("/bin/pwd") "pwd"))))))))))
+
+(define-public glibc-2.21
+  ;; The old libc, which we use mostly to build locale data in the old format
+  ;; (which the new libc can cope with.)
+  (package
+    (inherit glibc-2.22)
     (version "2.21")
     (source (origin
               (inherit (package-source glibc))
@@ -690,7 +787,7 @@ the 'share/locale' sub-directory of this package.")
          ((#:configure-flags flags)
           `(append ,flags
                    ;; Use $(libdir)/locale/X.Y as is the case by default.
-                   (list (string-append "libc_cv_localedir="
+                   (list (string-append "libc_cv_complocaledir="
                                         (assoc-ref %outputs "out")
                                         "/lib/locale/"
                                         ,(package-version glibc))))))))))
@@ -766,73 +863,6 @@ variety of options.  It is an alternative to the shell \"type\" built-in
 command.")
     (license gpl3+))) ; some files are under GPLv2+
 
-(define-public glibc/hurd
-  ;; The Hurd's libc variant.
-  (package (inherit glibc)
-    (name "glibc-hurd")
-    (version "2.18")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.sv.gnu.org/hurd/glibc")
-                    (commit "cc94b3cfe65523f980359e5f0e93a26196bda1d3")))
-              (sha256
-               (base32
-                "17gsh0kaz0zyvghjmx861mi2p65m9901lngi179x61zm6v2v3xc4"))
-              (file-name (string-append name "-" version))
-              (patches (search-patches "glibc-hurd-extern-inline.patch"))))
-
-    ;; Libc provides <hurd.h>, which includes a bunch of Hurd and Mach headers,
-    ;; so both should be propagated.
-    (propagated-inputs `(("gnumach-headers" ,gnumach-headers)
-                         ("hurd-headers" ,hurd-headers)
-                         ("hurd-minimal" ,hurd-minimal)))
-    (native-inputs
-     `(,@(package-native-inputs glibc)
-       ("patch/libpthread-patch" ,(search-patch "libpthread-glibc-preparation.patch"))
-       ("mig" ,mig)
-       ("perl" ,perl)
-       ("libpthread" ,(origin
-                        (method git-fetch)
-                        (uri (git-reference
-                              (url "git://git.sv.gnu.org/hurd/libpthread")
-                              (commit "0ef7b75c4ba91b6660f0d3d8b51d14d25e3d5bfb")))
-                        (sha256
-                         (base32
-                          "031py18fls15z0wprni33mf762kg6fx8xqijppimhp83yp6ky3l3"))
-                        (file-name "libpthread")))))
-
-    (arguments
-     (substitute-keyword-arguments (package-arguments glibc)
-       ((#:configure-flags original-configure-flags)
-        `(append (list "--host=i686-pc-gnu"
-
-                       ;; nscd fails to build for GNU/Hurd:
-                       ;; <https://lists.gnu.org/archive/html/bug-hurd/2014-07/msg00006.html>.
-                       ;; Disable it.
-                       "--disable-nscd")
-                 (filter (lambda (flag)
-                           (not (or (string-prefix? "--with-headers=" flag)
-                                    (string-prefix? "--enable-kernel=" flag))))
-                         ;; Evaluate 'original-configure-flags' in a
-                         ;; lexical environment that has a dummy
-                         ;; "linux-headers" input, to prevent errors.
-                         (let ((%build-inputs `(("linux-headers" . "@DUMMY@")
-                                                ,@%build-inputs)))
-                           ,original-configure-flags))))
-       ((#:phases phases)
-        `(alist-cons-after
-          'unpack 'prepare-libpthread
-          (lambda* (#:key inputs #:allow-other-keys)
-            (copy-recursively (assoc-ref inputs "libpthread") "libpthread")
-
-            (system* "patch" "--force" "-p1" "-i"
-                     (assoc-ref inputs "patch/libpthread-patch"))
-            #t)
-          ,phases))))
-    (synopsis "The GNU C Library (GNU Hurd variant)")
-    (supported-systems %hurd-systems)))
-
 (define-public glibc/hurd-headers
   (package (inherit glibc/hurd)
     (name "glibc-hurd-headers")
@@ -844,7 +874,7 @@ command.")
        ;; We just pass the flags really needed to build the headers.
        ((#:configure-flags _)
         `(list "--enable-add-ons"
-               "--host=i686-pc-gnu"
+               "--host=i586-pc-gnu"
                "--enable-obsolete-rpc"))
        ((#:phases _)
         '(alist-replace

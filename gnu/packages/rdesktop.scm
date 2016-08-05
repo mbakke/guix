@@ -31,8 +31,8 @@
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/rdesktop/rdesktop-"
-                    version ".tar.gz"))
+                    "mirror://sourceforge/" name "/" name "/" version "/"
+                    name "-" version ".tar.gz"))
               (sha256
                (base32
                 "1r7c1rjmw2xzq8fw0scyb453gy9z19774z1z8ldmzzsfndb03cl8"))))

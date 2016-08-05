@@ -30,6 +30,7 @@
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 match)
   #:export (dicod-service
+            dicod-service-type
             dicod-configuration
             dicod-database
             %dicod-database:gcide))

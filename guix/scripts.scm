@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Deck Pickard <deck.r.pickard@gmail.com>
-;;; Copyright © 2015 Alex Kost <alezost@gmail.com>
+;;; Copyright © 2015, 2016 Alex Kost <alezost@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,6 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix scripts)
+  #:use-module (guix grafts)
   #:use-module (guix utils)
   #:use-module (guix ui)
   #:use-module (guix store)
@@ -105,11 +106,13 @@ true."
                         #:rest build-options)
   "Build PACKAGE using BUILD-OPTIONS acceptable by 'set-build-options'.
 Show what and how will/would be built."
-  (mbegin %store-monad
+  (mlet %store-monad ((grafting? ((lift0 %graft? %store-monad))))
     (apply set-build-options*
            #:use-substitutes? use-substitutes?
            (strip-keyword-arguments '(#:dry-run?) build-options))
-    (mlet %store-monad ((derivation (package->derivation package)))
+    (mlet %store-monad ((derivation (package->derivation
+                                     package #:graft? (and (not dry-run?)
+                                                           grafting?))))
       (mbegin %store-monad
         (maybe-build (list derivation)
                      #:use-substitutes? use-substitutes?

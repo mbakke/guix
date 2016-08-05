@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,10 +22,8 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (gnu packages autotools)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages image)
-  #:use-module (gnu packages pkg-config))
+  #:use-module (gnu packages image))
 
 (define-public ocrad
   (package
@@ -50,39 +49,24 @@ it produces text in 8-bit or UTF-8 formats.")
 (define-public tesseract-ocr
   (package
     (name "tesseract-ocr")
-    (version "3.02.02")
+    (version "3.04.01")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://tesseract-ocr.googlecode.com/files/tesseract-ocr-"
+             "https://github.com/tesseract-ocr/tesseract/archive/"
              version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0g81m9y4iydp7kgr56mlkvjdwpp3mb01q385yhdnyvra7z5kkk96"))
-       (modules '((guix build utils)))
-       ;; Leptonica added a pkg-config file in the meanwhile.
-       (snippet
-        '(substitute* "tesseract.pc.in"
-           (("^# Requires: lept  ## .*")
-            "Requires: lept\n")))))
+        (base32 "0snwd8as5i8vx7zkimpd2yg898jl96zf90r65a9w615f2hdkxxjp"))))
     (build-system gnu-build-system)
-    (native-inputs
-     `(("autoconf" ,autoconf)
-       ("automake" ,automake)
-       ("libtool" ,libtool)))
-    (propagated-inputs
+    (inputs
      `(("leptonica" ,leptonica)))
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after
-          'unpack 'autogen
-          (lambda _
-            (zero? (system* "sh" "autogen.sh")))))
-       #:configure-flags
+     '(#:configure-flags
        (let ((leptonica (assoc-ref %build-inputs "leptonica")))
          (list (string-append "LIBLEPT_HEADERSDIR=" leptonica "/include")))))
-    (home-page "https://code.google.com/p/tesseract-ocr/")
+    (home-page "https://github.com/tesseract-ocr")
     (synopsis "Optical character recognition engine")
     (description
      "Tesseract is an optical character recognition (OCR) engine with very

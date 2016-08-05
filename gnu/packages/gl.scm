@@ -20,29 +20,29 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gl)
-  #:use-module (ice-9 match)
-  #:use-module (guix build utils)
-  #:use-module ((guix licenses) #:prefix l:)
-  #:use-module (guix packages)
-  #:use-module (guix download)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix build-system cmake)
-  #:use-module (guix packages)
-  #:use-module (guix utils)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages flex)
-  #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages gettext)
-  #:use-module (gnu packages linux)
-  #:use-module (gnu packages python)
-  #:use-module (gnu packages xorg)
-  #:use-module (gnu packages xml)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages guile)
+  #:use-module (gnu packages linux)
+  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xdisorg)
-  #:use-module (gnu packages zip))
+  #:use-module (gnu packages xml)
+  #:use-module (gnu packages xorg)
+  #:use-module (gnu packages zip)
+  #:use-module (guix download)
+  #:use-module (guix build utils)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix build-system cmake)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix packages)
+  #:use-module (guix utils)
+  #:use-module (ice-9 match))
 
 (define-public glu
   (package
@@ -71,7 +71,7 @@ matrices for creating perspective and orthographic projections,
 positioning a camera, and selection/picking, Rendering of disk,
 cylinder, and sphere primitives, Interpreting OpenGL error values
 as ASCII text.")
-    (license (l:x11-style "http://directory.fsf.org/wiki/License:SGIFreeBv2"))))
+    (license (license:x11-style "http://directory.fsf.org/wiki/License:SGIFreeBv2"))))
 
 (define-public freeglut
   (package
@@ -80,7 +80,7 @@ as ASCII text.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/project/freeglut/freeglut/"
+                    "mirror://sourceforge/freeglut/freeglut/"
                     version "/freeglut-" version ".tar.gz"))
               (sha256
                (base32
@@ -112,7 +112,7 @@ GLUT (and hence freeglut) allows the user to create and manage windows
 containing OpenGL contexts on a wide range of platforms and also read
 the mouse, keyboard and joystick functions.  Freeglut is released under
 the X-Consortium license.")
-    (license l:x11)))
+    (license license:x11)))
 
 (define-public ftgl
   (package
@@ -121,7 +121,7 @@ the X-Consortium license.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/project/ftgl/FTGL%20Source/2.1.3~rc5/"
+                    "mirror://sourceforge/ftgl/FTGL%20Source/2.1.3~rc5/"
                     "ftgl-" version ".tar.gz"))
               (sha256
                (base32
@@ -138,7 +138,7 @@ the X-Consortium license.")
      "FTGL is a font rendering library for OpenGL applications.  Supported
 rendering modes are: Bitmaps, Anti-aliased pixmaps, Texture maps, Outlines,
 Polygon meshes, and Extruded polygon meshes.")
-    (license l:x11)))
+    (license license:x11)))
 
 (define-public s2tc
   (package
@@ -170,7 +170,7 @@ Polygon meshes, and Extruded polygon meshes.")
     (description
      "S2TC is a patent-free implementation of S3 Texture Compression (S3TC,
 also known as DXTn or DXTC) for Mesa.")
-    (license l:expat)))
+    (license license:expat)))
 
 ;;; Mesa needs LibVA headers to build its Gallium-based VA API implementation;
 ;;; LibVA itself depends on Mesa.  We use the following to solve the circular
@@ -287,7 +287,7 @@ also known as DXTn or DXTC) for Mesa.")
 a system for rendering interactive 3D graphics.  A variety of device drivers
 allows Mesa to be used in many different environments ranging from software
 emulation to complete hardware acceleration for modern GPUs.")
-    (license l:x11)))
+    (license license:x11)))
 
 (define-public mesa-headers
   (package
@@ -317,12 +317,12 @@ emulation to complete hardware acceleration for modern GPUs.")
     (method url-fetch)
     (uri (string-append "ftp://ftp.freedesktop.org/pub/mesa/demos/" version
                         "/mesa-demos-" version ".tar.bz2"))
-    (sha256 (base32 "14msj0prbl3ljwd24yaqv9pz1xzicdmqgg616xxlppbdh6syrgz4"))))
+    (sha256 (base32 "1vqb7s5m3fcg2csbiz45mha1pys2xx6rhw94fcyvapqdpm5iawy1"))))
 
 (define-public mesa-utils
   (package
     (name "mesa-utils")
-    (version "8.2.0")
+    (version "8.3.0")
     (source (mesa-demos-source version))
     (build-system gnu-build-system)
     (inputs
@@ -332,12 +332,7 @@ emulation to complete hardware acceleration for modern GPUs.")
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (arguments
-     '(;; XXX: fails to build against latest mesa:
-       ;;   eglut.c: error: 'EGL_SCREEN_BIT_MESA' undeclared
-       ;;
-       ;; <https://bugs.freedesktop.org/show_bug.cgi?id=91643>
-       #:configure-flags '("--disable-egl")
-       #:phases
+     '(#:phases
        (modify-phases %standard-phases
          (replace
           'install
@@ -355,7 +350,7 @@ emulation to complete hardware acceleration for modern GPUs.")
      "The mesa-utils package contains several utility tools for Mesa: glxdemo,
 glxgears, glxheads, and glxinfo.")
     ;; glxdemo is public domain; others expat.
-    (license (list l:expat l:public-domain))))
+    (license (list license:expat license:public-domain))))
 
 (define-public glew
   (package
@@ -363,10 +358,8 @@ glxgears, glxheads, and glxinfo.")
     (version "1.11.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/glew/glew-"
-                    version
-                    ".tgz"))
+              (uri (string-append "mirror://sourceforge/glew/glew/" version
+                                  "/glew-" version ".tgz"))
               (sha256
                (base32
                 "1mhkllxz49l1x680dmzrv2i82qjrq017sykah3xc90f2d8qcxfv9"))
@@ -399,7 +392,7 @@ glxgears, glxheads, and glxinfo.")
 loading library.  GLEW provides efficient run-time mechanisms for determining
 which OpenGL extensions are supported on the target platform.  OpenGL core and
 extension functionality is exposed in a single header file.")
-    (license l:bsd-3)))
+    (license license:bsd-3)))
 
 (define-public guile-opengl
   (package
@@ -445,12 +438,12 @@ extension functionality is exposed in a single header file.")
     (description
      "Guile-OpenGL is a library for Guile that provides bindings to the
 OpenGL graphics API.")
-    (license l:lgpl3+)))
+    (license license:lgpl3+)))
 
 (define-public libepoxy
   (package
     (name "libepoxy")
-    (version "1.2")
+    (version "1.3.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -460,7 +453,7 @@ OpenGL graphics API.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1xp8g6b7xlbym2rj4vkbl6xpb7ijq7glpv656mc7k9b01x22ihs2"))))
+                "1d1brhwfmlzgnphmdwlvn5wbcrxsdyzf1qfcf8nb89xqzznxs037"))))
     (arguments
      `(#:phases
        (alist-cons-after
@@ -502,7 +495,7 @@ OpenGL graphics API.")
     (synopsis "A library for handling OpenGL function pointer management")
     (description
      "A library for handling OpenGL function pointer management.")
-    (license l:x11)))
+    (license license:x11)))
 
 (define-public soil
   (package
@@ -544,4 +537,4 @@ OpenGL graphics API.")
     (description
      "SOIL is a tiny C library used primarily for uploading textures into
 OpenGL.")
-    (license l:public-domain)))
+    (license license:public-domain)))

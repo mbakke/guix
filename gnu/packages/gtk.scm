@@ -1189,7 +1189,7 @@ information.")
 (define-public gtk-doc
   (package
     (name "gtk-doc")
-    (version "1.24")
+    (version "1.25")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -1197,10 +1197,11 @@ information.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "12xmmcnq4138dlbhmqa45wqza8dky4lf856sp80h6xjwl2g7a85l"))))
+                "0hpxcij9xx9ny3gs9p0iz4r8zslw8wqymbyababiyl7603a6x90y"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:parallel-tests? #f
+       #:phases
        (modify-phases %standard-phases
          (add-before
              'configure 'fix-docbook

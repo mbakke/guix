@@ -87,30 +87,29 @@ that will be shared with the host system."
                                   #:container? #t)))
 
       (define script
-        #~(begin
-            (use-modules (gnu build linux-container)
-                         (guix build utils))
+        (with-imported-modules '((guix config)
+                                 (guix utils)
+                                 (guix combinators)
+                                 (guix build utils)
+                                 (guix build syscalls)
+                                 (guix build bournish)
+                                 (gnu build file-systems)
+                                 (gnu build linux-container))
+          #~(begin
+              (use-modules (gnu build linux-container)
+                           (guix build utils))
 
-            (call-with-container '#$specs
-              (lambda ()
-                (setenv "HOME" "/root")
-                (setenv "TMPDIR" "/tmp")
-                (setenv "GUIX_NEW_SYSTEM" #$os-drv)
-                (for-each mkdir-p '("/run" "/bin" "/etc" "/home" "/var"))
-                (primitive-load (string-append #$os-drv "/boot")))
-              ;; A range of 65536 uid/gids is used to cover 16 bits worth of
-              ;; users and groups, which is sufficient for most cases.
-              ;;
-              ;; See: http://www.freedesktop.org/software/systemd/man/systemd-nspawn.html#--private-users=
-              #:host-uids 65536)))
+              (call-with-container '#$specs
+                (lambda ()
+                  (setenv "HOME" "/root")
+                  (setenv "TMPDIR" "/tmp")
+                  (setenv "GUIX_NEW_SYSTEM" #$os-drv)
+                  (for-each mkdir-p '("/run" "/bin" "/etc" "/home" "/var"))
+                  (primitive-load (string-append #$os-drv "/boot")))
+                ;; A range of 65536 uid/gids is used to cover 16 bits worth of
+                ;; users and groups, which is sufficient for most cases.
+                ;;
+                ;; See: http://www.freedesktop.org/software/systemd/man/systemd-nspawn.html#--private-users=
+                #:host-uids 65536))))
 
-      (gexp->script "run-container" script
-                    #:modules '((ice-9 match)
-                                (srfi srfi-98)
-                                (guix config)
-                                (guix utils)
-                                (guix build utils)
-                                (guix build syscalls)
-                                (guix build bournish)
-                                (gnu build file-systems)
-                                (gnu build linux-container))))))
+      (gexp->script "run-container" script))))

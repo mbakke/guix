@@ -46,8 +46,8 @@
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/gnucash/gnucash-"
-                          version ".tar.bz2"))
+      (uri (string-append "mirror://sourceforge/gnucash/gnucash%20%28stable%29/"
+                          version "/gnucash-" version ".tar.bz2"))
       (sha256
        (base32
         "0x84f07p30pwhriamv8ifljgw755cj87rc12jy1xddf47spyj7rp"))

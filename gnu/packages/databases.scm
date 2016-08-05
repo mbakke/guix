@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2012, 2014, 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2014, 2016 David Thompson <davet@gnu.org>
@@ -86,6 +86,7 @@
        ("automake" ,automake)
        ("gettext" ,gnu-gettext)
        ("libtool" ,libtool)
+       ("pcre" ,pcre "bin")                       ;for 'pcre-config'
        ("pkg-config" ,pkg-config)))
     (inputs
      `(("glib" ,glib)
@@ -94,7 +95,6 @@
        ("raptor2" ,raptor2)
        ("readline" ,readline)
        ("avahi" ,avahi)
-       ("pcre" ,pcre)
        ("cyrus-sasl" ,cyrus-sasl)
        ("openssl" ,openssl)
        ("util-linux" ,util-linux)))
@@ -114,14 +114,14 @@ either single machines or networked clusters.")
 (define-public gdbm
   (package
     (name "gdbm")
-    (version "1.11")
+    (version "1.12")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gdbm/gdbm-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1hz3jgh3pd4qzp6jy0l8pd8x01g9abw7csnrlnj1a2sxy122z4cd"))))
+                "1smwz4x5qa4js0zf1w3asq6z7mh20zlgwbh2bk5dczw6xrk22yyr"))))
     (arguments `(#:configure-flags '("--enable-libgdbm-compat")))
     (build-system gnu-build-system)
     (home-page "http://www.gnu.org/software/gdbm/")
@@ -136,18 +136,20 @@ and provides interfaces to the traditional file format.")
 (define-public bdb
   (package
     (name "bdb")
-    (version "5.3.21")
+    (version "6.2.23")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://download.oracle.com/berkeley-db/db-" version
-                                  ".tar.gz"))
-              (sha256 (base32
-                       "1f2g2612lf8djbwbwhxsvmffmf9d7693kh2l20195pqp0f9jmnfx"))))
+              (uri (string-append "http://download.oracle.com/berkeley-db/db-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "1isxx4jfmnh913jzhp8hhfngbk6dsg46f4kjpvvc56maj64jqqa7"))))
     (build-system gnu-build-system)
     (outputs '("out"                             ; programs, libraries, headers
                "doc"))                           ; 94 MiB of HTML docs
     (arguments
      '(#:tests? #f                            ; no check target available
+       #:disallowed-references ("doc")
        #:phases
        (alist-replace
         'configure
@@ -164,6 +166,9 @@ and provides interfaces to the traditional file format.")
                       (string-append "--prefix=" out)
                       (string-append "CONFIG_SHELL=" (which "bash"))
                       (string-append "SHELL=" (which "bash"))
+
+                      ;; Remove 7 MiB of .a files.
+                      "--disable-static"
 
                       ;; The compatibility mode is needed by some packages,
                       ;; notably iproute2.
@@ -183,10 +188,22 @@ SQL, Key/Value, XML/XQuery or Java Object storage for their data model.")
     (home-page
      "http://www.oracle.com/us/products/database/berkeley-db/overview/index.html")))
 
+(define-public bdb-5.3
+  (package (inherit bdb)
+    (name "bdb")
+    (version "5.3.28")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://download.oracle.com/berkeley-db/db-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "0a1n5hbl7027fbz5lm0vp0zzfp1hmxnz14wx3zl9563h83br5ag0"))))))
+
 (define-public mysql
   (package
     (name "mysql")
-    (version "5.7.12")
+    (version "5.7.13")
     (source (origin
              (method url-fetch)
              (uri (list (string-append
@@ -196,9 +213,10 @@ SQL, Key/Value, XML/XQuery or Java Object storage for their data model.")
                         (string-append
                           "http://downloads.mysql.com/archives/get/file/"
                           name "-" version ".tar.gz")))
+             (patches (search-patches "mysql-fix-failing-test.patch"))
              (sha256
               (base32
-               "11qwbid666fspq143ymi86yva2b01lybaqh26k92rciasav3r11j"))))
+               "11qbib1xpy0zkki7j9ip17hks5kp5zgpcj7x8gy3a4m66lb1mgsh"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -259,7 +277,7 @@ Language.")
 (define-public mariadb
   (package
     (name "mariadb")
-    (version "10.1.14")
+    (version "10.1.16")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://downloads.mariadb.org/f/"
@@ -267,7 +285,7 @@ Language.")
                                   name "-" version ".tar.gz"))
               (sha256
                (base32
-                "04ysdbvj2qapfpaj7s5d2j3m8k9l0yb5k0c2yaini8jrl1s1krqq"))))
+                "14s3wq1c25n62n75hkixl8n7cni4m73w055nsx4czm655k33bjv7"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -464,7 +482,7 @@ for example from a shell script.")
 (define-public sqlite
   (package
    (name "sqlite")
-   (version "3.10.0")
+   (version "3.12.2")
    (source (origin
             (method url-fetch)
             ;; TODO: Download from sqlite.org once this bug :
@@ -495,7 +513,7 @@ for example from a shell script.")
                    ))
             (sha256
              (base32
-              "0hhhv6si0pyf5i8bv7a71953m0b4gk6s3j2h09caf7vif0njkk23"))))
+              "1fwss0i2lixv39b27gkqiibdd2syym90wh3qbiaxnfgxk867f07x"))))
    (build-system gnu-build-system)
    (inputs `(("readline" ,readline)))
    (arguments
@@ -747,21 +765,22 @@ columns, primary keys, unique constraints and relationships.")
        ("postgresql" ,postgresql)))
     (home-page "http://search.cpan.org/dist/DBD-Pg")
     (synopsis "DBI PostgreSQL interface")
-    (description "")
+    (description "This package provides a PostgreSQL driver for the Perl5
+@dfn{Database Interface} (DBI).")
     (license (package-license perl))))
 
 (define-public perl-dbd-mysql
   (package
     (name "perl-dbd-mysql")
-    (version "4.033")
+    (version "4.035")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://cpan/authors/id/C/CA/CAPTTOFU/"
+       (uri (string-append "mirror://cpan/authors/id/M/MI/MICHIELB/"
                            "DBD-mysql-" version ".tar.gz"))
        (sha256
         (base32
-         "0769xakykps0cx368g4vaips4w3bjk383rianiavq7sq6g6bp66c"))))
+         "0dqrnrk8yjl06xl8hld5wyalk77z0h9j5h1gdk4z9g0nx9js7v5p"))))
     (build-system perl-build-system)
     ;; Tests require running MySQL server
     (arguments `(#:tests? #f))
@@ -1013,3 +1032,35 @@ trees (LSM), for sustained throughput under random insert workloads.")
     (license gpl3) ; or GPL-2
     ;; configure.ac: WiredTiger requires a 64-bit build.
     (supported-systems '("x86_64-linux" "mips64el-linux"))))
+
+(define-public perl-db-file
+ (package
+  (name "perl-db-file")
+  (version "1.838")
+  (source
+    (origin
+      (method url-fetch)
+      (uri (string-append
+             "mirror://cpan/authors/id/P/PM/PMQS/DB_File-"
+             version
+             ".tar.gz"))
+      (sha256
+        (base32
+          "0yp5d5zr8dk9g6xdh7ygi5bq63q7nxvhd58dk2i3ki4nb7yv2yh9"))))
+  (build-system perl-build-system)
+  (inputs `(("bdb" ,bdb)))
+  (native-inputs `(("perl-test-pod" ,perl-test-pod)))
+  (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (add-before
+                   'configure 'modify-config.in
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "config.in"
+                       (("/usr/local/BerkeleyDB") (assoc-ref inputs "bdb")))
+                     #t)))))
+  (home-page "http://search.cpan.org/dist/DB_File")
+  (synopsis
+    "Perl5 access to Berkeley DB version 1.x")
+  (description
+    "The DB::File module provides Perl bindings to the Berkeley DB version 1.x.")
+  (license (package-license perl))))

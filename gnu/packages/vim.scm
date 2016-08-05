@@ -26,7 +26,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages admin) ; For GNU hostname
-  #:use-module (gnu packages tcsh))
+  #:use-module (gnu packages shells))
 
 (define-public vim
   (package

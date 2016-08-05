@@ -5,6 +5,7 @@
 ;;; Copyright © 2015 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -6008,14 +6009,14 @@ generators, and more.")
 (define-public ghc-memory
   (package
     (name "ghc-memory")
-    (version "0.10")
+    (version "0.13")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://hackage.haskell.org/package/"
                                   "memory/memory-" version ".tar.gz"))
               (sha256
                (base32
-                "1xqs9zmjbjihb7gfbk25f2q00m2lsi4kc3jv672175ac8a36pgag"))))
+                "02l742qxjqy3jw1a347gb7sn7pn7a5qha1vzi2qqbvgafcjn0wyw"))))
     (build-system haskell-build-system)
     (native-inputs
      `(("ghc-tasty" ,ghc-tasty)
@@ -6204,7 +6205,7 @@ extensions.")
      `(("ghc-cereal" ,ghc-cereal)
        ("ghc-network" ,ghc-network)))
     (home-page "https://github.com/vincenthz/hs-socks")
-    (synopsis "SOCKS proxy (version 5) implementation.")
+    (synopsis "SOCKS proxy (version 5) implementation")
     (description
      "This library provides a SOCKS proxy (version 5) implementation.")
     (license license:bsd-3)))

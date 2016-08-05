@@ -244,7 +244,7 @@ display, and can run a user-specified program on mouse click.")
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (home-page "http://www.improbability.net/")
-    (synopsis "Display flames to represent CPU usage, memory usage, etc.")
+    (synopsis "Display flames to represent resource usage")
     (description
      "wmfire is an applet for Window Maker that can monitor the average cpu
 load, or individual cpu load on SMP computers.  Additionally it can monitor the

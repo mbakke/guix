@@ -27,12 +27,10 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages xorg))
 
-(define kde-frameworks-version "5.21.0")
-
 (define-public extra-cmake-modules
   (package
     (name "extra-cmake-modules")
-    (version kde-frameworks-version)
+    (version "5.21.0")
     (source
       (origin
         (method url-fetch)
@@ -57,7 +55,7 @@ common build settings used in software produced by the KDE community.")
 (define-public kwindowsystem
   (package
     (name "kwindowsystem")
-    (version kde-frameworks-version)
+    (version "5.21.0")
     (source
       (origin
         (method url-fetch)
@@ -95,7 +93,7 @@ lower level classes for interaction with the X Windowing System.")
 (define-public oxygen-icons
   (package
     (name "oxygen-icons")
-    (version kde-frameworks-version)
+    (version "5.21.0")
     (source
       (origin
         (method url-fetch)
@@ -112,6 +110,6 @@ lower level classes for interaction with the X Windowing System.")
      `(("extra-cmake-modules" ,extra-cmake-modules)
        ("qtbase" ,qtbase)))
     (home-page "https://community.kde.org/Frameworks")
-    (synopsis "Oxygen provides the standard icon theme for the KDE desktop.")
+    (synopsis "Oxygen provides the standard icon theme for the KDE desktop")
     (description "Oxygen icon theme for the KDE desktop")
     (license license:lgpl3+)))

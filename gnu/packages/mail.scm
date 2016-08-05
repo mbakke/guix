@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014 Ian Denhardt <ian@zenhack.net>
 ;;; Copyright © 2014 Sou Bunnbu <iyzsong@gmail.com>
@@ -15,6 +15,7 @@
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
 ;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2016 Troy Sankey <sankeytms@gmail.com>
+;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -179,14 +180,14 @@ aliasing facilities to work just as they would on normal mail.")
 (define-public mutt
   (package
     (name "mutt")
-    (version "1.6.1")
+    (version "1.6.2")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://ftp.mutt.org/pub/mutt/mutt-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "087dz1y9qhl4ikhsnnb4xmyvs82w6kx480w8zj130wdiqvn6rclq"))
+               "13hxmji7v9m2agmvzrs7gzx8s3c9jiwrv7pbkr7z1kc6ckq2xl65"))
              (patches (search-patches "mutt-store-references.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -240,14 +241,14 @@ operating systems.")
           'unpack 'patch-paths-in-tests
           (lambda _
             ;; The test programs run several programs using 'system' with
-            ;; hard-coded paths.  Here we patch them all.  We also change "gpg"
-            ;; to "gpg2".  We use ISO-8859-1 here because test-iconv.c contains
+            ;; hard-coded paths.  Here we patch them all.
+            ;; We use ISO-8859-1 here because test-iconv.c contains
             ;; raw byte sequences in several different encodings.
             (with-fluids ((%default-port-encoding #f))
               (substitute* (find-files "tests" "\\.c$")
                 (("(system *\\(\")(/[^ ]*)" all pre prog-path)
                  (let* ((base (basename prog-path))
-                        (prog (which (if (string=? base "gpg") "gpg2" base))))
+                        (prog (which base)))
                    (string-append pre
                                   (or prog (error "not found: " base))))))))))))
     (home-page "http://spruce.sourceforge.net/gmime/")
@@ -293,7 +294,7 @@ and corrections.  It is based on a Bayesian filter.")
 (define-public offlineimap
   (package
     (name "offlineimap")
-    (version "6.7.0.1")
+    (version "7.0.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/OfflineIMAP/offlineimap/"
@@ -301,10 +302,10 @@ and corrections.  It is based on a Bayesian filter.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1ys26v2w3vws08acjs7w5irjgahdxyad00pmj7fhcx91hbvizs80"))))
+                "0hnyfby6ib7i7yblg7qpabdyl35n9l3n0a6agk47w1crpn2lsric"))))
     (build-system python-build-system)
-    (native-inputs `(("python" ,python-2)))
-    (inputs `(("python2-pysqlite" ,python2-pysqlite)))
+    (inputs `(("python2-pysqlite" ,python2-pysqlite)
+              ("python2-six" ,python2-six)))
     (arguments
      ;; The setup.py script expects python-2.
      `(#:python ,python-2
@@ -678,14 +679,15 @@ which can add many functionalities to the base client.")
 (define-public msmtp
   (package
     (name "msmtp")
-    (version "1.6.4")
+    (version "1.6.5")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "mirror://sourceforge/msmtp/msmtp-" version ".tar.xz"))
-       (sha256 (base32
-                "1kfihblm769s4hv8iah5mqynqd6hfwlyz5rcg2v423a4llic0jcv"))))
+       (uri (string-append "mirror://sourceforge/msmtp/msmtp/" version
+                           "/msmtp-" version ".tar.xz"))
+       (sha256
+        (base32
+         "01jh9ba49bih8zsh40myw6qq1ll210q1vw0jg865vrn7jc3dd83n"))))
     (build-system gnu-build-system)
     (inputs
      `(("libidn" ,libidn)
@@ -741,12 +743,12 @@ delivery.")
        ("gzip" ,gzip)
        ("bzip2" ,bzip2)
        ("xz" ,xz)
-       ("pcre" ,pcre)
        ("perl" ,perl)
        ("libxt" ,libxt)
        ("libxaw" ,libxaw)))
     (native-inputs
-     `(("perl" ,perl)))
+     `(("pcre" ,pcre "bin")
+       ("perl" ,perl)))
     (arguments
      '(#:phases
        (alist-replace
@@ -811,7 +813,7 @@ facilities for checking incoming mail.")
 (define-public dovecot
   (package
     (name "dovecot")
-    (version "2.2.19")
+    (version "2.2.25")
     (source
      (origin
        (method url-fetch)
@@ -819,7 +821,7 @@ facilities for checking incoming mail.")
                            (version-major+minor version) "/"
                            name "-" version ".tar.gz"))
        (sha256 (base32
-                "17sf5aancad4pg1vx1606k99389wg76blpqzmnmxlz4hklzix7km"))))
+                "0rwn5wc5b8j9fzqcjggdgpzmb77myrf4ra294z1gg5v3hhng7nfq"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -1204,8 +1206,7 @@ deliver it in various ways.")
     ;; filesystem are performed during 'make install'.  However, these
     ;; are performed before the actual build process.
     (build-system gnu-build-system)
-    (inputs `(("glibc" ,glibc)
-              ("exim" ,exim)))
+    (inputs `(("exim" ,exim)))
     (home-page "http://www.procmail.org/")
     (synopsis "Versatile mail delivery agent (MDA)")
     (description "Procmail is a mail delivery agent (MDA) featuring support

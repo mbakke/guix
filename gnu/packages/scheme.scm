@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
-;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
+;;; Copyright © 2015, 2016 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
@@ -23,17 +23,23 @@
 
 (define-module (gnu packages scheme)
   #:use-module (gnu packages)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses)
+                #:select (gpl2+ lgpl2.0+ lgpl2.1+ asl2.0 bsd-3
+                          cc-by-sa4.0))
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages multiprecision)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages emacs)
+  #:use-module (gnu packages ghostscript)
+  #:use-module (gnu packages netpbm)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages base)
@@ -48,6 +54,8 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages image)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages tls)
+  #:use-module (gnu packages gl)
   #:use-module (ice-9 match))
 
 (define (mit-scheme-source-directory system version)
@@ -394,7 +402,7 @@ implementation techniques and as an expository tool.")
 (define-public racket
   (package
     (name "racket")
-    (version "6.2.1")
+    (version "6.5")
     (source (origin
              (method url-fetch)
              (uri (list (string-append "http://mirror.racket-lang.org/installers/"
@@ -404,61 +412,98 @@ implementation techniques and as an expository tool.")
                          version "/racket/racket-" version "-src-unix.tgz")))
              (sha256
               (base32
-               "0555j63k7fs10iv0icmivlxpzgp6s7gwcbfddmbwxlf2rk80qhq0"))))
+               "0gvh7i5k87mg1gpqk8gaq50ja9ksbhnvdqn7qqh0n17byidd6999"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
-       (let* ((gui-libs
-               (lambda (inputs)
-                 (define (lib input)
-                   (string-append (assoc-ref inputs input) "/lib"))
-
-                 (list (lib "glib")
-                       (lib "cairo")
-                       (lib "pango")
-                       (lib "libjpeg")
-                       (lib "gtk")
-                       (lib "gdk-pixbuf")
-                       (lib "fontconfig")
-                       (lib "sqlite")))))         ;to build the doc
-         (alist-cons-before
-          'configure 'pre-configure
-          (lambda* (#:key inputs #:allow-other-keys)
-            (chdir "src")
-
-            ;; The GUI libs are dynamically opened through the FFI, so they
-            ;; must be in the loader's search path.
-            (setenv "LD_LIBRARY_PATH" (string-join (gui-libs inputs) ":")))
-          (alist-cons-after
-           'unpack 'patch-/bin/sh
-           (lambda _
-             (substitute* "collects/racket/system.rkt"
-               (("/bin/sh") (which "sh"))))
-           (alist-cons-after
-            'install 'wrap-programs
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out")))
-                (define (wrap prog)
-                  (wrap-program prog
-                                `("LD_LIBRARY_PATH" ":" prefix
-                                  ,(gui-libs inputs))))
-
-                (with-directory-excursion (string-append out "/bin")
-                  (for-each wrap
-                            (list "gracket" "drracket" "slideshow" "mred"))
-                  #t)))
-            %standard-phases))))
+       (alist-cons-before
+        'configure 'pre-configure
+        (lambda* (#:key inputs #:allow-other-keys)
+          ;; Patch dynamically loaded libraries with their absolute paths.
+          (let* ((library-path   (search-path-as-string->list
+                                  (getenv "LIBRARY_PATH")))
+                 (find-so        (lambda (soname)
+                                   (search-path
+                                    library-path
+                                    (format #f "~a.so" soname))))
+                 (patch-ffi-libs (lambda (file libs)
+                                   (for-each
+                                    (lambda (lib)
+                                      (substitute* file
+                                        (((format #f "\"~a\"" lib))
+                                         (format #f "\"~a\"" (find-so lib)))))
+                                    libs))))
+            (substitute* "collects/db/private/sqlite3/ffi.rkt"
+              (("ffi-lib sqlite-so")
+               (format #f "ffi-lib \"~a\"" (find-so "libsqlite3"))))
+            (substitute* "collects/openssl/libssl.rkt"
+              (("ffi-lib libssl-so")
+               (format #f "ffi-lib \"~a\"" (find-so "libssl"))))
+            (substitute* "collects/openssl/libcrypto.rkt"
+              (("ffi-lib libcrypto-so")
+               (format #f "ffi-lib \"~a\"" (find-so "libcrypto"))))
+            (substitute* "share/pkgs/math-lib/math/private/bigfloat/gmp.rkt"
+              (("ffi-lib libgmp-so")
+               (format #f "ffi-lib \"~a\"" (find-so "libgmp"))))
+            (substitute* "share/pkgs/math-lib/math/private/bigfloat/mpfr.rkt"
+              (("ffi-lib libmpfr-so")
+               (format #f "ffi-lib \"~a\"" (find-so "libmpfr"))))
+            (for-each
+             (lambda (x) (apply patch-ffi-libs x))
+             '(("share/pkgs/draw-lib/racket/draw/unsafe/cairo-lib.rkt"
+                ("libfontconfig" "libcairo"))
+               ("share/pkgs/draw-lib/racket/draw/unsafe/glib.rkt"
+                ("libglib-2.0" "libgmodule-2.0" "libgobject-2.0"))
+               ("share/pkgs/draw-lib/racket/draw/unsafe/jpeg.rkt"
+                ("libjpeg"))
+               ("share/pkgs/draw-lib/racket/draw/unsafe/pango.rkt"
+                ("libpango-1.0" "libpangocairo-1.0"))
+               ("share/pkgs/draw-lib/racket/draw/unsafe/png.rkt"
+                ("libpng"))
+               ("share/pkgs/db-lib/db/private/odbc/ffi.rkt"
+                ("libodbc"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/x11.rkt"
+                ("libX11"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/gsettings.rkt"
+                ("libgio-2.0"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/gtk3.rkt"
+                ("libgdk-3" "libgtk-3"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/unique.rkt"
+                ("libunique-1.0"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/utils.rkt"
+                ("libgdk-x11-2.0" "libgdk_pixbuf-2.0" "libgtk-x11-2.0"))
+               ("share/pkgs/gui-lib/mred/private/wx/gtk/gl-context.rkt"
+                ("libGL"))
+               ("share/pkgs/sgl/gl.rkt"
+                ("libGL" "libGLU")))))
+          (chdir "src"))
+        (alist-cons-after
+         'unpack 'patch-/bin/sh
+         (lambda _
+           (substitute* "collects/racket/system.rkt"
+             (("/bin/sh") (which "sh"))))
+         %standard-phases))
        #:tests? #f                                ; XXX: how to run them?
        ))
-    (inputs `(("libffi" ,libffi)
-              ("glib" ,glib)                      ; for DrRacket
-              ("cairo" ,cairo)
-              ("pango" ,pango)
-              ("libjpeg" ,libjpeg-8)
-              ("fontconfig" ,fontconfig)
-              ("gdk-pixbuf" ,gdk-pixbuf)
-              ("gtk" ,gtk+-2)
-              ("sqlite" ,sqlite)))                ;needed to build the doc
+    (inputs
+     `(("libffi" ,libffi)
+       ;; Hardcode dynamically loaded libraries for better functionality.
+       ;; sqlite and libraries for `racket/draw' are needed to build the doc.
+       ("cairo" ,cairo)
+       ("fontconfig" ,fontconfig)
+       ("glib" ,glib)
+       ("glu" ,glu)
+       ("gmp" ,gmp)
+       ("gtk+" ,gtk+)  ; propagates gdk-pixbuf+svg
+       ("libjpeg" ,libjpeg)
+       ("libpng" ,libpng)
+       ("libx11" ,libx11)
+       ("mesa" ,mesa)
+       ("mpfr" ,mpfr)
+       ("openssl" ,openssl)
+       ("pango" ,pango)
+       ("sqlite" ,sqlite)
+       ("unixodbc" ,unixodbc)))
     (home-page "http://racket-lang.org")
     (synopsis "Implementation of Scheme and related languages")
     (description
@@ -547,6 +592,160 @@ addition to support for lightweight VM-based threads, each VM itself runs in
 an isolated heap allowing multiple VMs to run simultaneously in different OS
 threads.")
     (license bsd-3)))
+
+(define nanopass
+  (let ((version "1.9"))
+    (origin
+      (method url-fetch)
+      (uri (string-append
+            "https://github.com/nanopass/nanopass-framework-scheme/archive"
+            "/v" version ".tar.gz"))
+      (sha256 (base32 "11pwyy4jiwhcl2am3a4ciczacjbjkyvdizqzdglb3l1hj2gj6nv2"))
+      (file-name (string-append "nanopass-" version ".tar.gz")))))
+
+(define stex
+  (let ((version "1.2.1"))
+    (origin
+      (method url-fetch)
+      (uri (string-append
+            "https://github.com/dybvig/stex/archive"
+            "/v" version ".tar.gz"))
+      (sha256 (base32 "03pl3f668h24dn51vccr1sj5lsba9zq3j37bnxjvdadcdaj4qy5z"))
+      (file-name (string-append "stex-" version ".tar.gz")))))
+
+(define-public chez-scheme
+  (package
+    (name "chez-scheme")
+    (version "9.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/cisco/ChezScheme/archive/"
+                           "v" version ".tar.gz"))
+       (sha256
+        (base32 "0lprmpsjg2plc6ykgkz482zyvhkzv6gd0vnar71ph21h6zknyklz"))
+       (file-name (string-append "chez-scheme-" version ".tar.gz"))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("ncurses" ,ncurses)
+       ("libx11" ,libx11)
+       ("xorg-rgb" ,xorg-rgb)
+       ("nanopass" ,nanopass)
+       ("zlib" ,zlib)
+       ("stex" ,stex)))
+    (native-inputs
+     `(("texlive" ,texlive)
+       ("ghostscript" ,ghostscript-gs)
+       ("netpbm" ,netpbm)))
+    (outputs '("out" "doc"))
+    (arguments
+     `(#:modules ((guix build gnu-build-system)
+                  (guix build utils)
+                  (ice-9 match))
+       #:test-target "test"
+       #:phases
+       (modify-phases %standard-phases
+         ;; Adapt the custom 'configure' script.
+         (replace 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (nanopass (assoc-ref inputs "nanopass"))
+                   (stex (assoc-ref inputs "stex"))
+                   (zlib (assoc-ref inputs "zlib"))
+                   (unpack (assoc-ref %standard-phases 'unpack))
+                   (patch-source-shebangs
+                    (assoc-ref %standard-phases 'patch-source-shebangs)))
+               (map (match-lambda
+                      ((src orig-name new-name)
+                       (with-directory-excursion "."
+                         (apply unpack (list #:source src))
+                         (apply patch-source-shebangs (list #:source src)))
+                       (delete-file-recursively new-name)
+                       (system* "mv" orig-name new-name)))
+                    `((,nanopass "nanopass-framework-scheme-1.9" "nanopass")
+                      (,stex "stex-1.2.1" "stex")))
+               ;; The Makefile wants to download and compile "zlib".  We patch
+               ;; it to use the one from our 'zlib' package.
+               (substitute* "configure"
+                 (("rmdir zlib .*$") "echo \"using system zlib\"\n"))
+               (substitute* (find-files "./c" "Mf-[a-zA-Z0-9.]+")
+                 (("\\$\\{Kernel\\}: \\$\\{kernelobj\\} \\.\\./zlib/libz\\.a")
+                  "${Kernel}: ${kernelobj}")
+                 (("ld -melf_x86_64 -r -X -o \\$\\{Kernel\\} \\$\\{kernelobj\\} \\.\\./zlib/libz\\.a")
+                  (string-append "ld -melf_x86_64 -r -X -o ${Kernel} ${kernelobj} "
+                                 zlib "/lib/libz.a"))
+                 (("\\(cd \\.\\./zlib; CFLAGS=-m64 \\./configure --64)")
+                  (which "true"))
+                 (("(cd \\.\\./zlib; make)")
+                  (which "true")))
+               (substitute* (find-files "mats" "Mf-.*")
+                 (("^[[:space:]]+(cc ) *") "\tgcc "))
+               (substitute*
+                   (find-files "." (string-append
+                                    "("
+                                    "Mf-[a-zA-Z0-9.]+"
+                                    "|Makefile[a-zA-Z0-9.]*"
+                                    "|checkin"
+                                    "|stex\\.stex"
+                                    "|newrelease"
+                                    "|workarea"
+                                    ;;"|[a-zA-Z0-9.]+\\.ms" ; guile can't read
+                                    ")"))
+                 (("/bin/rm") (which "rm"))
+                 (("/bin/ln") (which "ln"))
+                 (("/bin/cp") (which "cp")))
+               (substitute* "makefiles/installsh"
+                 (("/bin/true") (which "true")))
+               (substitute* "stex/Makefile"
+                 (("PREFIX=/usr") (string-append "PREFIX=" out)))
+               (zero? (system* "./configure" "--threads"
+                               (string-append "--installprefix=" out))))))
+         ;; Installation of the documentation requires a running "chez".
+         (add-after 'install 'install-doc
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((bin (string-append (assoc-ref outputs "out") "/bin"))
+                   (doc (string-append (assoc-ref outputs "doc")
+                                       "/share/doc/" ,name "-" ,version)))
+               (setenv "HOME" (getcwd))
+               (setenv "PATH" (string-append (getenv "PATH") ":" bin))
+               (with-directory-excursion "stex"
+                 (system* "make" (string-append "BIN=" bin)))
+               (system* "make" "docs")
+               (with-directory-excursion "csug"
+                 (substitute* "Makefile"
+                   (("/tmp/csug9") doc)
+                   (("^m = a6le")
+                    "m := $(shell echo '(machine-type)' | scheme -q)"))
+                 (system* "make" "install")
+                 (install-file "csug.pdf" doc))
+               (with-directory-excursion "release_notes"
+                 (install-file "release_notes.pdf" doc))
+               #t)))
+         ;; The binary file name is called "scheme" as the one from MIT/GNU
+         ;; Scheme.  We add a symlink to use in case both are installed.
+         (add-after 'install 'install-symlink
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (bin (string-append out "/bin"))
+                    (lib (string-append out "/lib"))
+                    (name "chez-scheme"))
+               (symlink (string-append bin "/scheme")
+                        (string-append bin "/" name))
+               (map (lambda (file)
+                      (symlink file (string-append (dirname file)
+                                                   "/" name ".boot")))
+                    (find-files lib "scheme.boot"))
+               #t))))))
+    ;; According to the documentation MIPS is not supported.
+    (supported-systems (delete "mips64el-linux" %supported-systems))
+    (home-page "http://www.scheme.com")
+    (synopsis "R6RS Scheme compiler and run-time")
+    (description
+     "Chez Scheme is a compiler and run-time system for the language of the
+Revised^6 Report on Scheme (R6RS), with numerous extensions.  The compiler
+generates native code for each target processor, with support for x86, x86_64,
+and 32-bit PowerPC architectures.")
+    (license asl2.0)))
 
 (define-public scmutils
   (let ()

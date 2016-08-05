@@ -908,13 +908,13 @@ Ruby Gems.")
 (define-public ruby-ffi
   (package
     (name "ruby-ffi")
-    (version "1.9.10")
+    (version "1.9.14")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "ffi" version))
               (sha256
                (base32
-                "1m5mprppw0xcrv2mkim5zsk70v089ajzqiq5hpyb0xg96fcyzyxj"))))
+                "1nkcrmxqr0vb1y4rwliclwlj2ajsi4ddpdx2gvzjy0xbkk5iqzfp"))))
     (build-system ruby-build-system)
     ;; FIXME: Before running tests the build system attempts to build libffi
     ;; from sources.
@@ -1909,37 +1909,48 @@ to reproduce user environments.")
 (define-public ruby-nokogiri
   (package
     (name "ruby-nokogiri")
-    (version "1.6.7.2")
+    (version "1.6.8")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "nokogiri" version))
               (sha256
                (base32
-                "11sbmpy60ynak6s3794q32lc99hs448msjy8rkp84ay7mq7zqspv"))))
+                "17pjhvm4yigriizxbbpx266nnh6nckdm33m3j4ws9dcg99daz91p"))))
     (build-system ruby-build-system)
     (arguments
      ;; Tests fail because Nokogiri can only test with an installed extension,
      ;; and also because many test framework dependencies are missing.
-     '(#:tests? #f
+     `(#:tests? #f
        #:gem-flags (list "--" "--use-system-libraries"
                          (string-append "--with-xml2-include="
                                         (assoc-ref %build-inputs "libxml2")
                                         "/include/libxml2" ))
        #:phases
        (modify-phases %standard-phases
-         (add-after 'extract-gemspec 'update-dependency
-           (lambda _
-             (substitute* ".gemspec" (("2.0.0.rc2") "2.0"))
+         (add-before 'build 'patch-extconf
+           ;; 'pkg-config' is not included in the GEM_PATH during
+           ;; installation, so we add it directly to the load path.
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((pkg-config (assoc-ref inputs "ruby-pkg-config"))
+                    (pkg-config-home (gem-home pkg-config
+                                               ,(package-version ruby))))
+               (substitute* "ext/nokogiri/extconf.rb"
+                 (("gem 'pkg-config'.*")
+                  (string-append "$:.unshift '"
+                                 pkg-config-home
+                                 "/gems/pkg-config-"
+                                 ,(package-version ruby-pkg-config)
+                                 "/lib'\n"))))
              #t)))))
     (native-inputs
-     `(("ruby-hoe" ,ruby-hoe)
-       ("ruby-rake-compiler" ,ruby-rake-compiler)))
+     `(("ruby-hoe" ,ruby-hoe)))
     (inputs
      `(("zlib" ,zlib)
        ("libxml2" ,libxml2)
        ("libxslt" ,libxslt)))
     (propagated-inputs
-     `(("ruby-mini-portile" ,ruby-mini-portile-2)))
+     `(("ruby-mini-portile" ,ruby-mini-portile-2)
+       ("ruby-pkg-config" ,ruby-pkg-config)))
     (synopsis "HTML, XML, SAX, and Reader parser for Ruby")
     (description "Nokogiri (鋸) parses and searches XML/HTML, and features
 both CSS3 selector and XPath 1.0 support.")
@@ -4050,7 +4061,7 @@ associated records.")
        ("ruby-minitest-rg" ,ruby-minitest-rg)
        ("ruby-mocha" ,ruby-mocha)
        ("ruby-activesupport" ,ruby-activesupport)))
-    (synopsis "Test mocks for time-dependent functions.")
+    (synopsis "Test mocks for time-dependent functions")
     (description
      "Timecop provides \"time travel\" and \"time freezing\" capabilities,
 making it easier to test time-dependent code.  It provides a unified method to
@@ -4117,3 +4128,24 @@ patterns.")
     (home-page "http://www.concurrent-ruby.com")
     (license license:expat)))
 
+(define-public ruby-pkg-config
+  (package
+    (name "ruby-pkg-config")
+    (version "1.1.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "pkg-config" version))
+       (sha256
+        (base32
+         "0lljiqnm0b4z6iy87lzapwrdfa6ps63x2z5zbs038iig8dqx2g0z"))))
+    (build-system ruby-build-system)
+    (arguments
+     ;; Tests require extra files not included in the gem.
+     `(#:tests? #f))
+    (synopsis "Detect libraries for compiling Ruby native extensions")
+    (description
+     "@code{pkg-config} can be used in your extconf.rb to properly detect need
+libraries for compiling Ruby native extensions.")
+    (home-page "https://github.com/ruby-gnome2/pkg-config")
+    (license license:lgpl2.0+)))

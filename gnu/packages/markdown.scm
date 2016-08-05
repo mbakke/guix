@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Mathieu Lirzin <mthl@openmailbox.org>
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
+;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,7 +32,7 @@
 (define-public hoedown
   (package
     (name "hoedown")
-    (version "3.0.3")
+    (version "3.0.7")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://github.com/hoedown/hoedown/archive/"
@@ -39,7 +40,7 @@
              (file-name (string-append name "-" version ".tar.gz"))
              (sha256
               (base32
-               "0mmmkfayqgh6k39kbi3pq68mg03x35aiygy3zypxzvwx9y8b53ky"))))
+               "0859dc2xjasd6kgkshi8mb20kbyw5sql1ln0hw3bfaf33qdh5dh1"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags (list "CC=gcc" (string-append "PREFIX=" %output))

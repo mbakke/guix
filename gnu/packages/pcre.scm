@@ -32,7 +32,6 @@
   (package
    (name "pcre")
    (version "8.38")
-   (replacement pcre-fixed)
    (source (origin
             (method url-fetch)
             (uri (list
@@ -43,15 +42,18 @@
                                  version "/pcre-" version ".tar.bz2")))
             (sha256
              (base32
-              "1pvra19ljkr5ky35y2iywjnsckrs9ch2anrf5b0dc91hw8v2vq5r"))))
+              "1pvra19ljkr5ky35y2iywjnsckrs9ch2anrf5b0dc91hw8v2vq5r"))
+            (patches (list (search-patch "pcre-CVE-2016-3191.patch")))))
    (build-system gnu-build-system)
-   (outputs '("out"
-              "doc"))                             ;1.8 MiB of HTML
+   (outputs '("out"           ;library & headers
+              "bin"           ;depends on Readline (adds 20MiB to the closure)
+              "doc"))         ;1.8 MiB of HTML
    (inputs `(("bzip2" ,bzip2)
              ("readline" ,readline)
              ("zlib" ,zlib)))
    (arguments
-    `(#:configure-flags '("--enable-utf"
+    '(#:disallowed-references ("doc")
+      #:configure-flags '("--enable-utf"
                           "--enable-pcregrep-libz"
                           "--enable-pcregrep-libbz2"
                           "--enable-pcretest-libreadline"
@@ -67,13 +69,6 @@ own native API, as well as a set of wrapper functions that correspond to the
 POSIX regular expression API.")
    (license license:bsd-3)
    (home-page "http://www.pcre.org/")))
-
-(define pcre-fixed                                ;for CVE-2016-3191
-  (package
-    (inherit pcre)
-    (source (origin
-              (inherit (package-source pcre))
-              (patches (search-patches "pcre-CVE-2016-3191.patch"))))))
 
 (define-public pcre2
   (package

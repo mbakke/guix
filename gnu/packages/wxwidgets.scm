@@ -42,7 +42,8 @@
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/wxwindows/" version
+       (uri (string-append "https://github.com/wxWidgets/wxWidgets/"
+                           "releases/download/v" version
                            "/wxWidgets-" version ".tar.bz2"))
        (sha256
         (base32 "0paq27brw4lv8kspxh9iklpa415mxi8zc117vbbbhfjgapf7js1l"))))
@@ -88,8 +89,9 @@ and many other languages.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "mirror://sourceforge/wxwindows/wxGTK-" version ".tar.gz"))
+       (uri (string-append "https://github.com/wxWidgets/wxWidgets/"
+                           "releases/download/v" version
+                           "/wxGTK-" version ".tar.gz"))
        (sha256
         (base32 "1gjs9vfga60mk4j4ngiwsk9h6c7j22pw26m3asxr1jwvqbr8kkqk"))))
     (inputs

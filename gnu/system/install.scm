@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -34,6 +35,7 @@
   #:use-module (gnu packages grub)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages nvi)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-26)
   #:export (self-contained-tarball
@@ -55,52 +57,53 @@ under /root/.guix-profile where GUIX is installed."
                                 (manifest
                                  (list (package->manifest-entry guix))))))
     (define build
-      #~(begin
-          (use-modules (guix build utils)
-                       (gnu build install))
+      (with-imported-modules '((guix build utils)
+                               (guix build store-copy)
+                               (gnu build install))
+        #~(begin
+            (use-modules (guix build utils)
+                         (gnu build install))
 
-          (define %root "root")
+            (define %root "root")
 
-          (setenv "PATH"
-                  (string-append #$guix "/sbin:" #$tar "/bin:" #$xz "/bin"))
+            (setenv "PATH"
+                    (string-append #$guix "/sbin:" #$tar "/bin:" #$xz "/bin"))
 
-          ;; Note: there is not much to gain here with deduplication and there
-          ;; is the overhead of the '.links' directory, so turn it off.
-          (populate-single-profile-directory %root
-                                             #:profile #$profile
-                                             #:closure "profile"
-                                             #:deduplicate? #f)
+            ;; Note: there is not much to gain here with deduplication and
+            ;; there is the overhead of the '.links' directory, so turn it
+            ;; off.
+            (populate-single-profile-directory %root
+                                               #:profile #$profile
+                                               #:closure "profile"
+                                               #:deduplicate? #f)
 
-          ;; Create the tarball.  Use GNU format so there's no file name
-          ;; length limitation.
-          (with-directory-excursion %root
-            (zero? (system* "tar" "--xz" "--format=gnu"
+            ;; Create the tarball.  Use GNU format so there's no file name
+            ;; length limitation.
+            (with-directory-excursion %root
+              (zero? (system* "tar" "--xz" "--format=gnu"
 
-                            ;; Avoid non-determinism in the archive.  Use
-                            ;; mtime = 1, not zero, because that is what the
-                            ;; daemon does for files in the store (see the
-                            ;; 'mtimeStore' constant in local-store.cc.)
-                            "--sort=name"
-                            "--mtime=@1"          ;for files in /var/guix
-                            "--owner=root:0"
-                            "--group=root:0"
+                              ;; Avoid non-determinism in the archive.  Use
+                              ;; mtime = 1, not zero, because that is what the
+                              ;; daemon does for files in the store (see the
+                              ;; 'mtimeStore' constant in local-store.cc.)
+                              "--sort=name"
+                              "--mtime=@1"        ;for files in /var/guix
+                              "--owner=root:0"
+                              "--group=root:0"
 
-                            "--check-links"
-                            "-cvf" #$output
-                            ;; Avoid adding / and /var to the tarball,
-                            ;; so that the ownership and permissions of those
-                            ;; directories will not be overwritten when
-                            ;; extracting the archive.  Do not include /root
-                            ;; because the root account might have a different
-                            ;; home directory.
-                            "./var/guix"
-                            (string-append "." (%store-directory)))))))
+                              "--check-links"
+                              "-cvf" #$output
+                              ;; Avoid adding / and /var to the tarball, so
+                              ;; that the ownership and permissions of those
+                              ;; directories will not be overwritten when
+                              ;; extracting the archive.  Do not include /root
+                              ;; because the root account might have a
+                              ;; different home directory.
+                              "./var/guix"
+                              (string-append "." (%store-directory))))))))
 
     (gexp->derivation "guix-tarball.tar.xz" build
-                      #:references-graphs `(("profile" ,profile))
-                      #:modules '((guix build utils)
-                                  (guix build store-copy)
-                                  (gnu build install)))))
+                      #:references-graphs `(("profile" ,profile)))))
 
 
 (define (log-to-info)
@@ -212,20 +215,20 @@ the user's target storage device rather than on the RAM disk."
 
   (define directory
     (computed-file "configuration-templates"
-                   #~(begin
-                       (mkdir #$output)
-                       (for-each (lambda (file target)
-                                   (copy-file file
-                                              (string-append #$output "/"
-                                                             target)))
-                                 '(#$(file "bare-bones.tmpl")
-                                   #$(file "desktop.tmpl")
-                                   #$(file "lightweight-desktop.tmpl"))
-                                 '("bare-bones.scm"
-                                   "desktop.scm"
-                                   "lightweight-desktop.scm"))
-                       #t)
-                   #:modules '((guix build utils))))
+                   (with-imported-modules '((guix build utils))
+                     #~(begin
+                         (mkdir #$output)
+                         (for-each (lambda (file target)
+                                     (copy-file file
+                                                (string-append #$output "/"
+                                                               target)))
+                                   '(#$(file "bare-bones.tmpl")
+                                     #$(file "desktop.tmpl")
+                                     #$(file "lightweight-desktop.tmpl"))
+                                   '("bare-bones.scm"
+                                     "desktop.scm"
+                                     "lightweight-desktop.scm"))
+                         #t))))
 
   `(("configuration" ,directory)))
 
@@ -391,6 +394,7 @@ Use Alt-F2 for documentation.
                      parted ddrescue
                      grub                  ;mostly so xrefs to its manual work
                      cryptsetup
+                     mdadm
                      btrfs-progs
                      wireless-tools iw wpa-supplicant-minimal iproute
                      ;; XXX: We used to have GNU fdisk here, but as of version
@@ -398,6 +402,7 @@ Use Alt-F2 for documentation.
                      ;; space; furthermore util-linux's fdisk is already
                      ;; available here, so we keep that.
                      bash-completion
+                     nvi                          ;:wq!
                      %base-packages))))
 
 ;; Return it here so 'guix system' can consume it directly.

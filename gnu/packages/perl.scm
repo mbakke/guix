@@ -90,15 +90,7 @@
                         "-Dinstallstyle=lib/perl5"
                         "-Duseshrplib"
                         (string-append "-Dlocincpth=" libc "/include")
-                        (string-append "-Dloclibpth=" libc "/lib")
-
-                        ;; Force the library search path to contain only libc
-                        ;; because it is recorded in Config.pm and
-                        ;; Config_heavy.pl; we don't want to keep a reference
-                        ;; to everything that's in $LIBRARY_PATH at build
-                        ;; time (Binutils, bzip2, file, etc.)
-                        (string-append "-Dlibpth=" libc "/lib")
-                        (string-append "-Dplibpth=" libc "/lib"))))))
+                        (string-append "-Dloclibpth=" libc "/lib"))))))
 
          (add-before
           'strip 'make-shared-objects-writable
@@ -109,7 +101,34 @@
                    (lib (string-append out "/lib")))
               (for-each (lambda (dso)
                           (chmod dso #o755))
-                        (find-files lib "\\.so$"))))))))
+                        (find-files lib "\\.so$")))))
+
+         (add-after 'install 'remove-extra-references
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let* ((out     (assoc-ref outputs "out"))
+                    (libc    (assoc-ref inputs "libc"))
+                    (config1 (car (find-files (string-append out "/lib/perl5")
+                                              "^Config_heavy\\.pl$")))
+                    (config2 (find-files (string-append out "/lib/perl5")
+                                         "^Config\\.pm$")))
+               ;; Force the library search path to contain only libc because
+               ;; it is recorded in Config.pm and Config_heavy.pl; we don't
+               ;; want to keep a reference to everything that's in
+               ;; $LIBRARY_PATH at build time (GCC, Binutils, bzip2, file,
+               ;; etc.)
+               (substitute* config1
+                 (("^incpth=.*$")
+                  (string-append "incpth='" libc "/include'\n"))
+                 (("^(libpth|plibpth|libspath)=.*$" _ variable)
+                  (string-append variable "='" libc "/lib'\n")))
+
+               (for-each (lambda (file)
+                           (substitute* config2
+                             (("libpth => .*$")
+                              (string-append "libpth => '" libc
+                                             "/lib',\n"))))
+                         config2)
+               #t))))))
     (native-search-paths (list (search-path-specification
                                 (variable "PERL5LIB")
                                 (files '("lib/perl5/site_perl")))))
@@ -1911,7 +1930,7 @@ each stack frame.")
 (define-public perl-devel-symdump
   (package
     (name "perl-devel-symdump")
-    (version "2.14")
+    (version "2.17")
     (source
      (origin
        (method url-fetch)
@@ -1919,7 +1938,7 @@ each stack frame.")
                            "Devel-Symdump-" version ".tar.gz"))
        (sha256
         (base32
-         "1phyyxgxsymgzbjd524zlaavvay6vjw34af5zn9153qffqign54v"))))
+         "0qkfjk7bm7jwn9d9qaldg298zvkqh2f19fgvfh5j1rp66mwzql1c"))))
     (build-system perl-build-system)
     (home-page "http://search.cpan.org/dist/Devel-Symdump")
     (synopsis "Dump symbol names or the symbol table")
@@ -2937,6 +2956,85 @@ either uses the first module it finds or throws an error.")
     (synopsis "JSON serialising/deserialising for Perl")
     (description "This module converts Perl data structures to JSON and vice
 versa.")
+    (license (package-license perl))))
+
+(define-public perl-log-any
+  (package
+    (name "perl-log-any")
+    (version "1.040")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/D/DA/DAGOLDEN/Log-Any-"
+                           version ".tar.gz"))
+       (sha256
+        (base32
+         "0r1q7cclgwl24gzdnjzvd8y0r7j17dngjk492x35w198zhdj2ncp"))))
+    (build-system perl-build-system)
+    (home-page "http://search.cpan.org/dist/Log-Any")
+    (synopsis "Bringing loggers and listeners together")
+    (description "@code{Log::Any} provides a standard log production API for
+modules.  @code{Log::Any::Adapter} allows applications to choose the mechanism
+for log consumption, whether screen, file or another logging mechanism like
+@code{Log::Dispatch} or @code{Log::Log4perl}.
+
+A CPAN module uses @code{Log::Any} to get a log producer object.  An
+application, in turn, may choose one or more logging mechanisms via
+@code{Log::Any::Adapter}, or none at all.
+
+@code{Log::Any} has a very tiny footprint and no dependencies beyond Perl
+itself, which makes it appropriate for even small CPAN modules to use.  It
+defaults to 'null' logging activity, so a module can safely log without
+worrying about whether the application has chosen (or will ever choose) a
+logging mechanism.")
+    (license (package-license perl))))
+
+(define-public perl-log-any-adapter-log4perl
+  (package
+    (name "perl-log-any-adapter-log4perl")
+    (version "0.08")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/D/DA/DAGOLDEN/Log-Any-Adapter-Log4perl-"
+             version
+             ".tar.gz"))
+       (sha256
+        (base32
+         "0xf4fnrsznvg0hf36q481124ja1hp3lybki1xjgnk82z9990jmxn"))))
+    (build-system perl-build-system)
+    (propagated-inputs
+     `(("perl-log-any" ,perl-log-any)
+       ("perl-log-log4perl" ,perl-log-log4perl)))
+    (home-page
+     "http://search.cpan.org/dist/Log-Any-Adapter-Log4perl")
+    (synopsis "Log::Any adapter for Log::Log4perl")
+    (description "@code{Log::Any::Adapter::Log4perl} provides a
+@code{Log::Any} adapter using @code{Log::Log4perl} for logging.")
+    (license (package-license perl))))
+
+(define-public perl-log-log4perl
+  (package
+    (name "perl-log-log4perl")
+    (version "1.47")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/M/MS/MSCHILLI/Log-Log4perl-"
+             version
+             ".tar.gz"))
+       (sha256
+        (base32
+         "0vxraq9navx5mgf8y8g6l5rbl3dv2ml8bishka5m69hj07nxs0ch"))))
+    (build-system perl-build-system)
+    (home-page
+     "http://search.cpan.org/dist/Log-Log4perl")
+    (synopsis "Log4j implementation for Perl")
+    (description "@code{Log::Log4perl} lets you remote-control and fine-tune
+the logging behaviour of your system from the outside.  It implements the
+widely popular (Java-based) Log4j logging package in pure Perl.")
     (license (package-license perl))))
 
 (define-public perl-log-report-optional
@@ -5713,7 +5811,7 @@ a minimum of effort.")
      `(("perl-test-tester" ,perl-test-tester)
        ("perl-data-dump" ,perl-data-dump)))
     (home-page "http://search.cpan.org/dist/Test-Trap")
-    (synopsis "Trap exit codes, exceptions, output, etc.")
+    (synopsis "Trap exit codes, exceptions, output, and so on")
     (description "This module is primarily (but not exclusively) for use in
 test scripts: A block eval configurable and extensible but by default trapping
 STDOUT, STDERR, warnings, exceptions, would-be exit codes, and return values
@@ -6075,8 +6173,8 @@ as exceptions to standard program flow.")
     (version "20160302")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/perltidy/Perl-Tidy-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/perltidy/" version
+                                  "/Perl-Tidy-" version ".tar.gz"))
               (sha256
                (base32
                 "19yw63yh5s3pq7k3nkw6nsamg5b8vvwyhgbizslgxg0mqgc4xl3d"))))

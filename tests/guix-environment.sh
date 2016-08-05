@@ -57,6 +57,10 @@ else
     test $? = 42
 fi
 
+# Make sure 'GUIX_ENVIRONMENT' points to the profile.
+guix environment --bootstrap --ad-hoc guile-bootstrap --pure \
+     -- "$SHELL" -c 'test -f "$GUIX_ENVIRONMENT/bin/guile"'
+
 case "`uname -m`" in
     x86_64)
 	# On x86_64, we should be able to create a 32-bit environment.

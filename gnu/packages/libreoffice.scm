@@ -127,7 +127,7 @@ CSV, CSS and XML.")
      (origin
       (method url-fetch)
       (uri (string-append "mirror://sourceforge/libwpd/" name "/" name "-"
-                          version ".tar.xz"))
+                          version "/" name "-" version ".tar.xz"))
       (sha256 (base32
                "03ygxyb0vfjv8raif5q62sl33b54wkr5rzgadb8slijm6k281wpn"))))
     (build-system gnu-build-system)
@@ -158,8 +158,8 @@ spreadsheets and presentations.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/libwpd/" name "/" name "-"
-                          version ".tar.xz"))
+      (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                          name "-" version "/" name "-" version ".tar.xz"))
       (sha256 (base32
                "0b6krzr6kxzm89g6bapn805kdayq70hn16n5b5wfs2lwrf0ag2wx"))))
     (build-system gnu-build-system)
@@ -220,8 +220,8 @@ ZVR (simple compressed text format).")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/libwpg/" name "/" name "-"
-                          version ".tar.xz"))
+      (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                          name "-" version "/" name "-" version ".tar.xz"))
       (sha256 (base32
                "097jx8a638fwwfrzf6v29r1yhc34rq9526py7wf0ck2z4fcr2w3g"))))
     (build-system gnu-build-system)
@@ -576,8 +576,8 @@ text documents, vector drawings, presentations and spreadsheets.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/" name "/" name "/"
-                          name "-" version ".tar.xz"))
+      (uri (string-append "mirror://sourceforge/" name "/" name "/" name "-"
+                          version "/" name "-" version ".tar.xz"))
       (sha256 (base32
                "1vx9h419fcfcs0yj071hsg9d2qvkacgca6052m8hv3h743cdmzil"))))
     (build-system gnu-build-system)
@@ -607,7 +607,7 @@ spreadsheet documents.")
      (origin
       (method url-fetch)
       (uri (string-append "mirror://sourceforge/" name "/" name "/"
-                          name "-" version ".tar.xz"))
+                          name "-" version "/" name "-" version ".tar.xz"))
       (sha256 (base32
                "0nlrdk7di015l0sk0ivjdqs86zdcvf73p9z9s9ry5glyhrknzxjk"))))
     (build-system gnu-build-system)
@@ -635,7 +635,7 @@ Works word processor file format.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/" name "/"
+      (uri (string-append "mirror://sourceforge/" name "/Hunspell/" version "/"
                           name "-" version ".tar.gz"))
       (sha256 (base32
                "0v14ff9s37vkh45diaddndcrj0hmn67arh8xh8k79q9c1vgc1cm7"))))
@@ -655,7 +655,8 @@ word compounding or character encoding.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/hunspell/"
+      (uri (string-append "mirror://sourceforge/hunspell/Hyphen/"
+                          (version-major+minor version) "/"
                           name "-" version ".tar.gz"))
       (sha256 (base32
                "01ap9pr6zzzbp4ky0vy7i1983fwyqy27pl0ld55s30fdxka3ciih"))))
@@ -676,7 +677,7 @@ patterns, which are pre-processed by a perl script.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "mirror://sourceforge/hunspell/"
+      (uri (string-append "mirror://sourceforge/hunspell/MyThes/" version "/"
                           name "-" version ".tar.gz"))
       (sha256 (base32
                "0prh19wy1c74kmzkkavm9qslk99gz8h8wmjvwzjc6lf8v2az708y"))))

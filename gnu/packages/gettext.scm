@@ -41,14 +41,14 @@
 (define-public gnu-gettext
   (package
     (name "gettext")
-    (version "0.19.7")
+    (version "0.19.8")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/gettext/gettext-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "0gy2b2aydj8r0sapadnjw8cmb8j2rynj28d5qs1mfa800njd51jk"))))
+               "13ylc6n3hsk919c7xl0yyibc3pfddzb53avdykn4hmk8g6yzd91x"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc"))                            ;8 MiB of HTML

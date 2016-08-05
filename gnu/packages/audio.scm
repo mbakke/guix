@@ -75,8 +75,8 @@
     (version "2.1.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/alsamodular/ams-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/alsamodular/alsamodular"
+                                  "/" version "/ams-" version ".tar.bz2"))
               (sha256
                (base32
                 "1azbrhpfk4nnybr7kgmc7w6al6xnzppg853vas8gmkh185kk11l0"))))
@@ -766,8 +766,8 @@ also play midifiles using a Soundfont.")
     (version "2.7")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/faac/faad2-" version ".zip"))
+              (uri (string-append "mirror://sourceforge/faac/faad2-src/faad2-"
+                                  version "/faad2-" version ".zip"))
               (sha256
                (base32
                 "16f3l16c00sg0wkrkm3vzv0gy3g97x309vw788igs0cap2x1ak3z"))))
@@ -868,7 +868,7 @@ patches that can be used with softsynths such as Timidity and WildMidi.")
     (source (origin
              (method url-fetch)
              (uri (string-append
-                   "mirror://sourceforge/guitarix/guitarix2-"
+                   "mirror://sourceforge/guitarix/guitarix/guitarix2-"
                    version ".tar.xz"))
              (sha256
               (base32
@@ -1230,8 +1230,8 @@ connections between them.")
     (version "3.1.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/bs2b/libbs2b-" version ".tar.lzma"))
+              (uri (string-append "mirror://sourceforge/bs2b/libbs2b/" version
+                                  "/libbs2b-" version ".tar.lzma"))
               (sha256
                (base32
                 "1mcc4gjkmphczjybnsrip3gq1f974knzys7x49bv197xk3fn8wdr"))))
@@ -1253,10 +1253,8 @@ essential distortions.")
     (version "0.28")
     (source (origin
              (method url-fetch)
-             (uri (string-append
-                   "mirror://sourceforge/liblo/liblo-"
-                   version
-                   ".tar.gz"))
+             (uri (string-append "mirror://sourceforge/liblo/liblo/" version
+                                 "/liblo-" version ".tar.gz"))
              (sha256
               (base32
                "02drgnpirvl2ihvzgsmn02agr5sj3vipzzw9vma56qlkgfvak56s"))))
@@ -1709,9 +1707,9 @@ Suil currently supports every combination of Gtk 2, Qt 4, and X11.")
     (version "2.14.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/timidity/TiMidity++-"
-                    version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/timidity/TiMidity++"
+                                  "/TiMidity++-" version
+                                  "/TiMidity++-" version ".tar.bz2"))
               (sha256
                (base32
                 "0xk41w4qbk23z1fvqdyfblbz10mmxsllw0svxzjw5sa9y11vczzr"))))
@@ -1871,7 +1869,7 @@ encode and decode wavpack files.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "mirror://sourceforge/project/modplug-xmms/"
+                    "mirror://sourceforge/modplug-xmms/"
                     name "/" version "/" name "-" version ".tar.gz"))
               (sha256
                (base32
@@ -1892,7 +1890,7 @@ surround and reverb.")
     (version "4.3.10")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/libxmp/"
+              (uri (string-append "mirror://sourceforge/xmp/libxmp/" version "/"
                                   name "-" version ".tar.gz"))
               (sha256
                (base32
@@ -1912,7 +1910,7 @@ Scream Tracker 3 (S3M), Fast Tracker II (XM), and Impulse Tracker (IT).")
     (version "4.0.10")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/xmp/"
+              (uri (string-append "mirror://sourceforge/xmp/xmp/" version "/"
                                   name "-" version ".tar.gz"))
               (sha256
                (base32
@@ -1972,8 +1970,8 @@ control functionality, or just for playing around with the sound effects.")
     (version "14.4.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/sox/sox-"
-                                  version ".tar.bz2"))
+              (uri (string-append "mirror://sourceforge/sox/sox/" version "/"
+                                  name "-" version ".tar.bz2"))
               (sha256
                (base32
                 "170lx90r1nlnb2j6lg00524iwvqy72p48vii4xc5prrh8dnrb9l1"))))
@@ -2035,8 +2033,8 @@ conversion.  It may be used, for example, to resample PCM-encoded audio.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "mirror://sourceforge/twolame/twolame-" version ".tar.gz"))
+       (uri (string-append "mirror://sourceforge/twolame/twolame/" version
+                           "/twolame-" version ".tar.gz"))
        (sha256
         (base32 "0ahiqqng5pidwhj1wzph4vxxgxxgcfa3gl0gywipzx2ii7s35wwq"))))
     (build-system gnu-build-system)
@@ -2102,8 +2100,8 @@ interface.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "mirror://sourceforge/qsynth/qsynth-" version ".tar.gz"))
+       (uri (string-append "mirror://sourceforge/qsynth/qsynth/" version
+                           "/qsynth-" version ".tar.gz"))
        (sha256
         (base32 "034p6mbwrjnxd9b6h20cidxi4ilkk3cgpjp154j0jzjs1ipf7x2h"))))
     (build-system gnu-build-system)

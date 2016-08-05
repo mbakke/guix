@@ -21,6 +21,7 @@
   #:use-module (guix scripts)
   #:use-module (guix store)
   #:use-module (guix utils)
+  #:use-module (guix grafts)
   #:use-module (guix monads)
   #:use-module (guix base32)
   #:use-module (guix packages)
@@ -222,23 +223,26 @@ Challenge the substitutes for PACKAGE... provided by one or more servers.\n"))
            (urls     (assoc-ref opts 'substitute-urls)))
       (leave-on-EPIPE
        (with-store store
-         (let ((files (match files
-                        (()
-                         (filter (cut locally-built? store <>)
-                                 (live-paths store)))
-                        (x
-                         files))))
-           (set-build-options store
-                              #:use-substitutes? #f)
+         ;; Disable grafts since substitute servers normally provide only
+         ;; ungrafted stuff.
+         (parameterize ((%graft? #f))
+           (let ((files (match files
+                          (()
+                           (filter (cut locally-built? store <>)
+                                   (live-paths store)))
+                          (x
+                           files))))
+             (set-build-options store
+                                #:use-substitutes? #f)
 
-           (run-with-store store
-             (mlet* %store-monad ((items  (mapm %store-monad
-                                                ensure-store-item files))
-                                  (issues (discrepancies items urls)))
-               (for-each summarize-discrepancy issues)
-               (unless (null? issues)
-                 (exit 2))
-               (return (null? issues)))
-             #:system system)))))))
+             (run-with-store store
+               (mlet* %store-monad ((items  (mapm %store-monad
+                                                  ensure-store-item files))
+                                    (issues (discrepancies items urls)))
+                 (for-each summarize-discrepancy issues)
+                 (unless (null? issues)
+                   (exit 2))
+                 (return (null? issues)))
+               #:system system))))))))
 
 ;;; challenge.scm ends here

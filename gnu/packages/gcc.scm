@@ -153,7 +153,7 @@ where the OS part is overloaded to denote a specific ABI---into GCC
                 ("libelf" ,libelf)
                 ("zlib" ,zlib)))
 
-      ;; GCC is one of the few packages that doesn't ship .info files.
+      ;; GCC < 5 is one of the few packages that doesn't ship .info files.
       (native-inputs `(("texinfo" ,texinfo)))
 
       (arguments
@@ -343,6 +343,8 @@ Go.  It also includes runtime support libraries for these languages.")
               (patches (search-patches "gcc-libvtv-runpath.patch"))))))
 
 (define-public gcc-5
+  ;; Note: GCC >= 5 ships with .info files but 'make install' fails to install
+  ;; them in a VPATH build.
   (package (inherit gcc-4.9)
     (version "5.3.0")
     (source (origin

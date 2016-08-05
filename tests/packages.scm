@@ -79,6 +79,10 @@
                     (write
                      (dummy-package "foo" (location #f)))))))
 
+(test-assert "hidden-package"
+  (and (hidden-package? (hidden-package (dummy-package "foo")))
+       (not (hidden-package? (dummy-package "foo")))))
+
 (test-assert "package-field-location"
   (let ()
     (define (goto port line column)
@@ -335,7 +339,6 @@
                        ("patch" ,%bootstrap-coreutils&co)))
                     (patch-guile %bootstrap-guile)
                     (modules '((guix build utils)))
-                    (imported-modules modules)
                     (snippet '(begin
                                 ;; We end up in 'bin', because it's the first
                                 ;; directory, alphabetically.  Not a very good
@@ -745,6 +748,20 @@
                        p
                        r))
                  #f))
+
+(test-assert "fold-packages, hidden package"
+  ;; There are two public variables providing "guile@2.0" ('guile-final' in
+  ;; commencement.scm and 'guile-2.0/fixed' in guile.scm), but only the latter
+  ;; should show up.
+  (match (fold-packages (lambda (p r)
+                          (if (and (string=? (package-name p) "guile")
+                                   (string-prefix? "2.0"
+                                                   (package-version p)))
+                              (cons p r)
+                              r))
+                        '())
+    ((one)
+     (eq? one guile-2.0/fixed))))
 
 (test-assert "find-packages-by-name"
   (match (find-packages-by-name "hello")

@@ -303,7 +303,7 @@ makefiles."
   (define (list-of-files dir)
     (map (cut string-append dir "/" <>)
          (or (scandir dir (lambda (f)
-                            (let ((s (stat (string-append dir "/" f))))
+                            (let ((s (lstat (string-append dir "/" f))))
                               (eq? 'regular (stat:type s)))))
              '())))
 

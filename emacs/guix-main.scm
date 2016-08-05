@@ -46,6 +46,7 @@
  (guix)
  (guix combinators)
  (guix git-download)
+ (guix grafts)
  (guix packages)
  (guix profiles)
  (guix licenses)
@@ -930,15 +931,16 @@ OUTPUTS is a list of package outputs (may be an empty list)."
          (new-manifest (manifest-perform-transaction
                         manifest transaction)))
     (unless (and (null? install) (null? remove))
-      (with-store store
-        (set-build-options store
-                           #:print-build-trace #f
-                           #:use-substitutes? use-substitutes?)
-        (show-manifest-transaction store manifest transaction
-                                   #:dry-run? dry-run?)
-        (build-and-use-profile store profile new-manifest
-                               #:use-substitutes? use-substitutes?
-                               #:dry-run? dry-run?)))))
+      (parameterize ((%graft? (not dry-run?)))
+        (with-store store
+          (set-build-options store
+                             #:print-build-trace #f
+                             #:use-substitutes? use-substitutes?)
+          (show-manifest-transaction store manifest transaction
+                                     #:dry-run? dry-run?)
+          (build-and-use-profile store profile new-manifest
+                                 #:use-substitutes? use-substitutes?
+                                 #:dry-run? dry-run?))))))
 
 (define (delete-generations* profile generations)
   "Delete GENERATIONS from PROFILE.

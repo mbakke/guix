@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015, 2016 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -70,3 +71,24 @@ probing.  This method is space-efficient -- there is no pointer overhead --
 and time-efficient for good hash functions.")
     (home-page "https://github.com/sparsehash/sparsehash")
     (license license:bsd-3)))
+
+(define-public ssdeep
+  (package
+    (name "ssdeep")
+    (version "2.13")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/ssdeep/"
+                                  name "-" version "/"
+                                  name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1igqy0j7jrklb8fdlrm6ald4cyl1fda5ipfl8crzyl6bax2ajk3f"))))
+    (build-system gnu-build-system)
+    (home-page "http://ssdeep.sourceforge.net")
+    (synopsis "Context-triggered piecewise hashing algorithm")
+    (description "ssdeep computes and matches context triggered piecewise
+hashes (CTPH), also called fuzzy checksums.  It can identify similar files
+that have sequences of identical bytes in the same order, even though bytes
+in between these sequences may be different in both content and length.")
+    (license license:gpl2+)))

@@ -37,8 +37,9 @@
     (version "0.5.3")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://sourceforge/w3m/w3m-"
-                                 version ".tar.gz"))
+             (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                                 name "-" version "/"
+                                 name "-" version ".tar.gz"))
              (sha256
               (base32
                "1qx9f0kprf92r1wxl3sacykla0g04qsi0idypzz24b7xy9ix5579"))

@@ -32,7 +32,7 @@
 (define-public conky
   (package
     (name "conky")
-    (version "1.10.0")
+    (version "1.10.3")
     (source
      (origin
        (method url-fetch)
@@ -40,10 +40,15 @@
                            version ".tar.gz"))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "1szq4ckfkvyabv5llf9nkdxipn7429sralsxyr7z0dyc3zwz74pk"))))
+        (base32 "1m9byrmpc2sprzk44v447yaqjzsvw230a0mlw7y1ngz3m3y44qs5"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f ; there are no tests
+       #:configure-flags
+       '("-DRELEASE=true"
+         ;; XXX: it checks ncurses with pkg-config.
+         ;; TODO: add 'ncurses.pc' to the ncurses package.
+         "-DBUILD_NCURSES=false")
        #:phases
        (alist-cons-after
         'unpack 'add-freetype-to-search-path
@@ -67,6 +72,7 @@
        ("libx11" ,libx11)
        ("libxdamage" ,libxdamage)
        ("libxft" ,libxft)
+       ("libxinerama" ,libxinerama)
        ("lua" ,lua)))
     (native-inputs
      `(("pkg-config" ,pkg-config)))

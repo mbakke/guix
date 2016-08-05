@@ -37,7 +37,10 @@
         (base32 "0l6swjy8fjrqw89ghc1vvakg21jmpfkpsw92yssrzkg3rg8vkrry"))))
     (build-system gnu-build-system)
     (home-page "http://www.gnu.org/software/marst")
-    (synopsis "Algol to C translator")
-    (description "MARST is an Algol-to-C translator.  It automatically translates programs
-written on the algorithmic language Algol 60 to the C programming language.")
+    (synopsis "Algol-to-C translator")
+    (description
+     "GNU MARST is an Algol-to-C translator.  The package consists of the
+translator itself, a library that contains the necessary Algol 60 procedures,
+and a converter that converts existing Algol 60 programs from other
+representations to the MARST representation.")
     (license gpl3+)))

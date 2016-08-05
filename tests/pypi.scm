@@ -73,6 +73,22 @@ baz > 13.37")
 
 (test-begin "pypi")
 
+(test-equal "guix-package->pypi-name, old URL style"
+  "psutil"
+  (guix-package->pypi-name
+   (dummy-package "foo"
+                  (source (dummy-origin
+                           (uri
+                            "https://pypi.io/packages/source/p/psutil/psutil-4.3.0.tar.gz"))))))
+
+(test-equal "guix-package->pypi-name, new URL style"
+  "certbot"
+  (guix-package->pypi-name
+   (dummy-package "foo"
+                  (source (dummy-origin
+                           (uri
+                            "https://pypi.python.org/packages/a2/3b/4756e6a0ceb14e084042a2a65c615d68d25621c6fd446d0fc10d14c4ce7d/certbot-0.8.1.tar.gz"))))))
+
 (test-assert "pypi->guix-package"
   ;; Replace network resources with sample data.
   (mock ((guix import utils) url-fetch

@@ -6,12 +6,16 @@
 # the shebang line in Linux.
 # Use `load-compiled' because `load' (and `-l') doesn't otherwise load our
 # .go file (see <http://bugs.gnu.org/12519>).
+# Unset 'GUILE_LOAD_COMPILED_PATH' to make sure we do not stumble upon
+# incompatible .go files.  See
+# <https://lists.gnu.org/archive/html/guile-devel/2016-03/msg00000.html>.
 
+unset GUILE_LOAD_COMPILED_PATH
 main="(@ (gnu build-support ld-wrapper) ld-wrapper)"
 exec @GUILE@ -c "(load-compiled \"@SELF@.go\") (apply $main (cdr (command-line)))" "$@"
 !#
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;

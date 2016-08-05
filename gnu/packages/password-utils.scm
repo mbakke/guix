@@ -6,6 +6,7 @@
 ;;; Copyright © 2016 Jessica Tallon <tsyesika@tsyesika.se>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -53,8 +54,8 @@
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/pwgen/pwgen-"
-                           version ".tar.gz"))
+       (uri (string-append "mirror://sourceforge/pwgen/pwgen/" version
+                           "/pwgen-" version ".tar.gz"))
        (sha256
         (base32 "0mhmw700kkh238fzivcwnwi94bj9f3h36yfh3k3j2v19b0zmjx7b"))))
     (build-system gnu-build-system)
@@ -266,27 +267,26 @@ any X11 window.")
      '(#:phases
        (modify-phases %standard-phases
          (delete 'configure)
-         (add-after
-          ;; The script requires 'getopt' at run-time, and this allows
-          ;; the user to not install the providing package 'util-linux'
-          ;; in their profile.
-          'unpack 'patch-path
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let ((getopt (string-append (assoc-ref inputs "getopt")
-                                         "/bin/getopt")))
-              (substitute* "src/password-store.sh"
-                (("GETOPT=\"getopt\"")
-                 (string-append "GETOPT=\"" getopt "\"")))
-              #t))))
+         (add-after 'install 'wrap-path
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (path (map (lambda (pkg)
+                                (string-append (assoc-ref inputs pkg) "/bin"))
+                              '("coreutils" "getopt" "git" "gnupg" "pwgen"
+                                "sed" "tree" "which" "xclip"))))
+               (wrap-program (string-append out "/bin/pass")
+                 `("PATH" ":" prefix (,(string-join path ":"))))))))
        #:make-flags (list "CC=gcc" (string-append "PREFIX=" %output))
        #:test-target "test"))
-    (native-inputs `(("getopt" ,util-linux))) ; getopt for the tests
-    (inputs `(("gnupg" ,gnupg)
-              ("pwgen" ,pwgen)
-              ("xclip" ,xclip)
-              ("git" ,git)
-              ("tree" ,tree)
-              ("which" ,which)))
+    (inputs
+     `(("getopt" ,util-linux)
+       ("git" ,git)
+       ("gnupg" ,gnupg)
+       ("pwgen" ,pwgen)
+       ("sed" ,sed)
+       ("tree" ,tree)
+       ("which" ,which)
+       ("xclip" ,xclip)))
     (home-page "http://www.passwordstore.org/")
     (synopsis "Encrypted password manager")
     (description "Password-store is a password manager which uses GnuPG to

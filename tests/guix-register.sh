@@ -1,5 +1,5 @@
 # GNU Guix --- Functional package management for GNU
-# Copyright © 2013, 2014, 2015 Ludovic Courtès <ludo@gnu.org>
+# Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 #
 # This file is part of GNU Guix.
 #
@@ -157,8 +157,20 @@ do
     # that name in a 'valid-path?' query because 'assertStorePath' would kill
     # us because of the wrong prefix.  So we just list dead paths instead.
     guile -c "
-      (use-modules (guix store) (srfi srfi-1))
-      (define s (open-connection \"$GUIX_DAEMON_SOCKET\"))
+      (use-modules (guix store) (srfi srfi-1) (srfi srfi-34))
+
+      (define s
+        (let loop ((i 5))
+          (guard (c ((nix-connection-error? c)
+                     (if (<= i 0)
+                         (raise c)
+                         (begin
+                           (display \"waiting for daemon socket...\")
+                           (newline)
+                           (sleep 1)
+                           (loop (- i 1))))))
+             (open-connection \"$GUIX_DAEMON_SOCKET\"))))
+
       (exit (lset= string=?
                    (pk 1 (list \"$copied\" \"$copied_duplicate1\"
                                \"$copied_duplicate2\"))

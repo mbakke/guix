@@ -2,7 +2,7 @@
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2013, 2015 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -33,7 +33,8 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix build-system gnu))
+  #:use-module (guix build-system gnu)
+  #:use-module (guix build-system trivial))
 
 (define-public lcms
   (package
@@ -41,8 +42,8 @@
    (version "2.6")
    (source (origin
             (method url-fetch)
-            (uri (string-append
-                  "mirror://sourceforge/lcms/lcms2-" version ".tar.gz"))
+            (uri (string-append "mirror://sourceforge/lcms/lcms/" version
+                                "/lcms2-" version ".tar.gz"))
             (sha256 (base32
                      "1c8lgq8gfs3nyplvbx9k8wzfj6r2bqi3f611vb1m8z3476454wji"))))
    (build-system gnu-build-system)
@@ -156,7 +157,8 @@ printing, and psresize, for adjusting page sizes.")
         ("python" ,python-wrapper)
         ("tcl" ,tcl)))
    (arguments
-    `(#:phases
+    `(#:disallowed-references ("doc")
+      #:phases
       (modify-phases %standard-phases
         (add-after 'configure 'patch-config-files
                    (lambda _
@@ -172,12 +174,15 @@ printing, and psresize, for adjusting page sizes.")
                      (substitute* "base/gscdef.c"
                        (("GS_DOCDIR")
                         "\"~/.guix-profile/share/doc/ghostscript\""))))
-        (add-after 'build 'build-so
-                   (lambda _
-                     (zero? (system* "make" "so"))))
-        (add-after 'install 'install-so
-                   (lambda _
-                     (zero? (system* "make" "install-so")))))))
+        (replace 'build
+          (lambda _
+            ;; Build 'libgs.so', but don't build the statically-linked 'gs'
+            ;; binary (saves 18 MiB).
+            (zero? (system* "make" "so" "-j"
+                            (number->string (parallel-job-count))))))
+        (replace 'install
+          (lambda _
+            (zero? (system* "make" "soinstall")))))))
    (synopsis "PostScript and PDF interpreter")
    (description
     "Ghostscript is an interpreter for the PostScript language and the PDF
@@ -193,6 +198,40 @@ output file formats and printers.")
     (inputs `(("libxext" ,libxext)
               ("libxt" ,libxt)
               ,@(package-inputs ghostscript)))))
+
+(define (ghostscript-wrapper name ghostscript)
+  ;; Return a GHOSTSCRIPT wrapper that provides the 'gs' command.
+  ;; See <https://lists.gnu.org/archive/html/guix-devel/2016-07/msg00987.html>.
+  (package
+    (name name)
+    (version (package-version ghostscript))
+    (source #f)
+    (build-system trivial-build-system)
+    (inputs `(("ghostscript" ,ghostscript)))
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder (begin
+                   (use-modules (guix build utils))
+
+                   (let* ((out (assoc-ref %outputs "out"))
+                          (bin (string-append out "/bin"))
+                          (gs  (assoc-ref %build-inputs "ghostscript")))
+                     (mkdir-p bin)
+                     (with-directory-excursion bin
+                       (symlink (string-append gs "/bin/gsc") "gs")
+                       #t)))))
+    (synopsis "Wrapper providing Ghostscript's 'gs' command")
+    (description
+     "This package provides the @command{gs} command, which used to be
+provided by Ghostscript itself and no longer is.")
+    (license (package-license ghostscript))
+    (home-page (package-home-page ghostscript))))
+
+(define-public ghostscript-gs
+  (ghostscript-wrapper "ghostscript-gs" ghostscript))
+
+(define-public ghostscript-gs/x
+  (ghostscript-wrapper "ghostscript-gs-with-x" ghostscript/x))
 
 (define-public ijs
   (package

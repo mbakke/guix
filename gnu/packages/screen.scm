@@ -3,6 +3,7 @@
 ;;; Copyright © 2014 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,11 +50,9 @@
        ("perl" ,perl)))
     (arguments
      `(#:configure-flags
-       ;; By default, man and info pages are put in PREFIX/{man,info},
-       ;; but we want them in PREFIX/share/{man,info}.
-       (let ((out (assoc-ref %outputs "out")))
-         (list (string-append "--mandir=" out "/share/man")
-               (string-append "--infodir=" out "/share/info")))))
+       ;; By default, screen supports 16 colors, but we want 256 when
+       ;; ~/.screenrc contains 'term xterm-256color'.
+       '("--enable-colors256")))
     (home-page "http://www.gnu.org/software/screen/")
     (synopsis "Full-screen window manager providing multiple terminals")
     (description
@@ -71,8 +70,8 @@ view to show two terminals at once.")
     (version "0.9")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/dtach/dtach-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/" name "/" name "/"
+                                  version "/" name "-" version ".tar.gz"))
               (sha256
                (base32
                 "1wwj2hlngi8qn2pisvhyfxxs8gyqjlgrrv5lz91w8ly54dlzvs9j"))))
@@ -144,3 +143,30 @@ as folding room dividers.  The Byobu software includes an enhanced profile,
 configuration utilities, and system status notifications for the GNU Screen
 window manager as well as the Tmux terminal multiplexer.")
     (license gpl3+)))
+
+(define-public reptyr
+  (package
+    (name "reptyr")
+    (version "0.6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/nelhage/reptyr/archive"
+                           "/reptyr-" version ".tar.gz"))
+       (sha256
+        (base32
+         "07pfl0rkgm8m3f3jy8r9l2yvnhf8lgllpsk3mh57mhzdxq8fagf7"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:tests? #f ; no tests
+       #:make-flags (list "CC=gcc"
+                          (string-append "PREFIX=" %output))
+       #:phases (modify-phases %standard-phases (delete 'configure))))
+    (home-page "https://github.com/nelhage/reptyr")
+    (synopsis "Tool for reparenting a running program to a new terminal")
+    (description
+     "reptyr is a utility for taking an existing running program and attaching
+it to a new terminal.  Started a long-running process over @code{ssh}, but have
+to leave and don't want to interrupt it?  Just start a @code{screen}, use
+reptyr to grab it, and then kill the @code{ssh} session and head on home.")
+    (license expat)))

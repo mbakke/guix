@@ -65,10 +65,15 @@ mount_test_code="
                 (match (string-split line #\space)
                   ;; Empty line.
                   ((\"\") #f)
-                  ;; Ignore these types of file systems.
-                  ((_ _ (or \"tmpfs\" \"proc\" \"sysfs\" \"devtmpfs\"
-                            \"devpts\" \"cgroup\" \"mqueue\") _ _ _)
+                  ;; Ignore the root file system.
+                  ((_ \"/\" _ _ _ _)
                    #f)
+                  ;; Ignore these types of file systems, except if they
+                  ;; correspond to a parent file system.
+                  ((_ mount (or \"tmpfs\" \"proc\" \"sysfs\" \"devtmpfs\"
+                                \"devpts\" \"cgroup\" \"mqueue\") _ _ _)
+                   (and (string-prefix? mount (getcwd))
+		        mount))
                   ((_ mount _ _ _ _)
                    mount)))
               (string-split (call-with-input-file \"/proc/mounts\" read-string)

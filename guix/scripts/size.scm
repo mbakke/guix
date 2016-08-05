@@ -29,6 +29,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-11)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-37)
   #:use-module (ice-9 match)
@@ -119,10 +120,12 @@ substitutes."
 information available in the local store or using information about
 substitutes."
   (lambda (store)
-    (guard (c ((nix-protocol-error? c)
-               (values (substitutable-requisites store items)
-                       store)))
-      (values (requisites store items) store))))
+    (let-values (((local missing)
+                  (partition (cut valid-path? store <>) items)))
+      (values (delete-duplicates
+               (append (requisites store local)
+                       (substitutable-requisites store missing)))
+              store))))
 
 (define (store-profile items)
   "Return as a monadic value a list of <profile> objects representing the

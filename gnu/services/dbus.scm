@@ -27,7 +27,9 @@
   #:use-module (guix records)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
-  #:export (dbus-root-service-type
+  #:export (dbus-configuration
+            dbus-configuration?
+            dbus-root-service-type
             dbus-service))
 
 ;;;
@@ -46,26 +48,27 @@
   "Return the system service directory, containing @code{.service} files for
 all the services that may be activated by the daemon."
   (computed-file "dbus-system-services"
-                 #~(begin
-                     (use-modules (guix build utils)
-                                  (srfi srfi-1))
+                 (with-imported-modules '((guix build utils))
+                   #~(begin
+                       (use-modules (guix build utils)
+                                    (srfi srfi-1))
 
-                     (define files
-                       (append-map (lambda (service)
-                                     (find-files (string-append
-                                                  service
-                                                  "/share/dbus-1/system-services")
-                                                 "\\.service$"))
-                                   (list #$@services)))
+                       (define files
+                         (append-map (lambda (service)
+                                       (find-files
+                                        (string-append
+                                         service
+                                         "/share/dbus-1/system-services")
+                                        "\\.service$"))
+                                     (list #$@services)))
 
-                     (mkdir #$output)
-                     (for-each (lambda (file)
-                                 (symlink file
-                                          (string-append #$output "/"
-                                                         (basename file))))
-                               files)
-                     #t)
-                 #:modules '((guix build utils))))
+                       (mkdir #$output)
+                       (for-each (lambda (file)
+                                   (symlink file
+                                            (string-append #$output "/"
+                                                           (basename file))))
+                                 files)
+                       #t))))
 
 (define (dbus-configuration-directory services)
   "Return a directory contains the @code{system-local.conf} file for DBUS that
@@ -168,7 +171,8 @@ includes the @code{etc/dbus-1/system.d} directories of each package listed in
             (requirement '(user-processes))
             (start #~(make-forkexec-constructor
                       (list (string-append #$dbus "/bin/dbus-daemon")
-                            "--nofork" "--system")))
+                            "--nofork" "--system")
+                      #:pid-file "/var/run/dbus/pid"))
             (stop #~(make-kill-destructor)))))))
 
 (define dbus-root-service-type

@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2013 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -39,7 +39,7 @@
             (sha256 (base32
                      "0q8s43z14vxm41pfa8s5h9kyyzk1fkwjhkiwbf2x70alm6rv6qi1"))))
    (build-system gnu-build-system)
-   (propagated-inputs `(("ghostscript" ,ghostscript/x)))
+   (propagated-inputs `(("ghostscript" ,ghostscript-gs/x)))
    (inputs `(("libx11" ,libx11)
              ("libxaw3d" ,libxaw3d)
              ("libxinerama" ,libxinerama)

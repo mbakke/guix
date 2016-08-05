@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015, 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,7 +32,6 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
@@ -61,7 +61,7 @@
 (define-public calibre
   (package
     (name "calibre")
-    (version "2.58.0")
+    (version "2.63.0")
     (source
       (origin
         (method url-fetch)
@@ -70,7 +70,7 @@
                             version ".tar.xz"))
         (sha256
          (base32
-          "0npqvfjqj1vwa7nmnsyd4d30z40brydw275ldf1jankrp6dr9dyd"))
+          "1rwgv6rsmy3ljfwcpv42w203ghngw86s5kzb0yjm1zgsxmas2wh6"))
         ;; Remove non-free or doubtful code, see
         ;; https://lists.gnu.org/archive/html/guix-devel/2015-02/msg00478.html
         (modules '((guix build utils)))
@@ -83,7 +83,7 @@
     (build-system python-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
-       ("qtbase" ,qtbase) ; for qmake
+       ("qt" ,qt) ; for qmake
        ;; xdg-utils is supposed to be used for desktop integration, but it
        ;; also creates lots of messages
        ;; mkdir: cannot create directory '/homeless-shelter': Permission denied
@@ -102,7 +102,6 @@
        ("fontconfig" ,fontconfig)
        ("glib" ,glib)
        ("icu4c" ,icu4c)
-       ("imagemagick" ,imagemagick)
        ("libmtp" ,libmtp)
        ("libpng" ,libpng)
        ("libusb" ,libusb)
@@ -119,25 +118,24 @@
        ("python2-mechanize" ,python2-mechanize)
        ("python2-netifaces" ,python2-netifaces)
        ("python2-pillow" ,python2-pillow)
-       ("python2-pyqt" ,python2-pyqt)
+       ("python2-pyqt" ,python2-pyqt-5.5)
        ("python2-sip" ,python2-sip)
-       ("qtbase" ,qtbase)
+       ("qt" ,qt)
        ("sqlite" ,sqlite)))
     (arguments
      `(#:python ,python-2
        #:test-target "check"
        #:tests? #f ; FIXME: enable once flake8 is packaged
        #:phases
-         (alist-cons-before
-          'build 'configure
+       (modify-phases %standard-phases
+         (add-before 'build 'configure
           (lambda* (#:key inputs #:allow-other-keys)
             (let ((podofo (assoc-ref inputs "podofo"))
                   (pyqt (assoc-ref inputs "python2-pyqt")))
               (substitute* "setup/build_environment.py"
                 (("sys.prefix") (string-append "'" pyqt "'")))
               (setenv "PODOFO_INC_DIR" (string-append podofo "/include/podofo"))
-              (setenv "PODOFO_LIB_DIR" (string-append podofo "/lib"))))
-          %standard-phases)))
+              (setenv "PODOFO_LIB_DIR" (string-append podofo "/lib"))))))))
     (home-page "http://calibre-ebook.com/")
     (synopsis "E-book library management software")
     (description "Calibre is an ebook library manager.  It can view, convert

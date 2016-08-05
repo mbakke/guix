@@ -4,8 +4,8 @@
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2016 Raimon Grau <raimonster@gmail.com>
-;;; Copyright © 2016 Tobias Geerinckx-Rice <tobias.geerinckx.rice@gmail.com>
-;;; Copyright   2016 John Darrington <jmd@gnu.org>
+;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -31,11 +31,13 @@
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages adns)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages audio)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages linux)
@@ -60,7 +62,7 @@
                 "1xsiivjjyhqcs6dyjcshrnxlgypvyfzacjz7gcjgl88xiw9lylri"))))
     (build-system gnu-build-system)
     (home-page "http://www.gnu.org/software/macchanger")
-    (synopsis "Display or change the MAC address of networking devices")
+    (synopsis "Viewing and manipulating MAC addresses of network interfaces")
     (description "GNU MAC Changer is a utility for viewing and changing MAC
 addresses of networking devices.  New addresses may be set explicitly or
 randomly.  They can include MAC addresses of the same or other hardware vendors
@@ -232,7 +234,8 @@ Ethernet devices.")
     (version "1.1.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/ifstatus/ifstatus-v"
+              (uri (string-append "mirror://sourceforge/ifstatus/ifstatus/"
+                                  "ifstatus%20v" version "/ifstatus-v"
                                   version ".tar.gz"))
               (sha256
                (base32
@@ -271,8 +274,8 @@ intended as a substitute for the PPPStatus and EthStatus projects.")
     (version "0.7.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/nload/nload-"
-                                  version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/nload/nload/" version
+                                  "/nload-" version ".tar.gz"))
               (sha256
                (base32
                 "1rb9skch2kgqzigf19x8bzk211jdfjfdkrcvaqyj89jy2pkm3h61"))))
@@ -328,7 +331,7 @@ and up to 1 Mbit/s downstream.")
 (define-public wireshark
   (package
     (name "wireshark")
-    (version "2.0.4")
+    (version "2.0.5")
     (synopsis "Network traffic analyzer")
     (source
      (origin
@@ -337,7 +340,7 @@ and up to 1 Mbit/s downstream.")
                            version ".tar.bz2"))
        (sha256
         (base32
-         "19g11m8m8qd7dkcvcb27lyppklg608d9ap7wr3mr88clm4nwiacy"))))
+         "02xi3fz8blcz9cf75rs11g7bijk06wm45vpgnksp72c2609j9q0c"))))
     (build-system glib-or-gtk-build-system)
     (inputs `(("bison" ,bison)
               ("c-ares" ,c-ares)
@@ -375,3 +378,37 @@ sniffer}, that lets you capture and interactively browse the contents of
 network frames.")
     (license license:gpl2+)
     (home-page "https://www.wireshark.org/")))
+
+(define-public httping
+  (package
+    (name "httping")
+    (version "2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.vanheusden.com/httping/httping-"
+                           version ".tgz"))
+       (sha256
+        (base32
+         "1110r3gpsj9xmybdw7w4zkhj3zmn5mnv2nq0ijbvrywbn019zdfs"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("gettext" ,gnu-gettext)))
+    (inputs
+     `(("fftw" ,fftw)
+       ("ncurses" ,ncurses)
+       ("openssl" ,openssl)))
+    (arguments
+     `(#:make-flags (list "CC=gcc"
+                          (string-append "DESTDIR=" (assoc-ref %outputs "out"))
+                          "PREFIX=")
+       #:tests? #f)) ; no tests
+    (home-page "https://www.vanheusden.com/httping/")
+    (synopsis "Web server latency and throughput monitor")
+    (description
+     "httping measures how long it takes to connect to a web server, send an
+HTTP(S) request, and receive the reply headers.  It is somewhat similar to
+@command{ping}, but can be used even in cases where ICMP traffic is blocked
+by firewalls or when you want to monitor the response time of the actual web
+application stack itself.")
+    (license license:gpl2)))        ; with permission to link with OpenSSL

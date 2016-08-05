@@ -62,7 +62,7 @@
 (define-public pspp
   (package
     (name "pspp")
-    (version "0.10.1")
+    (version "0.10.2")
     (source
      (origin
       (method url-fetch)
@@ -70,7 +70,7 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "0xw61kq0hxh7f6a4yjhnqbhc0fj9r3wb3qnpq05qhdp79n30ik24"))))
+        "1afsq0a3iij64qacczvwhk81qg0q5rfqm055y5h9ls28d6paqz7p"))))
     (build-system gnu-build-system)
     (inputs
      `(("cairo" ,cairo)
@@ -1331,7 +1331,8 @@ building design matrices.")
                            "s/statsmodels/statsmodels-" version ".tar.gz"))
        (sha256
         (base32
-         "0xn67sqr0cc1lmlhzm71352hrb4hw7g318p5ff5q97pc98vl8kmy"))))
+         "0xn67sqr0cc1lmlhzm71352hrb4hw7g318p5ff5q97pc98vl8kmy"))
+       (patches (search-patches "python-statsmodels-fix-tests.patch"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -1375,7 +1376,8 @@ inference for statistical models.")
   (let ((stats (package-with-python2 python-statsmodels)))
     (package (inherit stats)
       (propagated-inputs
-       `(("python2-numpy" ,python2-numpy)
+       `(("python2-pytz" ,python2-pytz)
+         ("python2-numpy" ,python2-numpy)
          ("python2-scipy" ,python2-scipy)
          ("python2-pandas" ,python2-pandas)
          ("python2-patsy" ,python2-patsy)

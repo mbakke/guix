@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.68)
-AC_INIT([GNU Guix], [0.10.0], [bug-guix@gnu.org], [guix],
+AC_INIT([GNU Guix], [0.11.0], [bug-guix@gnu.org], [guix],
   [http://www.gnu.org/software/guix/])
 AC_CONFIG_AUX_DIR([build-aux])
 
@@ -85,11 +85,6 @@ GUIX_ASSERT_GUILE_FEATURES([regex posix socket net-db threads])
 dnl Check whether (srfi srfi-37) works, and provide our own if it doesn't.
 GUIX_CHECK_SRFI_37
 AM_CONDITIONAL([INSTALL_SRFI_37], [test "x$ac_cv_guix_srfi_37_broken" = xyes])
-
-dnl Check whether (guix build syscalls) can be built.
-GUIX_CHECK_LIBC_MOUNT
-AM_CONDITIONAL([BUILD_SYSCALLS_MODULE],
-  [test "x$guix_cv_libc_has_mount" = "xyes"])
 
 dnl Decompressors, for use by the substituter and other modules.
 AC_PATH_PROG([GZIP], [gzip])
@@ -193,6 +188,17 @@ AC_SUBST([LIBGCRYPT_PREFIX])
 AC_SUBST([LIBGCRYPT_LIBDIR])
 
 GUIX_ASSERT_LIBGCRYPT_USABLE
+
+dnl Library name of zlib suitable for 'dynamic-link'.
+GUIX_LIBZ_LIBDIR([libz_libdir])
+if test "x$libz_libdir" = "x"; then
+  LIBZ="libz"
+else
+  LIBZ="$libz_libdir/libz"
+fi
+AC_MSG_CHECKING([for zlib's shared library name])
+AC_MSG_RESULT([$LIBZ])
+AC_SUBST([LIBZ])
 
 AC_CACHE_SAVE
 

@@ -47,7 +47,6 @@
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages tls)
-  #:use-module (gnu packages valgrind)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xorg))
 
@@ -93,7 +92,6 @@
        ("mesa" ,mesa)
        ("printproto" ,printproto)
        ("scrnsaverproto" ,scrnsaverproto)
-       ("valgrind" ,valgrind)
        ("xextproto" ,xextproto)
        ("xinput" ,xinput)
        ("xpr" ,xpr)
@@ -118,12 +116,11 @@
     (arguments
      `(#:configure-flags '("--disable-silent-rules")
        #:phases
-       (alist-cons-before
-        'configure 'patch-config-files
-        (lambda _
-          (substitute* "po/Makefile.in.in"
-            (("/bin/sh") (which "bash"))))
-        %standard-phases)))
+       (modify-phases %standard-phases
+         (add-before 'configure 'patch-config-files
+           (lambda _
+             (substitute* "po/Makefile.in.in"
+                          (("/bin/sh") (which "bash"))))))))
     (home-page "http://www.enlightenment.org")
     (synopsis "Enlightenment Foundation Libraries")
     (description
@@ -273,7 +270,7 @@ Libraries with some extra bells and whistles.")
 (define-public enlightenment
   (package
     (name "enlightenment")
-    (version "0.21.0")
+    (version "0.21.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -281,7 +278,7 @@ Libraries with some extra bells and whistles.")
                               name "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0p85dmk9ysbf9y7vlc92z7495mh9l860xj3s8pspy9mscv3dnwg9"))))
+                "119sxrgrz163c01yx0q9n2jpmmbv0a58akmz0c2z4xy37f1m02rx"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-mount-eeze")))

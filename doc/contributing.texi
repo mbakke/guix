@@ -15,6 +15,10 @@ our project uses a ``Contributor Covenant'', which was adapted from
 @url{http://contributor-covenant.org/}.  You can find a local version in
 the @file{CODE-OF-CONDUCT} file in the source tree.
 
+Contributors are not required to use their legal name in patches and
+on-line communication; they can use any name or pseudonym of their
+choice.
+
 @menu
 * Building from Git::           The latest and greatest.
 * Running Guix Before It Is Installed::  Hacker tricks.
@@ -285,6 +289,20 @@ Make sure the package builds on your platform, using @code{guix build
 @var{package}}.
 
 @item
+@cindex bundling
+Make sure the package does not use bundled copies of software already
+available as separate packages.
+
+Sometimes, packages include copies of the source code of their
+dependencies as a convenience for users.  However, as a distribution, we
+want to make sure that such packages end up using the copy we already
+have in the distribution, if there is one.  This improves resource usage
+(the dependency is built and stored only once), and allows the
+distribution to make transverse changes such as applying security
+updates for a given software package in a single place and have them
+affect the whole system---something that bundled copies prevent.
+
+@item
 Take a look at the profile reported by @command{guix size}
 (@pxref{Invoking guix size}).  This will allow you to notice references
 to other packages unwillingly retained.  It may also help determine
@@ -295,6 +313,13 @@ and which optional dependencies should be used.
 For important changes, check that dependent package (if applicable) are
 not affected by the change; @code{guix refresh --list-dependent
 @var{package}} will help you do that (@pxref{Invoking guix refresh}).
+
+Packages with roughly 100 dependents or more usually have to be
+committed to a separate branch.  That branch can then be built
+separately by our build farm, and later merged into @code{master} once
+everything has been successfully built.  This allows us to fix issues
+before they hit users, and to reduce the window during which pre-built
+binaries are not available.
 
 @item
 @cindex determinism, of build processes
@@ -323,8 +348,24 @@ related to the hardware---e.g., use of different instruction set
 extensions---or to the operating system kernel---e.g., reliance on
 @code{uname} or @file{/proc} files.
 
+@item
+When writing documentation, please use gender-neutral wording when
+referring to people, such as
+@uref{https://en.wikipedia.org/wiki/Singular_they, singular
+``they''@comma{} ``their''@comma{} ``them''}, and so forth.
+
+@item
+Verify that your patch contains only one set of related changes.
+Bundling unrelated changes together makes reviewing harder and slower.
+
+Examples of unrelated changes include the addition of several packages,
+or a package update along with fixes to that package.
+
 @end enumerate
 
 When posting a patch to the mailing list, use @samp{[PATCH] @dots{}} as
 a subject.  You may use your email client or the @command{git
-send-email} command.
+send-email} command.  We prefer to get patches in plain text messages,
+either inline or as MIME attachments.  You are advised to pay attention if
+your email client changes anything like line breaks or indentation which
+could could potentially break the patches.

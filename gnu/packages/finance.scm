@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2015, 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
@@ -61,7 +61,7 @@
        ("python" ,python-2) ; for the tests
        ("util-linux" ,util-linux))) ; provides the hexdump command for tests
     (inputs
-     `(("bdb" ,bdb)
+     `(("bdb" ,bdb-5.3) ; with 6.2.23, there is an error: ambiguous overload
        ("boost" ,boost)
        ("libevent" ,libevent)
        ("miniupnpc" ,miniupnpc)

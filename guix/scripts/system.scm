@@ -236,11 +236,15 @@ BODY..., and restore them."
       (with-monad %store-monad
         (return #f)))))
 
-(define-syntax-rule (with-shepherd-error-handling body ...)
-  (warn-on-system-error
-   (guard (c ((shepherd-error? c)
-              (report-shepherd-error c)))
-     body ...)))
+(define-syntax-rule (with-shepherd-error-handling mbody ...)
+  "Catch and report Shepherd errors that arise when binding MBODY, a monadic
+expression in %STORE-MONAD."
+  (lambda (store)
+    (warn-on-system-error
+     (guard (c ((shepherd-error? c)
+                (values (report-shepherd-error c) store)))
+       (values (run-with-store store (begin mbody ...))
+               store)))))
 
 (define (report-shepherd-error error)
   "Report ERROR, a '&shepherd-error' error condition object."
@@ -362,7 +366,7 @@ it atomically, and then run OS's activation script."
        ;; The activation script may modify '%load-path' & co., so protect
        ;; against that.  This is necessary to ensure that
        ;; 'upgrade-shepherd-services' gets to see the right modules when it
-       ;; computes derivations with (gexp->derivation #:modules …).
+       ;; computes derivations with 'gexp->derivation'.
        (save-load-path-excursion
         (primitive-load (derivation->output-path script))))
 

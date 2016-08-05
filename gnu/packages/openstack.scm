@@ -56,7 +56,7 @@
         ("python-testscenarios" ,python-testscenarios)
         ("python-testtools" ,python-testtools)))
     (home-page "https://wiki.openstack.org/wiki/Security/Projects/Bandit")
-    (synopsis "Security oriented static analyser for python code.")
+    (synopsis "Security oriented static analyser for python code")
     (description
       "Bandit is a tool designed to find common security issues in Python code.
 To do this Bandit processes each file, builds an AST from it, and runs

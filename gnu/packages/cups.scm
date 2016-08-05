@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2016 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2015 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015, 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -135,20 +135,17 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
        ;; cups-filters package.
        #:tests? #f
        #:phases
-       (alist-cons-before
-        'configure
-        'patch-makedefs
-        (lambda _
-          (substitute* "Makedefs.in"
-            (("INITDIR.*=.*@INITDIR@") "INITDIR = @prefix@/@INITDIR@")
-            (("/bin/sh") (which "sh"))))
-        (alist-cons-before
-         'build
-         'patch-tests
-         (lambda _
-           (substitute* "test/ippserver.c"
-             (("#  else /\\* HAVE_AVAHI \\*/") "#elif defined(HAVE_AVAHI)")))
-         %standard-phases))))
+       (modify-phases %standard-phases
+         (add-before 'configure 'patch-makedefs
+           (lambda _
+             (substitute* "Makedefs.in"
+               (("INITDIR.*=.*@INITDIR@") "INITDIR = @prefix@/@INITDIR@")
+               (("/bin/sh") (which "sh")))))
+         (add-before 'build 'patch-tests
+           (lambda _
+             (substitute* "test/ippserver.c"
+               (("#  else /\\* HAVE_AVAHI \\*/")
+                "#elif defined(HAVE_AVAHI)")))))))
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (inputs
@@ -306,14 +303,14 @@ device-specific programs to convert and print many types of files.")
 (define-public hplip
   (package
     (name "hplip")
-    (version "3.16.3")
+    (version "3.16.7")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/hplip/"
-                                  "hplip-" version ".tar.gz"))
+              (uri (string-append "mirror://sourceforge/hplip/hplip/" version
+                                  "/hplip-" version ".tar.gz"))
               (sha256
                (base32
-                "1501qdnkjp1ybgagy5188fmf6cgmj5555ygjl3543nlbwcp31lj2"))))
+                "1hpzyf9ifs0vilsbwxcgpv8g9557p1x8w5qwgz5l0avgcd10dzlx"))))
     (build-system gnu-build-system)
     (home-page "http://hplipopensource.com/")
     (synopsis "HP Printer Drivers")

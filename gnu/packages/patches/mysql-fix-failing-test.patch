@@ -1,0 +1,57 @@
+Fix spurious test failure:
+https://bugs.mysql.com/bug.php?id=81868
+
+Copied from Fedora:
+https://pkgs.fedoraproject.org/cgit/rpms/community-mysql.git/diff/community-mysql-5.7.13-pfs-oom-unittest.patch?id=a51381c6f98b9cd6855bc89ba93398a949ef7098
+
+commit 6c23035b52284c2575f297311dfd0278bcbb0dd1
+Author: Christopher Powers <chris.powers@oracle.com>
+Date:   Mon May 2 19:43:31 2016 +0100
+
+    Bug#23186653 PERFORMANCE SCHEMA UNIT TESTS PFS_INSTR-OOM & PFS_INSTR_CLASS FAIL REGULARLY
+    
+    Two test cases pass on Windows but crash on Linux due to different init paths.
+    Now pass on both.
+
+diff --git a/storage/perfschema/unittest/pfs_instr-oom-t.cc b/storage/perfschema/unittest/pfs_instr-oom-t.cc
+index db74c9c..b6bc818 100644
+--- a/storage/perfschema/unittest/pfs_instr-oom-t.cc
++++ b/storage/perfschema/unittest/pfs_instr-oom-t.cc
+@@ -232,12 +232,14 @@ void test_oom()
+   ok(cond_2 == NULL, "oom (create cond)");
+ 
+   /* Create file. */
+-  stub_alloc_always_fails = false;
+   PFS_thread fake_thread;
++  rc = init_instruments(&param);
+   fake_thread.m_filename_hash_pins= NULL;
+   init_file_hash(&param);
+-  rc = init_instruments(&param);
+-  ok(rc == 0, "instances init");
++
++  stub_alloc_always_fails = true;
++  file_2 = find_or_create_file(&fake_thread, &dummy_file_class, "dummy", 5, true);
++  ok(file_2 == NULL, "oom (create file)");
+ 
+   stub_alloc_always_fails= false;
+   file_1= find_or_create_file(&fake_thread, &dummy_file_class, "dummy", 5, true);
+@@ -245,10 +247,6 @@ void test_oom()
+   release_file(file_1);
+   cleanup_instruments();
+ 
+-  stub_alloc_always_fails= true;
+-  file_2= find_or_create_file(&fake_thread, &dummy_file_class, "dummy", 5, true);
+-  ok(file_2 == NULL, "oom (create file)");
+-
+   /* Create socket. */
+   stub_alloc_always_fails = false;
+   rc = init_instruments(&param);
+@@ -422,7 +420,7 @@ void do_all_tests()
+ 
+ int main(int, char **)
+ {
+-  plan(28);
++  plan(32);
+   MY_INIT("pfs_instr-oom-t");
+   do_all_tests();
+   return 0;

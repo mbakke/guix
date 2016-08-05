@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Mckinley Olsen <mck.olsen@gmail.com>
+;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,6 +22,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build utils)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages)
@@ -30,6 +32,7 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages gtk)
@@ -121,3 +124,38 @@ insert mode and command mode where keybindings have different functions.")
 
     ;; Files under util/ are under the Expat license; the rest is LGPLv2+.
     (license license:lgpl2.0+)))
+
+(define-public asciinema
+  (package
+    (name "asciinema")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://pypi.python.org/packages/06/96/93947d9be78aebb7985014fdf"
+             "4d84896dd0f62514d922ee03f5bb55a21fb/asciinema-" version
+             ".tar.gz"))
+       (sha256
+        (base32
+         "1crdm9zfdbjflvz1gsqvy5zsbgwdfkj34z69kg6h5by70rrs1hdc"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'patch-exec-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((ncurses (assoc-ref inputs "ncurses")))
+               (substitute* "asciinema/recorder.py"
+                 (("'tput'")
+                  (string-append "'" ncurses "/bin/tput'"))))
+             #t)))))
+    (inputs `(("ncurses" ,ncurses)
+              ("python-setuptools" ,python-setuptools)))
+    (home-page "https://asciinema.org")
+    (synopsis "Terminal session recorder")
+    (description
+     "Use asciinema to record and share your terminal sessions, the right way.
+Forget screen recording apps and blurry video.  Enjoy a lightweight, purely
+text-based approach to terminal recording.")
+    (license license:gpl3)))

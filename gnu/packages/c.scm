@@ -52,7 +52,7 @@
                                               (assoc-ref %build-inputs "libc")
                                               "/include:"
                                               (assoc-ref %build-inputs
-                                                         "linux-headers")
+                                                         "kernel-headers")
                                               "/include:{B}/include")
                                (string-append "--libpaths="
                                               (assoc-ref %build-inputs "libc")

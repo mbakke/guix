@@ -41,6 +41,25 @@
 
     (users %base-user-accounts)))
 
+(define %luks-device
+  (mapped-device
+   (source "/dev/foo") (target "my-luks-device")
+   (type luks-device-mapping)))
+
+(define %os-with-mapped-device
+  (operating-system
+    (host-name "komputilo")
+    (timezone "Europe/Berlin")
+    (locale "en_US.utf8")
+    (bootloader (grub-configuration (device "/dev/sdX")))
+    (mapped-devices (list %luks-device))
+    (file-systems (cons (file-system
+                          (inherit %root-fs)
+                          (dependencies (list %luks-device)))
+                        %base-file-systems))
+    (users %base-user-accounts)))
+
+
 (test-begin "system")
 
 (test-assert "operating-system-store-file-system"
@@ -70,5 +89,29 @@
                 (file-systems (cons* gnu %root-fs
                                      %base-file-systems)))))
     (eq? gnu (operating-system-store-file-system os))))
+
+(test-equal "operating-system-user-mapped-devices"
+  '()
+  (operating-system-user-mapped-devices %os-with-mapped-device))
+
+(test-equal "operating-system-boot-mapped-devices"
+  (list %luks-device)
+  (operating-system-boot-mapped-devices %os-with-mapped-device))
+
+(test-equal "operating-system-boot-mapped-devices, implicit dependency"
+  (list %luks-device)
+
+  ;; Here we expect the implicit dependency between "/" and
+  ;; "/dev/mapper/my-luks-device" to be found, in spite of the lack of a
+  ;; 'dependencies' field in the root file system.
+  (operating-system-boot-mapped-devices
+   (operating-system
+     (inherit %os-with-mapped-device)
+     (file-systems (cons (file-system
+                           (device "/dev/mapper/my-luks-device")
+                           (title 'device)
+                           (mount-point "/")
+                           (type "ext4"))
+                         %base-file-systems)))))
 
 (test-end)

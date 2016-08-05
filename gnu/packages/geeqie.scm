@@ -37,8 +37,10 @@
     (version "0.25")
     (source (origin
              (method url-fetch)
-             (uri (string-append "http://www.exiv2.org/exiv2-"
-                                 version ".tar.gz"))
+             (uri (list (string-append "http://www.exiv2.org/exiv2-"
+                                       version ".tar.gz")
+                        (string-append "https://fossies.org/linux/misc/exiv2-"
+                                       version ".tar.gz")))
              (sha256
               (base32
                "197g6vgcpyf9p2cwn5p5hb1r714xsk1v4p96f5pv1z8mi9vzq2y8"))))
