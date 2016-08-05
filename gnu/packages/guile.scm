@@ -127,14 +127,14 @@ without requiring the source code to be rewritten.")
 (define-public guile-2.0
   (package
    (name "guile")
-   (version "2.0.11")
+   (version "2.0.12")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/guile/guile-" version
                                 ".tar.xz"))
             (sha256
              (base32
-              "1qh3j7308qvsjgwf7h94yqgckpbgz2k3yqdkzsyhqcafvfka9l5f"))
+              "1sdpjq0jf1h65w29q0zprj4x6kdp5jskkvbnlwphy9lvdxrqg0fy"))
             (patches (search-patches "guile-arm-fixes.patch"))))
    (build-system gnu-build-system)
    (native-inputs `(("pkgconfig" ,pkg-config)))
@@ -195,7 +195,17 @@ without requiring the source code to be rewritten.")
 (define-public guile-2.0/fixed
   ;; A package of Guile 2.0 that's rarely changed.  It is the one used
   ;; in the `base' module, and thus changing it entails a full rebuild.
-  guile-2.0)
+  (package
+    (inherit guile-2.0)
+    (version "2.0.11")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/guile/guile-" version
+                                  ".tar.xz"))
+              (sha256
+               (base32
+                "1qh3j7308qvsjgwf7h94yqgckpbgz2k3yqdkzsyhqcafvfka9l5f"))
+              (patches (search-patches "guile-arm-fixes.patch"))))))
 
 (define-public guile-next
   (package (inherit guile-2.0)
