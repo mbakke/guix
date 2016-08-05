@@ -137,8 +137,7 @@ without requiring the source code to be rewritten.")
                                 ".tar.xz"))
             (sha256
              (base32
-              "1sdpjq0jf1h65w29q0zprj4x6kdp5jskkvbnlwphy9lvdxrqg0fy"))
-            (patches (search-patches "guile-arm-fixes.patch"))))
+              "1sdpjq0jf1h65w29q0zprj4x6kdp5jskkvbnlwphy9lvdxrqg0fy"))))
    (build-system gnu-build-system)
    (native-inputs `(("pkgconfig" ,pkg-config)))
    (inputs `(("libffi" ,libffi)
