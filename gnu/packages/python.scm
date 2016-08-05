@@ -780,8 +780,7 @@ have been used.")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "https://pypi.python.org/packages/source/s/setuptools/setuptools-"
-                          version ".tar.gz"))
+      (uri (pypi-uri "setuptools" version))
       (sha256
        (base32
         "018p4p46clijh8f9r0kxagpr8iy4hwd8f3vf8wn53qsp10vavjll"))))
