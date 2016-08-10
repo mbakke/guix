@@ -1922,10 +1922,15 @@ Python tests.")
     (description
       "Python Build Reasonableness (PBR) is a library that injects some useful
 and sensible default behaviors into your setuptools run.")
-    (license asl2.0)))
+    (license asl2.0)
+    (properties `((python2-variant . ,(delay python2-pbr-0.11))))))
 
 (define-public python2-pbr-0.11
-  (package-with-python2 python-pbr-0.11))
+  (let ((base (package-with-python2
+               (strip-python2-variant python-pbr-0.11))))
+    (package (inherit base)
+      (inputs `(("python2-testrepository" ,python2-testrepository)
+                ,@(package-inputs base))))))
 
 (define-public python-pbr
   (package
