@@ -4,6 +4,7 @@
 ;;; Copyright © 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015, 2016 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym+a@scratchpost.org>
+;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -59,6 +60,7 @@
   #:export (guix-lint
             check-description-style
             check-inputs-should-be-native
+            check-inputs-should-not-be-an-input-at-all
             check-patch-file-names
             check-synopsis-style
             check-derivation
@@ -228,34 +230,55 @@ by two spaces; possible infraction~p at ~{~a~^, ~}")
                       (format #f (_ "invalid description: ~s") description)
                       'description))))
 
+(define (warn-if-package-has-input linted inputs-to-check input-names message)
+  ;; Emit a warning MESSAGE if some of the inputs named in INPUT-NAMES are
+  ;; contained in INPUTS-TO-CHECK, which are assumed to be inputs of package
+  ;; LINTED.
+  (match inputs-to-check
+    (((labels packages . outputs) ...)
+     (for-each (lambda (package output)
+                 (when (package? package)
+                   (let ((input (string-append
+                                 (package-name package)
+                                 (if (> (length output) 0)
+                                     (string-append ":" (car output))
+                                     ""))))
+                     (when (member input input-names)
+                       (emit-warning linted
+                                     (format #f (_ message) input)
+                                     'inputs-to-check)))))
+               packages outputs))))
+
 (define (check-inputs-should-be-native package)
   ;; Emit a warning if some inputs of PACKAGE are likely to belong to its
   ;; native inputs.
-  (let ((linted package)
+  (let ((message "'~a' should probably be a native input")
         (inputs (package-inputs package))
-        (native-inputs
+        (input-names
           '("pkg-config"
             "extra-cmake-modules"
             "glib:bin"
             "intltool"
             "itstool"
             "qttools")))
-    (match inputs
-      (((labels packages . outputs) ...)
-       (for-each (lambda (package output)
-                   (when (package? package)
-                     (let ((input (string-append
-                                   (package-name package)
-                                   (if (> (length output) 0)
-                                       (string-append ":" (car output))
-                                       ""))))
-                       (when (member input native-inputs)
-                         (emit-warning linted
-                                       (format #f (_ "'~a' should probably \
-be a native input")
-                                               input)
-                                       'inputs)))))
-                 packages outputs)))))
+    (warn-if-package-has-input package inputs input-names message)))
+
+(define (check-inputs-should-not-be-an-input-at-all package)
+  ;; Emit a warning if some inputs of PACKAGE are likely to should not be
+  ;; an input at all.
+  (let ((message "'~a' should probably not be an input at all")
+        (inputs (package-inputs package))
+        (input-names
+          '("python-setuptools"
+            "python2-setuptools"
+            "python-pip"
+            "python2-pip")))
+    (warn-if-package-has-input package (package-inputs package)
+                               input-names message)
+    (warn-if-package-has-input package (package-native-inputs package)
+                               input-names message)
+    (warn-if-package-has-input package (package-propagated-inputs package)
+                               input-names message)))
 
 (define (package-name-regexp package)
   "Return a regexp that matches PACKAGE's name as a word at the beginning of a
@@ -824,6 +847,10 @@ them for PACKAGE."
      (name        'inputs-should-be-native)
      (description "Identify inputs that should be native inputs")
      (check       check-inputs-should-be-native))
+   (lint-checker
+     (name        'inputs-should-not-be-input)
+     (description "Identify inputs that should be inputs at all")
+     (check       check-inputs-should-not-be-an-input-at-all))
    (lint-checker
      (name        'patch-file-names)
      (description "Validate file names and availability of patches")

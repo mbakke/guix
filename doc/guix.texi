@@ -12456,7 +12456,8 @@ following check list to determine which dependency goes where.
 @item
 We currently package Python 2 with @code{setuptools} and @code{pip}
 installed like Python 3.4 has per default.  Thus you don't need to
-specify either of these as an input.
+specify either of these as an input.  @command{guix lint} will warn you
+if you do.
 
 @item
 Python dependencies required at run time go into
