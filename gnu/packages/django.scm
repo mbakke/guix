@@ -55,10 +55,6 @@
                      (string-append ".:" (getenv "PYTHONPATH")))
              (zero? (system* "python" "tests/runtests.py")))))))
     ;; TODO: Install extras/django_bash_completion.
-    (propagated-inputs
-     ;; Django uses 'pkg_resources' (part of setuptools) to locate templates
-     ;; at run-time.
-     `(("python-setuptools" ,python-setuptools)))
     (native-inputs
      `(("tzdata", tzdata)
        ;; bcrypt and argon2-cffi are extra requirements not yet in guix
@@ -113,8 +109,6 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
     (build-system python-build-system)
     (propagated-inputs
      `(("python-django" ,python-django)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/alsoicode/django-simple-math-captcha")
     (synopsis "Easy-to-use math field/widget captcha for Django forms")
     (description

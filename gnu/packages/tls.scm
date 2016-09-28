@@ -498,7 +498,6 @@ security, and applying best practice development processes.")
        ("python-sphinx" ,python-sphinx)
        ("python-sphinxcontrib-programoutput" ,python-sphinxcontrib-programoutput)
        ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)
-       ("python-setuptools" ,python-setuptools)
        ("texinfo" ,texinfo)))
     (propagated-inputs
      `(("python-ndg-httpsclient" ,python-ndg-httpsclient)

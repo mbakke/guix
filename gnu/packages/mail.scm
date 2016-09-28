@@ -1335,8 +1335,6 @@ maintained.")
               (let* ((out (assoc-ref outputs "out"))
                      (doc (string-append out "/share/doc/khard")))
                 (copy-recursively "misc/khard" doc)))))))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (propagated-inputs
      `(("python2-vobject" ,python2-vobject)
        ("python2-pyyaml" ,python2-pyyaml)

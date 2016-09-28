@@ -346,8 +346,6 @@ errors.")
         (base32
          "1nwmmh816f96h0ff1jxk95ad38ilbhbdl5dgibx1d4cl81dsi48d"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (inputs
      `(("python" ,python-2)
        ("librsync" ,librsync)))

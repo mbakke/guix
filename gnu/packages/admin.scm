@@ -1332,8 +1332,6 @@ specified directories.")
                 (("/usr") out)
                 (("distro_ver = .*") "distro_ver = ''"))
               #t))))))
-   (inputs
-    `(("python-setuptools" ,python2-setuptools)))
    (home-page "https://github.com/shawn-sterling/graphios")
    (synopsis "Emit Nagios metrics to Graphite, Statsd, and Librato")
    (description
@@ -1693,8 +1691,6 @@ throughput (in the same interval).")
                (base32
                 "04q2cn8c83f6z6wn1scla1ilrpi5ssjc64987hvmwfvwvb82bvkp"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-colorama" ,python-colorama)
        ("python-decorator" ,python-decorator)

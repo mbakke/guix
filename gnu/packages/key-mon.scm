@@ -42,8 +42,6 @@
     (arguments
      `(#:python ,python-2                    ;uses the Python 2 'print' syntax
        #:tests? #f))                         ;no tests
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (inputs
      `(("python2-xlib" ,python2-xlib)
        ("python2-pygtk" ,python2-pygtk)

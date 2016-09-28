@@ -586,8 +586,6 @@ interface (API).")
                         (string-append v4l-ref "/include/libv4l1-videodev.h")
                         "linux/videodev.h")
                (system* "ln" "--symbolic" "Setup.in" "Setup")))))))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("sdl" ,sdl)
        ("sdl-image" ,sdl-image)

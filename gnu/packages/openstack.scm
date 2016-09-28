@@ -51,7 +51,6 @@
         ("python-stevedore" ,python-stevedore)))
     (inputs
       `(("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests
         ("python-fixtures" ,python-fixtures)
         ("python-mock" ,python-mock)
@@ -88,7 +87,6 @@ all the files it generates a report.")
     (inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests.
         ("python-oslotest" ,python-oslotest)))
     (home-page "http://www.openstack.org/")
@@ -152,7 +150,6 @@ guidelines}.")
     (native-inputs
       `(("python-fixtures" ,python-fixtures)
         ("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ("python-six" ,python-six)
         ("python-testtools" ,python-testtools)))
     (home-page "http://www.openstack.org/")
@@ -188,7 +185,6 @@ tested on Python version 3.2, 2.7 and 2.6.")
         ("python-pbr" ,python-pbr)
         ("python-pyyaml" ,python-pyyaml)
         ("python-testrepository" ,python-testrepository)
-        ("python-setuptools" ,python-setuptools)
         ("python-testscenarios" ,python-testscenarios)
         ("python-testtools" ,python-testtools)))
     (home-page "http://www.openstack.org/")
@@ -383,7 +379,6 @@ common features used in Tempest.")
         ("python-stevedore" ,python-stevedore)))
     (inputs
       `(("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests
         ("python-oslo.i18n" ,python-oslo.i18n)
         ("python-mock" ,python-mock)
@@ -414,7 +409,6 @@ common features used in Tempest.")
     (inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests.
         ("python-oslotest" ,python-oslotest)))
     (home-page "http://launchpad.net/oslo")
@@ -445,7 +439,6 @@ pipeline and used by various modules such as logging.")
         ("python-six" ,python-six)))
     (inputs
       `(("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests
         ("python-mock" ,python-mock)
         ("python-mox3" ,python-mox3)
@@ -525,7 +518,6 @@ handlers and support for context specific logging (like resource id’s etc).")
     (inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests.
         ("python-mock" ,python-mock)
         ("python-oslo.i18n" ,python-oslo.i18n)
@@ -558,7 +550,6 @@ in transmittable and storable formats, such as JSON and MessagePack.")
       `(("python-pbr" ,python-pbr)
         ("python-docutils" ,python-docutils)
         ("python-hacking" ,python-hacking)
-        ("python-setuptools" ,python-setuptools)
         ("python-sphinx" ,python-sphinx)))
     (home-page "http://www.openstack.org/")
     (synopsis "OpenStack sphinx extensions and theme")
@@ -593,7 +584,6 @@ from the OpenStack project.")
     (inputs
       `(("python-pbr" ,python-pbr)
         ("python-os-client-config" ,python-os-client-config)
-        ("python-setuptools" ,python-setuptools)
         ("python-subunit" ,python-subunit)
         ("python-testrepository" ,python-testrepository)
         ("python-testscenarios" ,python-testscenarios)
@@ -637,7 +627,6 @@ and better support for mocking results.")
     (inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
-        ("python-setuptools" ,python-setuptools)
         ;; Tests.
         ("python-oslotest" ,python-oslotest)
         ("python-mock" ,python-mock)
@@ -743,7 +732,6 @@ LDAP.")
     (build-system python-build-system)
     (native-inputs
      `(("python-pbr" ,python-pbr)
-       ("python-setuptools" ,python-setuptools)
        ("python-sphinx" ,python-sphinx)
        ;; The folloing packages are needed for the tests.
        ("python-coverage" ,python-coverage)

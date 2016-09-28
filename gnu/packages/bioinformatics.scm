@@ -2805,8 +2805,6 @@ HMMs).")
      `(("python-numpy" ,python2-numpy)))
     (inputs
      `(("python-pysam" ,python2-pysam)))
-    (native-inputs
-     `(("python-setuptools" ,python2-setuptools)))
     (home-page "http://www-huber.embl.de/users/anders/HTSeq/")
     (synopsis "Analysing high-throughput sequencing data with Python")
     (description
@@ -3085,8 +3083,6 @@ data.")
        #:tests? #f)) ; no test target
     (inputs
      `(("python-numpy" ,python2-numpy)))
-    (native-inputs
-     `(("python-setuptools" ,python2-setuptools)))
     (home-page "http://github.com/taoliu/MACS/")
     (synopsis "Model based analysis for ChIP-Seq data")
     (description
@@ -3512,7 +3508,6 @@ interrupted by stop codons.  OrfM finds and prints these ORFs.")
     (native-inputs
      `(("python-docutils" ,python2-docutils)
        ("python-nose" ,python2-nose)
-       ("python-setuptools" ,python2-setuptools)
        ("python-sphinx" ,python2-sphinx)))
     (propagated-inputs
      `(("python-pyxb" ,python2-pyxb)))
@@ -4019,7 +4014,6 @@ BAM and Wiggle files in both transcript-coordinate and genomic-coordinate.")
      `(("python-cython" ,python2-cython)
        ("python-pysam" ,python2-pysam)
        ("python-numpy" ,python2-numpy)
-       ("python-setuptools" ,python2-setuptools)
        ("zlib" ,zlib)))
     (native-inputs
      `(("python-nose" ,python2-nose)))
@@ -7634,8 +7628,6 @@ replacement for strverscmp.")
        ("python-click" ,python-click)
        ("python-matplotlib" ,python-matplotlib)
        ("python-numpy" ,python-numpy)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://multiqc.info")
     (synopsis "Aggregate bioinformatics analysis reports")
     (description
