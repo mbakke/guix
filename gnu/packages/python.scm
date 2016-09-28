@@ -799,7 +799,15 @@ have been used.")
                           version ".tar.gz"))
       (sha256
        (base32
-        "0kc7rbav00ks6iaw14p38y81q12fx0lpkhgf5m97xc04f5r318ig"))))
+        "0kc7rbav00ks6iaw14p38y81q12fx0lpkhgf5m97xc04f5r318ig"))
+      (modules '((guix build utils)))
+      (snippet
+       '(begin
+          ;; Remove included binaries which are used to build self-extracting
+          ;; installers for Windows.
+          ;; TODO: Find some way to build them ourself so we can include them.
+          (for-each delete-file (find-files "setuptools" "^(cli|gui).*\\.exe$"))
+          #t))))
     (build-system python-build-system)
     ;; FIXME: Tests require pytest, which itself relies on setuptools.
     ;; One could bootstrap with an internal untested setuptools.
