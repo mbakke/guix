@@ -754,15 +754,10 @@ concepts.")
     (description
      "The lockfile package exports a LockFile class which provides a simple
 API for locking files.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-lockfile))))))
+    (license license:expat)))
 
 (define-public python2-lockfile
-  (let ((base (package-with-python2 (strip-python2-variant python-lockfile))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-lockfile))
 
 (define-public python-mock
   (package
@@ -891,15 +886,10 @@ etc.).  The package is structured to make adding new modules easy.")
 service from python.  It can be used in any application that needs safe
 password storage.")
     ;; "MIT" and PSF dual license
-    (license license:x11)
-    (properties `((python2-variant . ,(delay python2-keyring))))))
+    (license license:x11)))
 
 (define-public python2-keyring
-  (let ((base (package-with-python2 (strip-python2-variant python-keyring))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-keyring))
 
 (define-public python-six
   (package
@@ -945,15 +935,10 @@ Python file, so it can be easily copied into your project.")
     (description
      "The dateutil module provides powerful extensions to the standard
 datetime module, available in Python 2.3+.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-dateutil-2))))))
+    (license license:bsd-3)))
 
 (define-public python2-dateutil-2
-  (let ((base (package-with-python2 (strip-python2-variant python-dateutil-2))))
-    (package
-      (inherit base)
-      (inputs `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-inputs base))))))
+  (package-with-python2 python-dateutil-2))
 
 (define-public python-dateutil
   (package
@@ -998,15 +983,10 @@ datetime module, available in Python 2.3+.")
      "Parse human-readable date/time text")
     (description
      "Parse human-readable date/time text.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-parsedatetime))))))
+    (license license:asl2.0)))
 
 (define-public python2-parsedatetime
-  (let ((base (package-with-python2 (strip-python2-variant python-parsedatetime))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-parsedatetime))
 
 (define-public python-pandas
   (package
@@ -1037,15 +1017,10 @@ structures designed to make working with structured (tabular,
 multidimensional, potentially heterogeneous) and time series data both easy
 and intuitive.  It aims to be the fundamental high-level building block for
 doing practical, real world data analysis in Python.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-pandas))))))
+    (license license:bsd-3)))
 
 (define-public python2-pandas
-  (let ((base (package-with-python2 (strip-python2-variant python-pandas))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-pandas))
 
 (define-public python-tzlocal
   (package
@@ -1180,14 +1155,10 @@ Python 3.3+.")
     (synopsis "Python extension wrapping the ICU C++ API")
     (description
      "PyICU is a python extension wrapping the ICU C++ API.")
-    (license license:x11)
-    (properties `((python2-variant . ,(delay python2-pyicu))))))
+    (license license:x11)))
 
 (define-public python2-pyicu
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-pyicu)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-pyicu))
 
 (define-public python2-dogtail
   ;; Python 2 only, as it leads to "TabError: inconsistent use of tabs and
@@ -1625,15 +1596,10 @@ and many external plugins.")
      "Pytest-cov produces coverage reports.  It supports centralised testing and
 distributed testing in both @code{load} and @code{each} modes.  It also
 supports coverage of subprocesses.")
-  (license license:expat)
-  (properties `((python2-variant . ,(delay python2-pytest-cov))))))
+  (license license:expat)))
 
 (define-public python2-pytest-cov
-  (let ((base (package-with-python2 (strip-python2-variant python-pytest-cov))))
-    (package
-      (inherit base)
-      (inputs `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-inputs base))))))
+  (package-with-python2 python-pytest-cov))
 
 (define-public python-pytest-runner
   (package
@@ -1666,16 +1632,10 @@ supports coverage of subprocesses.")
     (description
      "This package provides a @command{pytest-runner} command that
 @file{setup.py} files can use to run tests.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-pytest-runner))))))
+    (license license:expat)))
 
 (define-public python2-pytest-runner
-  (let ((base (package-with-python2
-                (strip-python2-variant python-pytest-runner))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-pytest-runner))
 
 (define-public python-pytest-mock
   (package
@@ -1752,16 +1712,10 @@ to run tests repeatedly when failed, and the ability to run tests on multiple
 Python interpreters or platforms.  It uses rsync to copy the existing
 program code to a remote location, executes there, and then syncs the
 result back.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-pytest-xdist))))))
+    (license license:expat)))
 
 (define-public python2-pytest-xdist
-  (let ((base (package-with-python2
-                (strip-python2-variant python-pytest-xdist))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-pytest-xdist))
 
 (define-public python-scripttest
   (package
@@ -2105,15 +2059,10 @@ executed.")
     (description
      "This is a library package for use by pytest-cov, nose-cov and nose2-cov.
 It is useful for developing coverage plugins for these testing frameworks.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-cov-core))))))
+    (license license:expat)))
 
 (define-public python2-cov-core
-  (let ((cov-core (package-with-python2 (strip-python2-variant python-cov-core))))
-    (package (inherit cov-core)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs cov-core))))))
+ (package-with-python2 python-cov-core))
 
 (define-public python-discover
   (package
@@ -2496,16 +2445,10 @@ OAuth request-signing logic.")
     (description
      "Itsdangerous provides various helpers to pass trusted data to untrusted
 environments and back.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-itsdangerous))))))
+    (license license:bsd-3)))
 
 (define-public python2-itsdangerous
-  (let ((base (package-with-python2
-                (strip-python2-variant python-itsdangerous))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-itsdangerous))
 
 (define-public python-pyyaml
   (package
@@ -3323,11 +3266,10 @@ doing the same calculation in Python.  In addition, its multi-threaded
 capabilities can make use of all your cores, which may accelerate
 computations, most specially if they are not memory-bounded (e.g. those using
 transcendental functions).")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-numexpr))))))
+    (license license:expat)))
 
 (define-public python2-numexpr
-  (package-with-python2 (strip-python2-variant python-numexpr)))
+  (package-with-python2 python-numexpr))
 
 (define-public python-matplotlib
   (package
@@ -3719,16 +3661,10 @@ simple and Pythonic domain language.")
     (description
      "SQLAlchemy-utils provides various utility functions and custom data types
 for SQLAlchemy.  SQLAlchemy is an SQL database abstraction library for Python.")
-    (properties `((python2-variant . ,(delay python2-sqlalchemy-utils))))
     (license license:bsd-3)))
 
 (define-public python2-sqlalchemy-utils
-  (let ((base (package-with-python2
-                (strip-python2-variant python-sqlalchemy-utils))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-sqlalchemy-utils))
 
 (define-public python-alembic
   (package
@@ -3755,16 +3691,10 @@ for SQLAlchemy.  SQLAlchemy is an SQL database abstraction library for Python.")
     (description
      "Alembic is a lightweight database migration tool for usage with the
 SQLAlchemy Database Toolkit for Python.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-alembic))))))
+    (license license:expat)))
 
 (define-public python2-alembic
-  (let ((alembic (package-with-python2
-                  (strip-python2-variant python-alembic))))
-    (package
-      (inherit alembic)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs alembic))))))
+  (package-with-python2 python-alembic))
 
 (define-public python-distutils-extra
   (package
@@ -4698,14 +4628,10 @@ screen-scraping projects.  It offers Pythonic idioms for navigating,
 searching, and modifying a parse tree, providing a toolkit for
 dissecting a document and extracting what you need.  It automatically
 converts incoming documents to Unicode and outgoing documents to UTF-8.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-beautifulsoup4))))))
+    (license license:expat)))
 
 (define-public python2-beautifulsoup4
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-beautifulsoup4)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-beautifulsoup4))
 
 (define-public python2-cssutils
   (package
@@ -4912,16 +4838,10 @@ as possible in order to be comprehensible and easily extensible.")
      "q is a Python module for \"print\" style of debugging Python code.  It
 provides convenient short API for print out of values, tracebacks, and
 falling into the Python interpreter.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-q))))))
+    (license license:asl2.0)))
 
 (define-public python2-q
-  (let ((base (package-with-python2 (strip-python2-variant python-q))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-q))
 
 (define-public python-testlib
   (package
@@ -5570,14 +5490,10 @@ should be stored on various operating systems.")
 suitable for similar data to JSON.  This package provides CPython bindings for
 reading and writing MessagePack data.")
     (home-page "https://pypi.python.org/pypi/msgpack-python/")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-msgpack))))))
+    (license license:asl2.0)))
 
 (define-public python2-msgpack
-  (package (inherit (package-with-python2
-                     (strip-python2-variant python-msgpack)))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-msgpack))
 
 (define-public python-netaddr
   (package
@@ -5881,15 +5797,10 @@ implementations of ASN.1-based codecs and protocols.")
  in Python.  This library is used to create, poke at, and manipulate IPv4 and
  IPv6 addresses and networks.  This is a port of the Python 3.3 ipaddress
  module to older versions of Python.")
-    (license license:psfl)
-    (properties `((python2-variant . ,(delay python2-ipaddress))))))
+    (license license:psfl)))
 
 (define-public python2-ipaddress
-  (let ((base (package-with-python2 (strip-python2-variant python-ipaddress))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-ipaddress))
 
 (define-public python2-ipaddr
   (package
@@ -6959,14 +6870,10 @@ WebSocket usage in Python programs.")
     (description "Library for atomic file writes using platform dependent tools
 for atomic file system operations.")
     (home-page "https://github.com/untitaker/python-atomicwrites")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-atomicwrites))))))
+    (license license:expat)))
 
 (define-public python2-atomicwrites
-  (package (inherit (package-with-python2
-                     (strip-python2-variant python-atomicwrites)))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-atomicwrites))
 
 (define-public python-requests-toolbelt
   (package
@@ -7049,15 +6956,10 @@ applications.")
 package and greatly reduce the number of imports for your users.  It is a small
 pure Python module that works on virtually all Python versions.")
     (home-page "https://bitbucket.org/hpk42/apipkg")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-apipkg))))))
+    (license license:expat)))
 
 (define-public python2-apipkg
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-apipkg)))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-apipkg))
 
 (define-public python-execnet
   (package
@@ -7085,17 +6987,10 @@ minimal and fast API targetting the following uses:
 @item write scripts to administer multiple environments
 @end enumerate")
     (home-page "http://codespeak.net/execnet/")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-execnet))))))
+    (license license:expat)))
 
 (define-public python2-execnet
-  (let ((execnet (package-with-python2
-                  (strip-python2-variant python-execnet))))
-    (package
-      (inherit execnet)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs execnet))))))
+  (package-with-python2 python-execnet))
 
 ;;; The software provided by this package was integrated into pytest 2.8.
 (define-public python-pytest-cache
@@ -7118,17 +7013,10 @@ minimal and fast API targetting the following uses:
     (description "The pytest-cache plugin provides tools to rerun failures from
 the last py.test invocation.")
     (home-page "https://bitbucket.org/hpk42/pytest-cache/")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-pytest-cache))))))
+    (license license:expat)))
 
 (define-public python2-pytest-cache
-  (let ((pytest-cache (package-with-python2
-                        (strip-python2-variant python-pytest-cache))))
-    (package
-      (inherit pytest-cache)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs pytest-cache))))))
+  (package-with-python2 python-pytest-cache))
 
 (define-public python-pytest-localserver
   (package
@@ -7793,14 +7681,10 @@ python-xdo for newer bindings.)")
      "WTForms is a flexible forms validation and rendering library
 for Python web development.  It is very similar to the web form API
 available in Django, but is a standalone package.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-wtforms))))))
+    (license license:bsd-3)))
 
 (define-public python2-wtforms
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-wtforms)))
-    (inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-wtforms))
 
 (define-public python-mako
   (package
@@ -7822,17 +7706,10 @@ available in Django, but is a standalone package.")
     (synopsis "Templating language for Python")
     (description "Mako is a templating language for Python that compiles
 templates into Python modules.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-mako))))))
+    (license license:expat)))
 
 (define-public python2-mako
-  (let ((base (package-with-python2
-               (strip-python2-variant python-mako))))
-    (package
-      (inherit base)
-      (native-inputs
-       (cons `("python2-setuptools" ,python2-setuptools)
-             (package-native-inputs base))))))
+  (package-with-python2 python-mako))
 
 (define-public python-waitress
   (package
@@ -7850,14 +7727,10 @@ templates into Python modules.")
     (synopsis "Waitress WSGI server")
     (description "Waitress is meant to be a production-quality pure-Python WSGI
 server with very acceptable performance.")
-    (license license:zpl2.1)
-    (properties `((python2-variant . ,(delay python2-waitress))))))
+    (license license:zpl2.1)))
 
 (define-public python2-waitress
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-waitress)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-waitress))
 
 (define-public python-wsgiproxy2
   (package
@@ -7885,16 +7758,10 @@ server with very acceptable performance.")
 WSGIProxy turns WSGI function calls into HTTP requests.
 It also includes code to sign requests and pass private data,
 and to spawn subprocesses to handle requests.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-wsgiproxy2))))))
+    (license license:expat)))
 
 (define-public python2-wsgiproxy2
-  (let ((wsgiproxy2 (package-with-python2
-                     (strip-python2-variant python-wsgiproxy2))))
-    (package
-      (inherit wsgiproxy2)
-      (inputs `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-inputs wsgiproxy2))))))
+ (package-with-python2 python-wsgiproxy2))
 
 (define-public python-pastedeploy
   (package
@@ -8026,15 +7893,10 @@ layouts.")
     (description "pyquery allows you to make jQuery queries on xml documents.
 The API is as much as possible the similar to jQuery.  pyquery uses lxml for
 fast xml and html manipulation.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-pyquery))))))
+    (license license:bsd-3)))
 
 (define-public python2-pyquery
-  (let ((pyquery (package-with-python2
-                  (strip-python2-variant python-pyquery))))
-    (package
-      (inherit pyquery)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools))))))
+  (package-with-python2 python-pyquery))
 
 (define-public python-webtest
   (package
@@ -8077,16 +7939,10 @@ fast xml and html manipulation.")
     (description "Webtest allows you to test your Python web applications
 without starting an HTTP server.  It supports anything that supports the
 minimum of WSGI.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-webtest))))))
+    (license license:expat)))
 
 (define-public python2-webtest
-  (let ((webtest (package-with-python2
-                  (strip-python2-variant python-webtest))))
-    (package
-      (inherit webtest)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs webtest))))))
+  (package-with-python2 python-webtest))
 
 (define-public python-anyjson
   (package
@@ -8296,14 +8152,10 @@ synchronously (wait until ready).")
      "This package contains codecs for transliterating ISO 10646 texts into
 best-effort representations using smaller coded character sets (ASCII,
 ISO 8859, etc.).")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-translitcodec))))))
+    (license license:expat)))
 
 (define-public python2-translitcodec
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-translitcodec)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-translitcodec))
 
 (define-public python-editor
   (package
@@ -8324,14 +8176,10 @@ ISO 8859, etc.).")
   (description
     "python-editor is a library that provides the editor module for
 programmatically interfacing with your system's $EDITOR.")
-  (license license:asl2.0)
-  (properties `((python2-variant . ,(delay python2-editor))))))
+  (license license:asl2.0)))
 
 (define-public python2-editor
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-editor)))
-    (inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-editor))
 
 (define-public python-sphinxcontrib-programoutput
   (package
@@ -8351,14 +8199,10 @@ programmatically interfacing with your system's $EDITOR.")
     (description "A Sphinx extension to literally insert the output of arbitrary
 commands into documents, helping you to keep your command examples up to date.")
     (home-page "https://github.com/lunaryorn/sphinxcontrib-programoutput")
-    (license license:bsd-2)
-    (properties `((python2-variant . ,(delay python2-sphinxcontrib-programoutput))))))
+    (license license:bsd-2)))
 
 (define-public python2-sphinxcontrib-programoutput
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-sphinxcontrib-programoutput)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-sphinxcontrib-programoutput))
 
 (define-public python-sphinx-repoze-autointerface
   (package
@@ -8407,14 +8251,10 @@ introspection of @code{zope.interface} instances in code.")
     (synopsis "Python PostgreSQL adapter")
     (description
      "psycopg2 is a thread-safe PostgreSQL adapter that implements DB-API 2.0. ")
-    (license license:lgpl3+)
-    (properties `((python2-variant . ,(delay python2-psycopg2))))))
+    (license license:lgpl3+)))
 
 (define-public python2-psycopg2
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-psycopg2)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-psycopg2))
 
 (define-public python-vobject
   (package
@@ -8437,14 +8277,10 @@ are supported and well tested. vCard 3.0 files are supported, and all data
 should be imported, but only a few components are understood in a sophisticated
 way.")
     (home-page "http://eventable.github.io/vobject/")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-vobject))))))
+    (license license:asl2.0)))
 
 (define-public python2-vobject
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-vobject)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-vobject))
 
 (define-public python-munkres
   (package
@@ -8489,13 +8325,10 @@ useful for solving the Assignment Problem.")
     (description "Flask is a micro web framework based on the Werkzeug toolkit
 and Jinja2 template engine.  It is called a micro framework because it does not
 presume or force a developer to use a particular tool or library.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-flask))))))
+    (license license:bsd-3)))
 
 (define-public python2-flask
-  (package (inherit (package-with-python2
-                     (strip-python2-variant python-flask)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-flask))
 
 (define-public python-cookies
   (package
@@ -8517,15 +8350,10 @@ presume or force a developer to use a particular tool or library.")
     (description "A RFC 6265-compliant HTTP cookie parser and renderer in
 Python.")
     (home-page "https://gitlab.com/sashahart/cookies")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-cookies))))))
+    (license license:expat)))
 
 (define-public python2-cookies
-  (let ((cookies (package-with-python2
-                  (strip-python2-variant python-cookies))))
-    (package (inherit cookies)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs cookies))))))
+  (package-with-python2 python-cookies))
 
 (define-public python-responses
   (package
@@ -8552,15 +8380,10 @@ Python.")
     (synopsis "Utility for mocking out the `requests` Python library")
     (description "A utility library for mocking out the `requests` Python
 library.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-responses))))))
+    (license license:asl2.0)))
 
 (define-public python2-responses
-  (let ((responses (package-with-python2
-                    (strip-python2-variant python-responses))))
-    (package (inherit responses)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs responses))))))
+  (package-with-python2 python-responses))
 
 (define-public python-whoosh
   (package
@@ -8956,15 +8779,10 @@ development version of CPython that are not available in older releases.")
      "@code{python-future} is the missing compatibility layer between Python 2 and
 Python 3.  It allows you to use a single, clean Python 3.x-compatible codebase
 to support both Python 2 and Python 3 with minimal overhead.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-future))))))
+    (license license:expat)))
 
 (define-public python2-future
-  (let ((base (package-with-python2
-               (strip-python2-variant python-future))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools))))))
+  (package-with-python2 python-future))
 
 (define-public python-cysignals
   (package
@@ -9297,14 +9115,10 @@ network support library.")
     (synopsis "Python Lex & Yacc")
     (description "PLY is a @code{lex}/@code{yacc} implemented purely in Python.
 It uses LR parsing and does extensive error checking.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-ply))))))
+    (license license:bsd-3)))
 
 (define-public python2-ply
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-ply)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-ply))
 
 (define-public python-tabulate
   (package
@@ -9417,14 +9231,10 @@ wide-character codes.  It is useful for those implementing a terminal emulator,
 or programs that carefully produce output to be interpreted by one.  It is a
 Python implementation of the @code{wcwidth} and @code{wcswidth} C functions
 specified in POSIX.1-2001 and POSIX.1-2008.")
-  (license license:expat)
-  (properties `((python2-variant . ,(delay python2-wcwidth))))))
+  (license license:expat)))
 
 (define-public python2-wcwidth
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-wcwidth)))
-    (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-wcwidth))
 
 (define-public python2-jsonrpclib
   (package
@@ -9809,16 +9619,10 @@ interfaces in Python.  It's like GNU Readline but it also features syntax
 highlighting while typing, out-of-the-box multi-line input editing, advanced
 code completion, incremental search, support for Chinese double-width
 characters, mouse support, and auto suggestions.")
-  (license license:bsd-3)
-  (properties `((python2-variant . ,(delay python2-prompt-toolkit))))))
+  (license license:bsd-3)))
 
 (define-public python2-prompt-toolkit
-  (let ((base (package-with-python2 (strip-python2-variant python-prompt-toolkit))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-prompt-toolkit))
 
 (define-public python-jedi
   (package
@@ -9837,16 +9641,10 @@ characters, mouse support, and auto suggestions.")
       "Autocompletion for Python that can be used for text editors")
     (description
       "Jedi is an autocompletion tool for Python that can be used for text editors.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-jedi))))))
+    (license license:expat)))
 
 (define-public python2-jedi
-  (let ((base (package-with-python2 (strip-python2-variant python-jedi))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-jedi))
 
 (define-public ptpython
   (package
@@ -9913,15 +9711,10 @@ etc.")
     (description
      "Requests-OAuthlib uses the Python Requests and OAuthlib libraries to
 provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients.")
-    (license license:isc)
-    (properties `((python2-variant . ,(delay python2-requests-oauthlib))))))
+    (license license:isc)))
 
 (define-public python2-requests-oauthlib
-  (let ((base (package-with-python2 (strip-python2-variant python-requests-oauthlib))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-requests-oauthlib))
 
 (define-public python-stem
   (package
@@ -9977,16 +9770,10 @@ relays publish about themselves.")
     (description "@code{pyserial} provide serial port bindings for Python.  It
 supports different byte sizes, stop bits, parity and flow control with RTS/CTS
 and/or Xon/Xoff.  The port is accessed in RAW mode.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-pyserial))))))
+    (license license:bsd-3)))
 
 (define-public python2-pyserial
-  (let ((base (package-with-python2 (strip-python2-variant python-pyserial))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-pyserial))
 
 (define-public python-kivy
   (package
@@ -10097,15 +9884,10 @@ binary or text.")
 resources such as WordNet, along with a suite of text processing libraries
 for classification, tokenization, stemming, tagging, parsing, and semantic
 reasoning, wrappers for natural language processing libraries.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-nltk))))))
+    (license license:asl2.0)))
 
 (define-public python2-nltk
-  (let ((base (package-with-python2 (strip-python2-variant python-nltk))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-nltk))
 
 (define-public python-pymongo
   (package
@@ -10123,15 +9905,10 @@ reasoning, wrappers for natural language processing libraries.")
     (home-page "http://github.com/mongodb/mongo-python-driver")
     (synopsis "Python driver for MongoDB")
     (description "Python driver for MongoDB.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-pymongo))))))
+    (license license:asl2.0)))
 
 (define-public python2-pymongo
-  (let ((base (package-with-python2 (strip-python2-variant python-pymongo))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-pymongo))
 
 (define-public python-sh
   (package
@@ -10150,15 +9927,10 @@ reasoning, wrappers for natural language processing libraries.")
     (synopsis "Python subprocess interface")
     (description "Abstracts process invocation by providing a function
 interface for programs.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-sh))))))
+    (license license:expat)))
 
 (define-public python2-sh
-  (let ((base (package-with-python2 (strip-python2-variant python-sh))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-sh))
 
 (define-public python-consul
   (package
@@ -10184,11 +9956,7 @@ discovery, monitoring and configuration.")
     (license license:expat)))
 
 (define-public python2-consul
-  (let ((consul (package-with-python2 python-consul)))
-    (package (inherit consul)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs consul))))))
+  (package-with-python2 python-consul))
 
 (define-public python-schematics
   (package
@@ -10212,15 +9980,10 @@ discovery, monitoring and configuration.")
     (home-page "https://github.com/schematics/schematics")
     (synopsis "Python Data Structures for Humans")
     (description "Python Data Structures for Humans.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-schematics))))))
+    (license license:bsd-3)))
 
 (define-public python2-schematics
-  (let ((base (package-with-python2 (strip-python2-variant python-schematics))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-schematics))
 
 (define-public python-publicsuffix
   (package
@@ -10239,15 +10002,10 @@ discovery, monitoring and configuration.")
     (synopsis "Get suffix for a domain name")
     (description "Get a public suffix for a domain name using the Public Suffix
 List.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-nltk))))))
+    (license license:expat)))
 
 (define-public python2-publicsuffix
-  (let ((base (package-with-python2 (strip-python2-variant python-publicsuffix))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-publicsuffix))
 
 (define-public python-publicsuffix2
   (package
@@ -10265,15 +10023,10 @@ List.")
     (synopsis "Get a public suffix for a domain name using the Public Suffix List")
     (description "Get a public suffix for a domain name using the Public Suffix
 List.  Forked from and using the same API as the publicsuffix package.")
-    (license (list license:expat license:mpl2.0))
-    (properties `((python2-variant . ,(delay python2-publicsuffix2))))))
+    (license (list license:expat license:mpl2.0))))
 
 (define-public python2-publicsuffix2
-  (let ((base (package-with-python2 (strip-python2-variant python-publicsuffix2))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-publicsuffix2))
 
 (define-public python-url
   (package
@@ -10303,10 +10056,7 @@ List.  Forked from and using the same API as the publicsuffix package.")
   (let ((base (package-with-python2 (strip-python2-variant python-url))))
     (package (inherit base)
       (inputs
-       `(("python2-publicsuffix" ,python2-publicsuffix)))
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+       `(("python2-publicsuffix" ,python2-publicsuffix))))))
 
 (define-public python-freezegun
   (package
@@ -10342,11 +10092,8 @@ time by mocking the datetime module.")
     (license license:asl2.0)))
 
 (define-public python2-freezegun
-  (let ((base (package-with-python2 (strip-python2-variant python-freezegun))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-freezegun))
+
 
 (define-public python-odfpy
   (package
@@ -10423,15 +10170,10 @@ Python to manipulate OpenDocument 1.2 files.")
     (synopsis "The httplib2 caching algorithms for use with requests")
     (description "CacheControl is a port of the caching algorithms in
 @code{httplib2} for use with @code{requests} session objects.")
-    (license license:asl2.0)
-    (properties `((python2-variant . ,(delay python2-cachecontrol))))))
+    (license license:asl2.0)))
 
 (define-public python2-cachecontrol
-  (let ((base (package-with-python2 (strip-python2-variant python-cachecontrol))))
-    (package (inherit base)
-             (native-inputs
-              `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-native-inputs base))))))
+  (package-with-python2 python-cachecontrol))
 
 (define-public python-lit
   (package
@@ -10450,16 +10192,10 @@ Python to manipulate OpenDocument 1.2 files.")
     (description "@code{lit} is a portable tool for executing LLVM and Clang
 style test suites, summarizing their results, and providing indication of
 failures.")
-    (license license:ncsa)
-    (properties `((python2-variant . ,(delay python2-lit))))))
+    (license license:ncsa)))
 
 (define-public python2-lit
-  (let ((base (package-with-python2 (strip-python2-variant python-lit))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-lit))
 
 (define-public python-pytest-pep8
   (package
@@ -10484,15 +10220,10 @@ failures.")
     (home-page "https://bitbucket.org/pytest-dev/pytest-pep8")
     (synopsis "Py.test plugin to check PEP8 requirements")
     (description "Pytest plugin for checking PEP8 compliance.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-pytest-pep8))))))
+    (license license:expat)))
 
 (define-public python2-pytest-pep8
-  (let ((base (package-with-python2 (strip-python2-variant python-pytest-pep8))))
-    (package (inherit base)
-             (native-inputs
-              `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-native-inputs base))))))
+  (package-with-python2 python-pytest-pep8))
 
 (define-public python-pytest-flakes
   (package
@@ -10525,15 +10256,10 @@ failures.")
     (home-page "https://github.com/fschulze/pytest-flakes")
     (synopsis "Py.test plugin to check source code with pyflakes")
     (description "Pytest plugin for checking Python source code with pyflakes.")
-    (license license:expat)
-    (properties `((python2-variant . ,(delay python2-pytest-flakes))))))
+    (license license:expat)))
 
 (define-public python2-pytest-flakes
-  (let ((base (package-with-python2 (strip-python2-variant python-pytest-flakes))))
-    (package (inherit base)
-             (native-inputs
-              `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-native-inputs base))))))
+  (package-with-python2 python-pytest-flakes))
 
 (define-public python-natsort
   (package
@@ -10605,16 +10331,10 @@ functionality in the command line.")
     "Glances is a curses-based monitoring tool for a wide variety of platforms.
 Glances uses the PsUtil library to get information from your system. It monitors
 CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
-  (license license:lgpl3+)
-  (properties `((python2-variant . ,(delay python2-glances))))))
+  (license license:lgpl3+)))
 
 (define-public python2-glances
-  (let ((base (package-with-python2 (strip-python2-variant python-glances))))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-glances))
 
 (define-public python-graphql-core
   (package
@@ -10650,16 +10370,10 @@ CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
 runtime designed and used to request and deliver data to mobile and web apps.
 This library is a port of @url{https://github.com/graphql/graphql-js,graphql-js}
 to Python.")
-    (properties `((python2-variant . ,(delay python2-graphql-core))))
     (license license:expat)))
 
 (define-public python2-graphql-core
-  (let ((base (package-with-python2
-                (strip-python2-variant python-graphql-core))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-graphql-core))
 
 (define-public python-graphql-relay
   (package
@@ -10687,16 +10401,10 @@ using the GraphQL Python reference implementation of a GraphQL server.  It
 should be noted that the code is a exact port of the original
 @url{https://github.com/graphql/graphql-relay-js,graphql-relay js implementation}
 from Facebook.")
-    (properties `((python2-variant . ,(delay python2-graphql-relay))))
     (license license:expat)))
 
 (define-public python2-graphql-relay
-  (let ((base (package-with-python2
-                (strip-python2-variant python-graphql-relay))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-graphql-relay))
 
 (define-public python-graphene
   (package
@@ -10902,16 +10610,10 @@ is used by PostgreSQL and the OpenSSH Server for example.")
 The schema format is based on the JSON Schema
 proposal (http://json-schema.org), so combined with json the library is also
 useful as a validator for JSON data.")
-  (license license:expat)
-  (properties `((python2-variant . ,(delay python2-validictory))))))
+  (license license:expat)))
 
 (define-public python2-validictory
-  (let ((base (package-with-python2
-               (strip-python2-variant python-validictory))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-validictory))
 
 (define-public python-aniso8601
   (package
