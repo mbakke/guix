@@ -676,15 +676,10 @@ bioinformatics programs; a standard sequence class and tools for performing
 common operations on them; code to perform data classification; code for
 dealing with alignments; code making it easy to split up parallelizable tasks
 into separate processes; and more.")
-    (license (license:non-copyleft "http://www.biopython.org/DIST/LICENSE"))
-    (properties `((python2-variant . ,(delay python2-biopython))))))
+    (license (license:non-copyleft "http://www.biopython.org/DIST/LICENSE"))))
 
 (define-public python2-biopython
-  (let ((base (package-with-python2 (strip-python2-variant python-biopython))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-biopython))
 
 ;; An outdated version of biopython is required for seqmagick, see
 ;; https://github.com/fhcrc/seqmagick/issues/59
@@ -1423,7 +1418,6 @@ also includes an interface for tabix.")
               (sha256
                (base32
                 "0y408fp6psqzwxpcpqn0wp7fr41dwz8d54wpj6j261fj5q8vs169"))))
-    (properties `((python2-variant . ,(delay python2-twobitreader))))
     (build-system python-build-system)
     (native-inputs
      `(("python-sphinx" ,python-sphinx)))
@@ -1435,11 +1429,7 @@ UCSC genome browser.")
     (license license:artistic2.0)))
 
 (define-public python2-twobitreader
-  (let ((base (package-with-python2 (strip-python2-variant python-twobitreader))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-twobitreader))
 
 (define-public python-plastid
   (package
@@ -1451,7 +1441,6 @@ UCSC genome browser.")
               (sha256
                (base32
                 "1sqkz5d3b9kf688mp7k771c87ins42j7j0whmkb49cb3fsg8s8lj"))))
-    (properties `((python2-variant . ,(delay python2-plastid))))
     (build-system python-build-system)
     (arguments
      ;; Some test files are not included.
@@ -1476,12 +1465,7 @@ high-throughput sequencing data – with an emphasis on simplicity.")
     (license license:bsd-3)))
 
 (define-public python2-plastid
-  (let ((base (package-with-python2 (strip-python2-variant python-plastid))))
-    (package
-      (inherit base)
-      ;; setuptools is required at runtime
-      (propagated-inputs `(("python2-setuptools" ,python2-setuptools)
-                           ,@(package-propagated-inputs base))))))
+  (package-with-python2 python-plastid))
 
 (define-public cd-hit
   (package
@@ -1930,10 +1914,7 @@ accessing bigWig files.")
     (license license:expat)))
 
 (define-public python2-pybigwig
-  (let ((pybigwig (package-with-python2 python-pybigwig)))
-    (package (inherit pybigwig)
-      (native-inputs
-       `(("python-setuptools" ,python2-setuptools))))))
+  (package-with-python2 python-pybigwig))
 
 (define-public python-dendropy
   (package
@@ -4559,11 +4540,7 @@ sequence itself can be retrieved from these databases.")
     (license license:bsd-3)))
 
 (define-public python2-screed
-  (let ((base (package-with-python2 (strip-python2-variant python-screed))))
-    (package
-      (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+  (package-with-python2 python-screed))
 
 (define-public sra-tools
   (package

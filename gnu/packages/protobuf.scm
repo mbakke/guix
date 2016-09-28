@@ -70,10 +70,7 @@ internal RPC protocols and file formats.")
     (description
      "Protocol buffers are a language-neutral, platform-neutral extensible
 mechanism for serializing structured data.")
-    (license bsd-3)
-    (properties `((python2-variant . ,(delay python2-protobuf))))))
+    (license bsd-3)))
 
 (define-public python2-protobuf
-  (package (inherit (package-with-python2
-                     (strip-python2-variant python-protobuf)))
-           (native-inputs `(("python2-setuptools" ,python2-setuptools)))))
+  (package-with-python2 python-protobuf))

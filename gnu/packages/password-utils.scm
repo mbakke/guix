@@ -374,8 +374,4 @@ Password Scheme\"} by Niels Provos and David Mazieres.")
     (license license:asl2.0)))
 
 (define-public python2-bcrypt
-  (let ((bcrypt (package-with-python2 python-bcrypt)))
-    (package (inherit bcrypt)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs bcrypt))))))
+  (package-with-python2 python-bcrypt))

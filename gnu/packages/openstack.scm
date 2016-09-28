@@ -260,16 +260,10 @@ tested on Python version 3.2, 2.7 and 2.6.")
     (description
       "This module provides a building block to stub out the HTTP requests
 portions of your testing code.")
-    (license asl2.0)
-    (properties `((python2-variant . ,(delay python2-requests-mock))))))
+    (license asl2.0)))
 
 (define-public python2-requests-mock
-  (let ((base (package-with-python2
-                (strip-python2-variant python-requests-mock))))
-    (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-requests-mock))
 
 (define-public python-stevedore
   (package
@@ -807,8 +801,4 @@ Gerrit for review, or fetching existing ones.")
     (license asl2.0)))
 
 (define-public python2-git-review
-  (let ((base (package-with-python2 (strip-python2-variant python-git-review))))
-    (package (inherit base)
-             (native-inputs
-              `(("python2-setuptools" ,python2-setuptools)
-                ,@(package-native-inputs base))))))
+  (package-with-python2 python-git-review))

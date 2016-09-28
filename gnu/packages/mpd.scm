@@ -257,15 +257,10 @@ information about tracks being played to a scrobbler, such as Libre.FM.")
     (synopsis "Python MPD client library")
     (description "Python-mpd2 is a Python library which provides a client
 interface for the Music Player Daemon.")
-    (license license:lgpl3+)
-    (properties `((python2-variant . ,(delay python2-mpd2))))))
+    (license license:lgpl3+)))
 
 (define-public python2-mpd2
-  (let ((mpd2 (package-with-python2
-               (strip-python2-variant python-mpd2))))
-    (package (inherit mpd2)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs mpd2))))))
+  (package-with-python2 python-mpd2))
 
 (define-public sonata
   (package

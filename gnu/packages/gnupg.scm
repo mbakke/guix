@@ -426,12 +426,7 @@ decrypt messages using the OpenPGP format by making use of GPGME.")
     (license license:lgpl2.1+)))
 
 (define-public python2-pygpgme
-  (let ((base (package-with-python2 python-pygpgme)))
-    (package
-      (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base))))))
+  (package-with-python2 python-pygpgme))
 
 (define-public python-gnupg
   (package

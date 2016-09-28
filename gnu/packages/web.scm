@@ -3171,11 +3171,7 @@ CDF, Atom 0.3, and Atom 1.0 feeds.")
                    l:freebsd-doc)))) ; documentation
 
 (define-public python2-feedparser
-  (let ((base (package-with-python2
-               (strip-python2-variant python-feedparser))))
-    (package (inherit base)
-             (native-inputs
-              `(("python2-setuptools" ,python2-setuptools))))))
+  (package-with-python2 python-feedparser))
 
 (define-public r-httpuv
   (package
