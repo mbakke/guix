@@ -1475,10 +1475,7 @@ inference for statistical models.")
          ("python2-scipy" ,python2-scipy)
          ("python2-pandas" ,python2-pandas)
          ("python2-patsy" ,python2-patsy)
-         ("python2-matplotlib" ,python2-matplotlib)))
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs stats))))))
+         ("python2-matplotlib" ,python2-matplotlib))))))
 
 (define-public r-coda
   (package

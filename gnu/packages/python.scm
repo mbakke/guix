@@ -1709,9 +1709,6 @@ same arguments.")
   (let ((base (package-with-python2
                 (strip-python2-variant python-pytest-mock))))
     (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base)))
       (inputs
        `(("python2-mock" ,python2-mock)
          ,@(package-inputs base))))))
@@ -2477,8 +2474,7 @@ OAuth request-signing logic.")
   (let ((base (package-with-python2 (strip-python2-variant python-oauthlib))))
     (package
       (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-unittest2" ,python2-unittest2)
+      (native-inputs `(("python2-unittest2" ,python2-unittest2)
                        ,@(package-native-inputs base))))))
 
 (define-public python-itsdangerous
@@ -4872,9 +4868,7 @@ and statistical routines from scipy and statsmodels.")
     (package
       (inherit base)
       (propagated-inputs `(("python2-pytz" ,python2-pytz)
-                           ,@(package-propagated-inputs base)))
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+                           ,@(package-propagated-inputs base))))))
 
 (define-public python-sympy
   (package
@@ -5045,10 +5039,7 @@ connection to each user.")
        `(("python2-backport-ssl-match-hostname"
           ,python2-backport-ssl-match-hostname)
          ("python2-singledispatch" ,python2-singledispatch)
-          ,@(package-inputs tornado)))
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs tornado))))))
+          ,@(package-inputs tornado))))))
 
 ;; the python- version can be removed with python-3.5
 (define-public python-backports-abc
@@ -5439,10 +5430,7 @@ term.js Javascript terminal emulator library.")
       (propagated-inputs
        `(("python2-backport-ssl-match-hostname"
           ,python2-backport-ssl-match-hostname)
-          ,@(package-propagated-inputs terminado)))
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs terminado))))))
+          ,@(package-propagated-inputs terminado))))))
 
 (define-public python-fonttools
   (package
@@ -7407,8 +7395,7 @@ authenticated session objects providing things like keep-alive.")
   (let ((base (package-with-python2 (strip-python2-variant python-rauth))))
     (package
       (inherit base)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-unittest2" ,python2-unittest2)
+      (native-inputs `(("python2-unittest2" ,python2-unittest2)
                        ,@(package-native-inputs base))))))
 
 (define-public python2-functools32
@@ -8138,8 +8125,7 @@ and provides a uniform API regardless of which JSON implementation is used.")
       (arguments `(;; Unlike the python 3 variant, we do run tests.  See above!
                    #:tests? #t
                    ,@(package-arguments anyjson)))
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-nose" ,python2-nose))))))
+      (native-inputs `(("python2-nose" ,python2-nose))))))
 
 (define-public python-amqp
   (package
@@ -8175,9 +8161,7 @@ alternative when librabbitmq is not available.")
                    ;; unmaintained.  Weirdly, does not do this on the python 3
                    ;; version?
                    #:tests? #f
-                   ,@(package-arguments amqp)))
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs amqp))))))
+                   ,@(package-arguments amqp))))))
 
 (define-public python-kombu
   (package
@@ -8213,8 +8197,7 @@ RabbitMQ messaging server is the most popular implementation.")
                 (strip-python2-variant python-kombu))))
     (package
       (inherit kombu)
-      (inputs `(("python2-setuptools" ,python2-setuptools)
-                ("python2-unittest2" ,python2-unittest2)
+      (inputs `(("python2-unittest2" ,python2-unittest2)
                 ,@(package-inputs kombu))))))
 
 (define-public python-billiard
@@ -8247,8 +8230,7 @@ Python 2.4 and 2.5, and will draw its fixes/improvements from python-trunk.")
                    (strip-python2-variant python-billiard))))
     (package
       (inherit billiard)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-unittest2" ,python2-unittest2)
+      (native-inputs `(("python2-unittest2" ,python2-unittest2)
                        ("python2-mock" ,python2-mock)
                        ,@(package-native-inputs billiard))))))
 
@@ -8288,8 +8270,7 @@ synchronously (wait until ready).")
                  (strip-python2-variant python-celery))))
     (package
       (inherit celery)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-unittest2" ,python2-unittest2)
+      (native-inputs `(("python2-unittest2" ,python2-unittest2)
                        ("python2-mock" ,python2-mock)
                        ,@(package-native-inputs celery))))))
 
@@ -8706,8 +8687,7 @@ encoding algorithms to do fuzzy string matching.")
   (let ((jellyfish (package-with-python2
                      (strip-python2-variant python-jellyfish))))
     (package (inherit jellyfish)
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-unicodecsv" ,python2-unicodecsv)
+      (native-inputs `(("python2-unicodecsv" ,python2-unicodecsv)
                        ,@(package-native-inputs jellyfish))))))
 
 (define-public python2-unicodecsv
@@ -10096,9 +10076,6 @@ binary or text.")
 (define-public python2-binaryornot
   (let ((base (package-with-python2 (strip-python2-variant python-binaryornot))))
     (package (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ,@(package-native-inputs base)))
       (inputs
        `(("python2-enum34" ,python2-enum34)
          ,@(package-inputs base))))))
@@ -10601,8 +10578,7 @@ functionality in the command line.")
   (let ((base (package-with-python2 (strip-python2-variant python-natsort))))
     (package (inherit base)
              (native-inputs
-              `(("python2-setuptools" ,python2-setuptools)
-                ("python2-pathlib" ,python2-pathlib)
+              `(("python2-pathlib" ,python2-pathlib)
                 ("python2-mock" ,python2-mock)
                 ("python2-enum34" ,python2-enum34)
                 ,@(package-native-inputs base))))))
@@ -10760,8 +10736,7 @@ with an associated set of resolve methods that know how to fetch data.")
                 (strip-python2-variant python-graphene))))
     (package (inherit base)
       (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)
-         ("python2-sqlalchemy" ,python2-sqlalchemy)
+       `(("python2-sqlalchemy" ,python2-sqlalchemy)
          ,@(package-native-inputs base))))))
 
 (define-public python-nautilus

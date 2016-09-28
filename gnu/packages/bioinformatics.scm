@@ -584,9 +584,7 @@ e.g. microbiome samples, genomes, metagenomes.")
                (substitute* "setup.py"
                  (("install_requires.append\\(\"pyqi\"\\)") "pass"))
                #t)))
-         ,@(package-arguments base)))
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ,@(package-native-inputs base))))))
+         ,@(package-arguments base))))))
 
 (define-public bioperl-minimal
   (let* ((inputs `(("perl-module-build" ,perl-module-build)
