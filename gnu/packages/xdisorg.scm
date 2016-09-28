@@ -91,8 +91,7 @@
     (inputs `(("pygtk" ,python2-pygtk)
               ("xrandr" ,xrandr)))
     (native-inputs `(("gettext"           ,gnu-gettext)
-                     ("python-docutils"   ,python2-docutils)
-                     ("python-setuptools" ,python2-setuptools)))
+                     ("python-docutils"   ,python2-docutils)))
     (home-page "https://christian.amsuess.com/tools/arandr/")
     (synopsis "Another RandR graphical user interface")
     ;; TRANSLATORS: "X11 resize-and-rotate" should not be translated.

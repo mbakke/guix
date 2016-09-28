@@ -66,8 +66,7 @@
                                "duplicity-test_selection-tmp.patch"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)
-       ("util-linux" ,util-linux)))     ;setsid command, for the tests
+     `(("util-linux" ,util-linux)))     ;setsid command, for the tests
     (inputs
      `(("python" ,python-2)
        ("librsync" ,librsync)

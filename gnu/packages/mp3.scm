@@ -472,8 +472,7 @@ compression format (.mpc files).")
     (arguments
      `(#:python ,python-2))
     (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)
-       ("python2-nose" ,python2-nose)
+     `(("python2-nose" ,python2-nose)
        ("python2-sphinx" ,python2-sphinx)
        ("python2-coverage" ,python2-coverage)))
     (synopsis "MP3 tag ID3 metadata editor")

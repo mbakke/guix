@@ -121,8 +121,7 @@ manner.")
         ("python-pyflakes-0.8.1" ,python-pyflakes-0.8.1)
         ("python-six" ,python-six)))
     (inputs
-      `(("python-setuptools" ,python-setuptools)
-        ;; Tests
+      `(;; Tests
         ("python-testscenarios" ,python-testscenarios)))
     (home-page "http://github.com/openstack-dev/hacking")
     (synopsis "OpenStack hacking guideline enforcement")
@@ -221,8 +220,7 @@ tested on Python version 3.2, 2.7 and 2.6.")
        ("python-subunit" ,python-subunit)
        ("python-testtools" ,python-testtools)))
     (inputs
-      `(("python-babel" ,python-babel)
-        ("python-setuptools" ,python-setuptools)))
+      `(("python-babel" ,python-babel)))
     (home-page "http://www.openstack.org/")
     (synopsis "Testr wrapper to provide functionality for OpenStack projects")
     (description
@@ -290,8 +288,7 @@ portions of your testing code.")
     (inputs
       `(("python-pbr" ,python-pbr)))
     (native-inputs
-      `(("python-setuptools" ,python-setuptools)
-        ;; Tests
+      `(;; Tests
         ("python-docutils" ,python-docutils)
         ("python-mock" ,python-mock)
         ("python-oslotest" ,python-oslotest)
@@ -345,8 +342,7 @@ extensions.")
       `(("python-babel" ,python-babel)
         ("python-mock" ,python-mock)
         ("python-os-testr" ,python-os-testr)
-        ("python-oslotest" ,python-oslotest)
-        ("python-setuptools" ,python-setuptools)))
+        ("python-oslotest" ,python-oslotest)))
     (home-page "http://www.openstack.org/")
     (synopsis "OpenStack functional testing library")
     (description
@@ -483,8 +479,7 @@ in an application or library.")
       ("python-iso8601" ,python-iso8601)
       ("python-mock" ,python-mock)
       ("python-oslotest" ,python-oslotest)
-      ("python-pbr" ,python-pbr)
-      ("python-setuptools" ,python-setuptools)))
+      ("python-pbr" ,python-pbr)))
   (home-page "http://launchpad.net/oslo")
   (synopsis "Python logging library of the Oslo project")
   (description
@@ -656,8 +651,7 @@ handling.")
           "1w4csvkah67rfpxylxnvs2s3594i0f9isy8pf4gnsqs5zirvjaa4"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-setuptools" ,python-setuptools)
-       ("python-sphinx" ,python-sphinx)
+     `(("python-sphinx" ,python-sphinx)
        ;; and some packages for the tests
        ("openssl" ,openssl)
        ("python-coverage" ,python-coverage)

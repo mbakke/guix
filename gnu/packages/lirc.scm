@@ -134,5 +134,4 @@ on just one button press.")
                (lambda _
                  (zero? (system* "make" "py2")))))))
         (native-inputs
-         `(("python2-setuptools" ,python2-setuptools)
-           ("python2-cython" ,python2-cython))))))
+         `(("python2-cython" ,python2-cython))))))

@@ -185,8 +185,7 @@ by no means limited to these applications.)  This package provides XML DTDs.")
     (build-system python-build-system)
     ;; TODO: Add xfig/transfig for fig2dev utility
     (inputs
-     `(("python-setuptools" ,python-setuptools)
-       ("texlive" ,texlive)
+     `(("texlive" ,texlive)
        ("imagemagick" ,imagemagick)     ;for convert
        ("inkscape" ,inkscape)           ;for svg conversion
        ("docbook" ,docbook-xml)

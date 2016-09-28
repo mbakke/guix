@@ -251,8 +251,7 @@ of a the system to know what users are logged in, and where.")
     (native-inputs
      `(("shared-mime-info" ,shared-mime-info) ;for tests
        ("hicolor-icon-theme" ,hicolor-icon-theme) ;for tests
-       ("python-nose" ,python-nose)
-       ("python-setuptools" ,python-setuptools)))
+       ("python-nose" ,python-nose)))
     (home-page "http://freedesktop.org/wiki/Software/pyxdg")
     (synopsis "Implementations of freedesktop.org standards in Python")
     (description

@@ -318,8 +318,7 @@ ideal (e.g. in LV2 implementations or embedded applications).")
     (inputs
       `(("python-html5lib" ,python-html5lib)
         ("python-isodate" ,python-isodate)
-        ("python-pyparsing" ,python-pyparsing)
-        ("python-setuptools" ,python-setuptools)))
+        ("python-pyparsing" ,python-pyparsing)))
     (home-page "https://github.com/RDFLib/rdflib")
     (synopsis
       "Python RDF library")

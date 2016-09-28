@@ -52,11 +52,7 @@
      `(("pygtk"             ,python2-pygtk)
        ("sqlalchemy"        ,python2-sqlalchemy)
        ("python-pillow"     ,python2-pillow)
-       ("elib.intl"         ,python2-elib.intl)
-       ;; XXX: This really isn't an input for gourmet but of pillow.  Making
-       ;; it a propagated input in pillow doesn't seem to get its site path
-       ;; into gourmet's wrapper's PYTHONPATH however...
-       ("python-setuptools" ,python2-setuptools)))
+       ("elib.intl"         ,python2-elib.intl)))
     (arguments
      `(#:python ,python-2               ;exception and print syntax
        #:tests? #f))                    ;tests look bitrotted

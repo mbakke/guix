@@ -215,8 +215,7 @@ structure of the predicted RNA.")
        ("libtool" ,libtool)
        ("zlib" ,zlib)
        ("python-nose" ,python2-nose)
-       ("python-pysam" ,python2-pysam)
-       ("python-setuptools" ,python2-setuptools)))
+       ("python-pysam" ,python2-pysam)))
     (inputs
      `(("htslib" ,htslib)
        ("samtools" ,samtools)
@@ -530,8 +529,7 @@ intended to behave exactly the same as the original BWK awk.")
        ("samtools" ,samtools)))
     (native-inputs
      `(("python-pyyaml" ,python2-pyyaml)
-       ("python-nose" ,python2-nose)
-       ("python-setuptools" ,python2-setuptools)))
+       ("python-nose" ,python2-nose)))
     (home-page "https://pythonhosted.org/pybedtools/")
     (synopsis "Python wrapper for BEDtools programs")
     (description
@@ -1338,8 +1336,7 @@ well as many of the command line options.")
      `(("python-numpy" ,python2-numpy)
        ("zlib" ,zlib)))
     (native-inputs
-     `(("python-nose" ,python2-nose)
-       ("python-setuptools" ,python2-setuptools)))
+     `(("python-nose" ,python2-nose)))
     (home-page "http://bitbucket.org/james_taylor/bx-python/")
     (synopsis "Tools for manipulating biological data")
     (description
@@ -1403,7 +1400,6 @@ multiple sequence alignments.")
        ("zlib"              ,zlib)))
     (native-inputs
      `(("python-cython"     ,python-cython)
-       ("python-setuptools" ,python-setuptools)
        ;; Dependencies below are are for tests only.
        ("samtools"          ,samtools)
        ("bcftools"          ,bcftools)
@@ -1574,9 +1570,8 @@ databases.")
        ("python-numpy" ,python2-numpy)
        ("python-scipy" ,python2-scipy)))
     (native-inputs
-     `(("python-mock" ,python2-mock) ; for tests
-       ("python-pytz" ,python2-pytz) ; for tests
-       ("python-setuptools" ,python2-setuptools)))
+     `(("python-mock" ,python2-mock)   ; for tests
+       ("python-pytz" ,python2-pytz))) ; for tests
     (home-page "https://github.com/YeoLab/clipper")
     (synopsis "CLIP peak enrichment recognition")
     (description
@@ -1749,8 +1744,7 @@ time.")
        ("zlib" ,zlib)))
     (native-inputs
      `(("python-cython" ,python2-cython)
-       ("python-nose" ,python2-nose)
-       ("python-setuptools" ,python2-setuptools)))
+       ("python-nose" ,python2-nose)))
     (home-page "http://crossmap.sourceforge.net/")
     (synopsis "Convert genome coordinates between assemblies")
     (description
@@ -1848,8 +1842,7 @@ preparation protocols.")
                  (alist-delete 'check %standard-phases))))
     (native-inputs
      `(("python-cython" ,python-cython)
-       ("python-nose" ,python-nose)
-       ("python-setuptools" ,python-setuptools)))
+       ("python-nose" ,python-nose)))
     (home-page "https://code.google.com/p/cutadapt/")
     (synopsis "Remove adapter sequences from nucleotide sequencing reads")
     (description
@@ -1991,8 +1984,7 @@ trees (phylogenies) and characters.")
                ;; There is currently a test failure that only happens on some
                ;; systems, and only using "setup.py test"
                (lambda _ (zero? (system* "nosetests")))))))
-      (native-inputs `(("python2-setuptools" ,python2-setuptools)
-                       ("python2-nose" ,python2-nose)
+      (native-inputs `(("python2-nose" ,python2-nose)
                        ,@(package-native-inputs base))))))
 
 
@@ -2020,9 +2012,8 @@ trees (phylogenies) and characters.")
        ("python-pysam" ,python2-pysam)
        ("python-pybigwig" ,python2-pybigwig)))
     (native-inputs
-     `(("python-mock" ,python2-mock) ;for tests
-       ("python-pytz" ,python2-pytz) ;for tests
-       ("python-setuptools" ,python2-setuptools)))
+     `(("python-mock" ,python2-mock)   ;for tests
+       ("python-pytz" ,python2-pytz))) ;for tests
     (home-page "https://github.com/fidelram/deepTools")
     (synopsis "Tools for normalizing and visualizing deep-sequencing data")
     (description
@@ -2678,8 +2669,7 @@ comment or quality sections.")
        ("python-pysam" ,python2-pysam)
        ("python-networkx" ,python2-networkx)))
     (native-inputs
-     `(("python-cython" ,python2-cython)
-       ("python-setuptools" ,python2-setuptools)))
+     `(("python-cython" ,python2-cython)))
     (home-page "http://grit-bio.org")
     (synopsis "Tool for integrative analysis of RNA-seq type assays")
     (description
@@ -2925,8 +2915,7 @@ data.  It also provides the bgzip, htsfile, and tabix utilities.")
        ("python-numpy" ,python-numpy)
        ("python-matplotlib" ,python-matplotlib)))
     (native-inputs
-     `(("python-cython" ,python-cython)
-       ("python-setuptools" ,python-setuptools)))
+     `(("python-cython" ,python-cython)))
     (home-page "https://github.com/nboley/idr")
     (synopsis "Tool to measure the irreproducible discovery rate (IDR)")
     (description
@@ -3414,9 +3403,8 @@ linker_so='gcc -shared'); defines")))))
        ("python-scipy" ,python2-scipy)
        ("python-matplotlib" ,python2-matplotlib)))
     (native-inputs
-     `(("python-mock" ,python2-mock) ;for tests
-       ("python-pytz" ,python2-pytz) ;for tests
-       ("python-setuptools" ,python2-setuptools)))
+     `(("python-mock" ,python2-mock)   ;for tests
+       ("python-pytz" ,python2-pytz))) ;for tests
     (home-page "http://genes.mit.edu/burgelab/miso/index.html")
     (synopsis "Mixture of Isoforms model for RNA-Seq isoform quantitation")
     (description
@@ -3553,8 +3541,7 @@ files and writing bioinformatics applications.")
        ("python-pandas" ,python2-pandas)
        ("python-pysnptools" ,python2-pysnptools)))
     (native-inputs
-     `(("python-setuptools" ,python2-setuptools)
-       ("python-mock" ,python2-mock)
+     `(("python-mock" ,python2-mock)
        ("python-nose" ,python2-nose)
        ("unzip" ,unzip)))
     (home-page "https://github.com/PMBio/warpedLMM")
@@ -3616,8 +3603,7 @@ the phenotype as it models the data.")
          ("python-h5py" ,python2-h5py)))
       (native-inputs
        `(("python-cython" ,python2-cython)
-         ("python-nose" ,python2-nose)
-         ("python-setuptools" ,python2-setuptools)))
+         ("python-nose" ,python2-nose)))
       (home-page "https://github.com/PacificBiosciences/cDNA_primer")
       (synopsis "Analyze transcriptome data generated with the Iso-Seq protocol")
       (description
@@ -4741,8 +4727,7 @@ bioinformatics file formats, sequence alignment, and more.")
      ;; should be removed.
      `(("python-biopython" ,python2-biopython-1.66)))
     (native-inputs
-     `(("python-setuptools" ,python2-setuptools)
-       ("python-nose" ,python2-nose)))
+     `(("python-nose" ,python2-nose)))
     (home-page "http://github.com/fhcrc/seqmagick")
     (synopsis "Tools for converting and modifying sequence files")
     (description

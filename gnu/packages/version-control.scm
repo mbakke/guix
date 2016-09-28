@@ -1156,8 +1156,7 @@ Mercurial, Bazaar, Darcs, CVS, Fossil, and Veracity.")
     (build-system python-build-system)
     (arguments `(#:python ,python-2))
     (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)
-       ;; for the tests
+     `(;; for the tests
        ("python2-six" ,python2-six)))
     (propagated-inputs
      `(("python2-dateutil" ,python2-dateutil-2)
