@@ -409,8 +409,6 @@ instead of @command{python3}.")))
         (base32
          "1w4r09fvn6kd80m5mx4ws1wz100brkaq6hzzpwrns8cgjzjpl6c6"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://www.github.com/giampaolo/psutil")
     (synopsis "Library for retrieving information on running processes")
     (description
@@ -479,8 +477,6 @@ to providing full-strength password hashing for multi-user application.")
         (base32
          "0y6smdggwi5s72v6p1nn53dg6w05hna3d264cq6kas0lap73p8az"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://code.google.com/p/py-bcrypt")
     (synopsis
      "Bcrypt password hashing and key derivation")
@@ -514,8 +510,6 @@ John the Ripper).")
         (base32
          "14k8z7ndc3zk5xivnm4d8lncchx475ll5izpf8vmfbq7rp9yp5rj"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-pycrypto" ,python-pycrypto)))
     (inputs
@@ -544,8 +538,6 @@ Python interface around SSH networking concepts.")
         (base32
          "126rsryvw9vhbf3qmsfw9lf4l4xm2srmgs439lgma4cpag4s3ay3"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/jcgregorio/httplib2")
     (synopsis "Comprehensive HTTP client library")
     (description
@@ -571,8 +563,6 @@ other HTTP libraries.")
         (base32
          "1yj31j0asmrx4an9xvsaj2icdmzy6pw0glfpqrrkrphwdpi1xkv4"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("openssl" ,openssl)))
     (home-page
@@ -602,8 +592,6 @@ making them easy to handle and incorporate into other protocols.")
         (base32
          "177dfxsmk3k4cih6fh6v8d91bh4nqx7ns6pc07w7m7i3cvdx3c8n"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-pyyaml" ,python-pyyaml)
        ("python-six" ,python-six)))
@@ -688,8 +676,6 @@ etc. ")
     (arguments
      `(#:python ,python-2
        #:tests? #f)) ; no test target
-    (inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (home-page "https://bitbucket.org/brandon/backports.ssl_match_hostname")
     (synopsis "Backport of ssl.match_hostname() function from Python 3.5")
     (description
@@ -854,8 +840,6 @@ Python 3 support.")
        (base32
         "0g0ayql5b9mkjam8hym6zyg6bv77lbh66rv1fyvgqb17kfc1xkpj"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python" ,python)
        ("gmp" ,gmp)))
@@ -931,8 +915,6 @@ password storage.")
        (base32
         "0snmb8xffb3vsma0z67i0h0w2g2dy0p3gsgh9gi4i0kgc5l8spqh"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pypi.python.org/pypi/six/")
     (synopsis "Python 2 and 3 compatibility utilities")
     (description
@@ -988,8 +970,6 @@ datetime module, available in Python 2.3+.")
        (base32
         "0fqfglhy5khbvsipr3x7m6bcaqljh8xl5cw33vbfxy7qhmywm2n0"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://dateutil.readthedocs.io/en/stable/")
     (synopsis "Extensions to the standard datetime module")
     (description
@@ -1130,8 +1110,6 @@ Database API 2.0T.")
        (base32
         "0rj7r166i1dyrq0ihm5rijfmvhs8a04im28lv05c0c3v206v4rrf"))))
     (build-system python-build-system)
-    (inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (arguments
      `(#:python ,python-2 ; apparently incompatible with Python 3
        #:tests? #f))
@@ -1443,8 +1421,6 @@ software.")
         (base32
          "1h7zx4dfyclalg0fqnfjijpn0f793a9mx8sy3b27gd31nr6dhq3s"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments
      ;; error in setup.cfg: command 'test' has no such option 'buffer'
      '(#:tests? #f))
@@ -1471,8 +1447,6 @@ software.")
         (base32
          "1hyxg09kaj02ri0rmwjqi86wk4nd1akvv7n0dx77azz76wga4s9w"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments
      '(#:tests? #f)) ; no setup.py test command
     (home-page
@@ -1498,8 +1472,6 @@ matching them against a list of media-ranges.")
           (base32
             "164a43k7k2wsqqk1s6vavcdamvss4mz0vd6pwzv2h9n8rgwzxgzi"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments
      '(#:tests? #f)) ; FIXME: test suite fails
     (home-page "http://readthedocs.org/docs/nose/")
@@ -1524,8 +1496,6 @@ matching them against a list of media-ranges.")
             "1x4zjq1zlyrh8b9ba0cmafd3w94pxhid408kibyjd3s6h1lap6s7"))))
     (build-system python-build-system)
     (arguments `(#:tests? #f)) ; 'module' object has no attribute 'collector'
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-cov-core" ,python-cov-core)
        ("python-pytest-cov" ,python-pytest-cov)
@@ -1556,8 +1526,6 @@ interfaces and processes.")
         (base32
          "00yl6lskygcrddx5zspkhr0ibgvpknl4678kkm6s626539grq93q"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pypi.python.org/pypi/unittest2")
     (synopsis "Python unit testing library")
     (description
@@ -1578,8 +1546,6 @@ standard library.")
        (sha256
         (base32
          "0wbs4i4x3x7klr3v35ss6p9mcqz883i1xgcpkhvl7n2lyv6yhpda"))))
-    (inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (arguments
      `(#:python ,python-2
        #:tests? #f)))) ; no setup.py test command
@@ -1596,8 +1562,6 @@ standard library.")
         (base32
          "0561gz2w3i825gyl42mcq14y3dcgkapfiv5zv9a2bz15qxiijl56"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pylib.readthedocs.org/")
     (synopsis "Python library for parsing, I/O, instrospection, and logging")
     (description
@@ -1906,8 +1870,6 @@ style tests.")
         (base32
          "0cbj3plbllyz42c4b5xxgwaa7mml54lakslrn4kkhinxhdri22md"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://launchpad.net/testresources")
     (synopsis
      "Pyunit extension for managing test resources")
@@ -1969,8 +1931,6 @@ protocol.")
         (base32
          "0x9r2gwilcig5g54k60bxzg96zabizq1855lrprlb4zckalp9asc"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments
      '(#:tests? #f)) ; no setup.py test command
     (home-page "https://launchpad.net/python-fixtures")
@@ -2072,7 +2032,6 @@ and sensible default behaviors into your setuptools run.")
        ("python-pbr-0.11" ,python-pbr-0.11)))
     (inputs
      `(("python-pip" ,python-pip)
-       ("python-setuptools" ,python-setuptools)
        ;; Tests
        ("python-testtools" ,python-testtools)))
     (arguments
@@ -2130,8 +2089,6 @@ have failed since the last commit or what tests are currently failing.")
         (base32
          "01rbr4br4lsk0lwn8fb96zwd2xr4f0mg1w7iq3j11i8f5ig2nqs1"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://nedbatchelder.com/code/coverage")
     (synopsis "Code coverage measurement for Python")
     (description
@@ -2187,8 +2144,6 @@ It is useful for developing coverage plugins for these testing frameworks.")
         (base32
          "0y8d0zwiqar51kxj8lzmkvwc3b8kazb04gk5zcb4nzg5k68zmhq5"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pypi.python.org/pypi/discover/")
     (synopsis
      "Python test discovery for unittest")
@@ -2239,8 +2194,6 @@ tests written in a natural language style, backed up by Python code.")
                (base32
                 "1b90jf6m9vxh9nanhpyvqdq7hmfx5iggw1l8kq10jrs6xgr49qkr"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments `(#:tests? #f)) ; no tests
     (home-page "https://github.com/ianare/exif-py")
     (synopsis "Python library to extract EXIF data from image files")
@@ -2263,8 +2216,6 @@ files.")
                (base32
                 "0k881ffazpf8q1z8862g4bb3pzwpnz9whrci2mf311mvn1qbyqad"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments `(#:tests? #f)) ; no tests
     (home-page "http://github.com/digitalbazaar/pyld")
     (synopsis "Python implementation of the JSON-LD specification")
@@ -2286,8 +2237,6 @@ files.")
                (base32
                 "05lgwf9rz1kn465azy2bpb3zmpnsn9gkypbhnjlclchv98ssgc1h"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments `(#:tests? #f)) ; no tests
     (home-page "http://python-requests.org/")
     (synopsis "Python CA certificate bundle")
@@ -2322,8 +2271,6 @@ is used by the Requests library to verify HTTPS requests.")
                  (("'locale'")
                   (string-append "'" glibc "/bin/locale'"))))
              #t)))))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://click.pocoo.org")
     (synopsis "Command line library for Python")
     (description
@@ -2424,8 +2371,6 @@ than Python’s urllib2 library.")
         (base32
          "11ivq1bm7v0yb4nsfbv9m7g7lyjn112gbvpjnjz8nv1fx633dm5c"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (synopsis "Python library for version number discovery")
     (description "Vcversioner is a Python library that inspects tagging
 information in a variety of version control systems in order to discover
@@ -2479,8 +2424,6 @@ version numbers.")
               (base32
                "12hhblqy1ajvidm38im4171x4arg83pfmziyn53nizp29p3m14gi"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://pypi.python.org/pypi/Unidecode")
     (synopsis "ASCII transliterations of Unicode text")
     (description
@@ -2601,8 +2544,6 @@ environments and back.")
     (build-system python-build-system)
     (inputs
      `(("libyaml" ,libyaml)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pyyaml.org/wiki/PyYAML")
     (synopsis "YAML parser and emitter for Python")
     (description
@@ -2665,8 +2606,6 @@ object.")
         (base32
          "1hvip33wva3fnmvfp9x5klqri7hpl1hkgqmjbss18nmrb7zimv54"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://github.com/mitsuhiko/markupsafe")
     (synopsis "XML/HTML/XHTML markup safe string implementation for Python")
     (description
@@ -2713,8 +2652,6 @@ written in pure Python.")
                (base32
                 "0nmqsfmiw4arjxqkmf9z66ml950pcdjk6aq4gin4sywmzdjw5fzp"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://defunkt.io/pystache/")
     (synopsis "Python logic-less template engine")
     (description
@@ -2766,8 +2703,6 @@ logging and tracing of the execution.")
         (base32
          "1ylnjnw1x4b2y7blr6x35ncdzn69k253kw4cdkv6asdb21w73ny7"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (arguments
      '(#:tests? #f)) ; no setup.py test command
     (home-page "http://docutils.sourceforge.net/")
@@ -2795,8 +2730,6 @@ reStructuredText.")
         (base32
          "0lagrwifsgn0s8bzqahpr87p7gd38xja8f06akscinp6hj89283k"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pygments.org/")
     (synopsis "Syntax highlighting")
     (description
@@ -2855,8 +2788,6 @@ sources.")
        ;; before 1980'
        #:configure-flags '("--single-version-externally-managed"
                            "--record=sphinx-rtd-theme.txt")))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-docutils" ,python-docutils)
        ("python-sphinx" ,python-sphinx)))
@@ -2907,8 +2838,6 @@ which can produce feeds in RSS 2.0, RSS 0.91, and Atom formats.")
         (base32
          "1dpq0vb01p36jjwbhhd08ylvrnyvcc82yxx3mwjx6awrycjyw6j7"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     ;; No "test" command supplied to setuptools, so unless there's another way
     ;; to run tests, we're skipping them!
     (arguments '(#:tests? #f))
@@ -3100,8 +3029,6 @@ mining and data analysis.")
     (propagated-inputs
      `(("python-click" ,python-click)
        ("python-redis" ,python-redis)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://python-rq.org/")
     (synopsis "Simple job queues for Python")
     (description
@@ -3263,7 +3190,6 @@ association studies (GWAS) on extremely large data sets.")
     (outputs '("out" "doc"))
     (inputs
      `(("which" ,which)
-       ("python-setuptools" ,python-setuptools)
        ("python-matplotlib" ,python-matplotlib)
        ("python-sphinx" ,python-sphinx)
        ("python-pyparsing" ,python-pyparsing)
@@ -3887,8 +3813,6 @@ SQLAlchemy Database Toolkit for Python.")
        (base32
         "0lx15kcbby9zisx33p2h5hgakgwh2bvh0ibag8z0px4j6ifhs41x"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://launchpad.net/python-distutils-extra/")
     (synopsis "Enhancements to Python's distutils")
     (description
@@ -3916,8 +3840,6 @@ Python's distutils.")
         (base32
          "0y7vzff9xgbnaay7m0va1arl6g68ncwrvbgwl7jqlclsahzzb09d"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (arguments
      ;; incompatible with Python 3 (exception syntax)
      `(#:python ,python-2
@@ -3957,9 +3879,7 @@ services for your Python modules and applications.")
        ("openjpeg" ,openjpeg)
        ("libtiff"  ,libtiff)
        ("libwebp"  ,libwebp)))
-    (propagated-inputs
-     `(;; Used at runtime for pkg_resources
-       ("python-setuptools" ,python-setuptools)))
+    ;; Note: setuptools used at runtime for pkg_resources
     (arguments
      `(#:phases (modify-phases %standard-phases
                   (add-before
@@ -4105,8 +4025,6 @@ a front-end for C compilers or analysis tools.")
     (inputs
      `(("libxcb" ,libxcb)
        ("python-six" ,python-six)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-cffi" ,python-cffi))) ; used at run time
     (arguments
@@ -4200,8 +4118,6 @@ PNG, PostScript, PDF, and SVG file output.")
         (base32 "1a5vwhflfd9sh3rfb40xlyipldgdzfff6brman57hqv3661jw0lh"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; no test target
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://pypi.python.org/pypi/decorator/")
     (synopsis "Python module to simplify usage of decorators")
     (description
@@ -4263,8 +4179,6 @@ Python language binding specification.")
      `(("python-psutil" ,python-psutil)
        ("python-drmaa" ,python-drmaa)
        ("python-pyzmq" ,python-pyzmq)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pygridtools/gridmap")
     (synopsis "Create jobs on a cluster directly from Python")
     (description
@@ -4317,7 +4231,6 @@ child application and control it as if a human were typing commands.")
                (base32
                 "1gqr73i150yzj3mz32854vj93x07yr52kn8fdckwa41ll8wgficc"))))
     (build-system python-build-system)
-    (native-inputs `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pypa/setuptools_scm/")
     (synopsis "Manage Python package versions in SCM metadata")
     (description
@@ -4372,8 +4285,6 @@ common operations on files to be invoked on those path objects directly.")
     (build-system python-build-system)
     (propagated-inputs
      `(("python-pathpy" ,python-pathpy)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/vivainio/pickleshare")
     (synopsis "Tiny key value database with concurrency support")
     (description
@@ -4597,8 +4508,6 @@ computing.")
           (base32
             "0cafaiwixgpxwh9dsd28qb0dbzsj6xpxjdkyk30ns91ps10mq422"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page
       "http://cheeseshop.python.org/pypi/isodate")
     (synopsis
@@ -4625,8 +4534,6 @@ ISO 8601 dates, time and duration.")
     (build-system python-build-system)
     (propagated-inputs
       `(("python-six" ,python-six))) ; required to "import html5lib"
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (arguments
      `(#:test-target "check"))
     (home-page
@@ -4664,7 +4571,6 @@ and written in Python.")
             (substitute* "urwid/tests/test_event_loops.py"
               (("test_remove_watch_file")
                 "disable_remove_watch_file")))))))
-    (native-inputs `(("python-setuptools" ,python-setuptools)))
     (home-page "http://urwid.org")
     (synopsis "Console user interface library for Python")
     (description
@@ -4859,8 +4765,6 @@ converts incoming documents to Unicode and outgoing documents to UTF-8.")
     (native-inputs
       `(("python2-mock" ,python2-mock) ; for the tests
         ("unzip" ,unzip))) ; for unpacking the source
-    (inputs
-      `(("python2-setuptools" ,python2-setuptools)))
     (arguments
      `(#:python ,python-2 ; Otherwise tests fail with a syntax error.
        #:tests? #f ; The tests apparently download an external URL.
@@ -4886,8 +4790,6 @@ options.")
          (base32
           "1xg6gbva1yswghiycmgincv6ab4bn7hpm720ndbj40h8xycmnfvi"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (arguments
      ;; tests fail with message
      ;; AttributeError: 'module' object has no attribute 'tests'
@@ -4920,8 +4822,6 @@ another XPath engine to find the matching elements in an XML or HTML document.")
           (base32
             "1plw237a4zib4z8s62g0mrs8gm3kjfrp5sxh6bbk9nl3rdls2mln"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page
       "https://bitbucket.org/al45tair/netifaces")
     (synopsis
@@ -4974,7 +4874,6 @@ of the structure, dynamics, and functions of complex networks.")
        (sha256
         (base32 "0fi4b63sj60hvi7rfydvmz2icl4wj74djw5sn2gl8hxd02qw4b91"))))
     (build-system python-build-system)
-    (inputs `(("python-setuptools" ,python-setuptools)))
     (home-page "https://bitbucket.org/johanneskoester/snakemake")
     (synopsis "Python-based execution environment for make-like workflows")
     (description
@@ -5030,8 +4929,6 @@ and statistical routines from scipy and statsmodels.")
        (sha256
         (base32 "19yp0gy4i7p4g6l3b8vaqkj9qj7yqb5kqy0qgbdagpzgkdz958yz"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://www.sympy.org/")
     (synopsis "Python library for symbolic mathematics")
     (description
@@ -5085,8 +4982,6 @@ falling into the Python interpreter.")
        (sha256
         (base32 "1mz26cxn4x8bbgv0rn0mvj2z05y31rkc8009nvdlb3lam5b4mj3y"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (native-inputs
      `(("unzip" ,unzip)))
     (arguments
@@ -5124,8 +5019,6 @@ falling into the Python interpreter.")
     (arguments
      `(#:python ,python-2                         ;Python 2 only
        #:tests? #f))                              ;no tests
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://python-xlib.sourceforge.net/")
     (synopsis "Python X11 client library")
     (description
@@ -5146,8 +5039,6 @@ It is written entirely in Python.")
         (base32
          "171b7ip0hsq5qm83np40h3phlr36ym18w0lay0a8v08kvy3sy1jv"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-six" ,python-six)))
     (home-page
@@ -5212,8 +5103,6 @@ connection to each user.")
            (base32
             "19fh75lni9pb673n2fn505m1rckm0af0szcv5xx1qm1xpa940glb"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/cython/backports_abc")
     (synopsis "Backport of additions to the 'collections.abc' module")
     (description
@@ -5304,8 +5193,6 @@ applications.")
           (base32
             "002rkl4lsn6x2mxmf8ar00l0m8i3mzrc6pnzz77blyksmpsxa4x1"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pep8.readthedocs.org/")
     (synopsis "Python style guide checker")
     (description
@@ -5328,8 +5215,6 @@ PEP 8.")
           (base32
             "0qs2sgqszq7wcplis8509wk2ygqcrwzbs1ghfj3svvivq2j377pk"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page
       "https://github.com/pyflakes/pyflakes")
     (synopsis "Passive checker of Python programs")
@@ -5620,9 +5505,6 @@ term.js Javascript terminal emulator library.")
                 "08ay3x4ijarwhl60gqx2i9jzq6pxs20p4snc2d1q5jagh4rn39lb"))))
     (build-system python-build-system)
     (arguments '(#:test-target "check"))
-    (propagated-inputs
-     ;; XXX: module not found if setuptools is not available.
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://github.com/behdad/fonttools")
     (synopsis "Tools to manipulate font files")
     (description
@@ -5652,8 +5534,6 @@ from an XML-based format.")
         (base32
          "0g6n288l83sfwavxh1aryi0aqvsr3sp7v6f903mckwqa4scpky62"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (synopsis "Tool and library for manipulating LilyPond files")
     (description "This package provides a Python library to parse, manipulate
 or create documents in LilyPond format.  A command line program ly is also
@@ -5676,8 +5556,6 @@ provided that can be used to do various manipulations with LilyPond files.")
           (base32
             "1iddva7v3fq0aqzsahkazxr7vpw28mqcrsy818z4wyiqnkplbhlg"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "http://github.com/ActiveState/appdirs")
     (synopsis
       "Determine platform-specific dirs, e.g. a \"user data dir\"")
@@ -5777,8 +5655,6 @@ reading and writing MessagePack data.")
           "06dxjlbcicq7q3vqy8agq11ra01kvvd47j4mk6dmghjsyzyckxd1"))))
     (build-system python-build-system)
     (arguments `(#:tests? #f)) ;; No tests.
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/drkjam/netaddr/")
     (synopsis "Pythonic manipulation of  network addresses")
     (description
@@ -5808,8 +5684,6 @@ and MAC network addresses.")
      ;; Tests are not included in the tarball, they are only available in the
      ;; git repository.
      `(#:tests? #f))
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/GrahamDumpleton/wrapt")
     (synopsis "Module for decorators, wrappers and monkey patching")
     (description
@@ -5833,8 +5707,6 @@ and MAC network addresses.")
        (base32
         "0c7gh3lsdjds262h0v1sqc66l7hqgfwbakn96qrhdbl0i3vm5yz8"))))
   (build-system python-build-system)
-  (inputs
-    `(("python-setuptools" ,python-setuptools)))
   (home-page "https://bitbucket.org/micktwomey/pyiso8601")
   (synopsis "Module to parse ISO 8601 dates")
   (description
@@ -5860,8 +5732,6 @@ and MAC network addresses.")
           (base32
             "0yz0bcbwx8r2c01czzfpbrxddynxyk9k95jj8h6sgcb7xmfvl998"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/atdt/monotonic")
     (synopsis "Implementation of time.monotonic() for Python 2 & < 3.3")
     (description
@@ -5941,8 +5811,6 @@ Unicode-aware.  It is not intended as an end-user tool.")
         (base32
          "0diwsicwmiq2cpzpxri7cyl5fmsvicafw6nfqf6p6p322dji2g45"))))
     (build-system python-build-system)
-    (inputs
-      `(("python-setuptools" ,python-setuptools)))
     (home-page "http://code.google.com/p/prettytable/")
     (synopsis "Display tabular data in an ASCII table format")
     (description
@@ -6046,8 +5914,6 @@ suitable for a wide range of protocols based on the ASN.1 specification.")
          (base32
           "0drqgw81xd3fxdlg89kgd79zzrabvfncvkbybi2wr6w2y4s1jmhh"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-pyasn1" ,python-pyasn1)))
     (home-page "http://sourceforge.net/projects/pyasn1/")
@@ -6130,8 +5996,6 @@ versions of Python.")
         (base32
          "0frxgmgi234lr9hylg62j69j4ik5zhg0wz05w5dhyacbjfnrl68n"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/kjd/idna")
     (synopsis "Internationalized domain names in applications")
     (description
@@ -6160,8 +6024,6 @@ specification.")
         (base32
          "0r5r7ygz9m6d2bklflbl84cqhjkc2q12xgis8268ygjh30g2q3wk"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/alex/pretend")
     (synopsis "Library for stubbing in Python")
     (description
@@ -6186,8 +6048,6 @@ responses, rather than doing any computation.")
         (base32
          "15h1iz2klnpb4f8djxy7cpbnyn3wbjp7bnj4pz6s7w6plghbq524"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pyca/cryptography")
     (synopsis "Test vectors for the cryptography package")
     (description
@@ -6221,7 +6081,6 @@ responses, rather than doing any computation.")
     (native-inputs
      `(("python-cryptography-vectors" ,python-cryptography-vectors)
        ("python-hypothesis" ,python-hypothesis)
-       ("python-setuptools" ,python-setuptools)
        ("python-pretend" ,python-pretend)
        ("python-pyasn1" ,python-pyasn1)
        ("python-pyasn1-modules" ,python-pyasn1-modules)
@@ -6266,8 +6125,6 @@ message digests and key derivation functions.")
        ("python-six" ,python-six)))
     (inputs
      `(("openssl" ,openssl)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/pyca/pyopenssl")
     (synopsis "Python wrapper module around the OpenSSL library")
     (description
@@ -6466,8 +6323,6 @@ serve the same purpose: provide Python bindings for libmagic.")))
     (build-system python-build-system)
     (inputs
      `(("python-six" ,python-six)))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://packages.debian.org/sid/python-debian")
     (synopsis "Debian package related modules")
     (description
@@ -6507,8 +6362,6 @@ Debian-related files, such as:
         (base32
          "1ak87ikcw34fivcgiz2xvi938dmclh078az65l9x3rmgljrkhgp5"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/chardet/chardet")
     (synopsis "Universal encoding detector for Python 2 and 3")
     (description
@@ -6567,8 +6420,6 @@ programatically with command-line parsers like @code{getopt} and
         (base32
          "11p75zpfz3ffhz21nzx9wb23xs993ck5s6hkjcvhswwizni5jynw"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pypi.python.org/pypi/zope.event")
     (synopsis "Event publishing system for Python")
     (description "Zope.event provides an event publishing API, intended for
@@ -6716,8 +6567,6 @@ tests.")
         (base32
          "1rslyph0klk58dmjjy4j0jxy21k03azksixc3x2xhqbkv97cmzml"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://pypi.python.org/pypi/zope.i18nmessageid")
     (synopsis "Message identifiers for internationalization")
     (description "Zope.i18nmessageid provides facilities for declaring
@@ -7154,8 +7003,6 @@ tables.")
     (build-system python-build-system)
     (native-inputs
      `(("python-six" ,python-six))) ; for tests
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/liris/websocket-client")
     (synopsis "WebSocket client for Python")
     (description "The Websocket-client module provides the low level APIs for
@@ -7483,8 +7330,6 @@ Blog, News or Announcements section to a Sphinx website.")
                (base32
                 "057qzi46h5dmxdqknsbrssn78lmqjlnm624iqdhrnpk26zcbi1d7"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/kennethreitz/args")
     (synopsis "Command-line argument parser")
     (description
@@ -7530,8 +7375,6 @@ output, progress bar display, and pipes.")
                (base32
                 "1fdafq5hkis1fxqlmhw0sn44zp2ar46nxhbc22cvwg7hsd8z5gsa"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/berkerpeksag/astor")
     (synopsis "Read and write Python ASTs")
     (description
@@ -7642,8 +7485,6 @@ authenticated session objects providing things like keep-alive.")
     (arguments
      `(#:python ,python-2
        #:tests? #f)) ; no test target
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (home-page "https://github.com/MiCHiLU/python-functools32")
     (synopsis
      "Backport of the functools module from Python 3.2.3")
@@ -7665,8 +7506,6 @@ authenticated session objects providing things like keep-alive.")
           "1vcb34dqhzkhbq1957vdjszhhm5y3j9ba88dgwhqx2zynhmk9qig"))))
     (build-system python-build-system)
     (arguments `(#:python ,python-2))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (home-page "https://github.com/agronholm/pythonfutures")
     (synopsis
      "Backport of the concurrent.futures package from Python 3.2")
@@ -7707,7 +7546,6 @@ concurrent.futures package from Python 3.2")
       (native-inputs
        `(("python2-futures" ,python2-futures)
          ("python2-pytest" ,python2-pytest)
-         ("python2-setuptools" ,python2-setuptools)
          ,@(package-native-inputs promise))))))
 
 (define-public python-urllib3
@@ -7758,8 +7596,6 @@ supports url redirection and retries, and also gzip and deflate decoding.")
       (base32
        "1716z9pq1r5ys3nkg7wdrb3h2f9rmd0zdxpxzmx3bgwgf6xg48gb"))))
    (build-system python-build-system)
-   (inputs
-    `(("python-setuptools" ,python-setuptools)))
    (synopsis "colored terminal text rendering for Python")
    (description "Colorama is a Python library for rendering colored terminal
 text.")
@@ -7807,8 +7643,6 @@ library as well as on the command line.")
       (base32
        "18qfzfm40bgx672lkg8q9x5hdh76n7vax99aank7vh2nw21wg70m"))))
    (build-system python-build-system)
-   (inputs
-    `(("python-setuptools" ,python-setuptools)))
    (synopsis "Plugin and hook calling mechanism for Python")
    (description "Pluggy is an extraction of the plugin manager as used by
 Pytest but stripped of Pytest specific details.")
@@ -7864,8 +7698,6 @@ servers.")
       (base32
        "0g9xvl69y7nr3w7ag4fsp6sm4fqf6vrqjw7504x2hzrrsh3ampq8"))))
    (build-system python-build-system)
-   (inputs
-    `(("python-setuptools" ,python-setuptools)))
    (synopsis "JSON Matching Expressions")
    (description "JMESPath (pronounced “james path”) is a Python library that
 allows one to declaratively specify how to extract elements from a JSON
@@ -7893,7 +7725,6 @@ document.")
       ("python-docutils" ,python-docutils)
       ("python-mock" ,python-mock)
       ("python-nose" ,python-nose)
-      ("python-setuptools" ,python-setuptools)
       ("python-tox" ,python-tox)
       ("python-wheel" ,python-wheel)
       ("python-jmespath" ,python-jmespath)))
@@ -7924,7 +7755,6 @@ interface to the Amazon Web Services (AWS) API.")
       ("python-mock" ,python-mock)
       ("python-nose" ,python-nose)
       ("python-rsa" ,python-rsa)
-      ("python-setuptools" ,python-setuptools)
       ("python-sphinx" ,python-sphinx)
       ("python-tox" ,python-tox)
       ("python-wheel" ,python-wheel)
@@ -7978,9 +7808,6 @@ seamlessly into your existing Python unit testing work flow.")
                (base32
                 "15kzcr5pchf3id4ikdvlv752rc0j4d912n589l4rifp8qsj19l1x"))))
     (build-system python-build-system)
-    (native-inputs
-     `(;; setuptools required for python-2 variant
-       ("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-pytest" ,python-pytest)))
     (synopsis "Set-up and tear-down fixtures for unit tests")
@@ -8159,10 +7986,7 @@ and to spawn subprocesses to handle requests.")
     (build-system python-build-system)
     (native-inputs
      `(("python-nose" ,python-nose)))
-    (propagated-inputs
-     ;; This package uses pkg_resources, part of setuptools, during runtime,
-     ;; hence why not a native-input.
-     `(("python-setuptools" ,python-setuptools)))
+    ;; Note: setuptools used at runtime for pkg_resources
     (home-page "http://pythonpaste.org/deploy/")
     (synopsis
      "Load, configure, and compose WSGI applications and servers")
@@ -9061,8 +8885,6 @@ is made as zipfile like as possible.")
                         port)
                (close-port port)
                #t))))))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      ;; python-magic needs to be able to find libmagic.so.
      `(("file" ,file)))
@@ -9097,8 +8919,6 @@ the same purpose: to provide Python bindings for libmagic.")
      ;; s3cmd is written for python2 only and contains no tests.
      `(#:python ,python-2
        #:tests? #f))
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (inputs
      `(("python2-dateutil" ,python2-dateutil)
        ;; The python-file package also provides a magic.py module.
@@ -9193,8 +9013,6 @@ development version of CPython that are not available in older releases.")
                (strip-python2-variant python-bz2file))))
     (package
       (inherit base)
-      (native-inputs
-       `(("python2-setuptools" ,python2-setuptools)))
       (arguments
        `(#:python ,python-2
          #:phases
@@ -9251,7 +9069,6 @@ to support both Python 2 and Python 3 with minimal overhead.")
     (build-system python-build-system)
     (native-inputs
       `(("python-cython" ,python-cython)
-        ("python-setuptools" ,python-setuptools)
         ("python-sphinx" ,python-sphinx)))
     (inputs
       `(("pari-gp" ,pari-gp)))
@@ -9313,7 +9130,6 @@ respectively.")
                                    "            line += ' -L" pcre "/lib"
                                    " -L " libgc "/lib'")))
                   #t))))))
-  (native-inputs `(("python2-setuptools" ,python2-setuptools)))
   (inputs `(("pcre" ,pcre)
             ("libgc" ,libgc)))
   (home-page "https://shedskin.github.io/")
@@ -9361,8 +9177,6 @@ to occurences in strings and comments.")
         (base32
          "0i283z1pivmir61z8kbiycigc94l61v33ygzkhczf1ifq7cppyds"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/ultrabug/py3status")
     (synopsis "Extensible i3status wrapper written in Python")
     (description "py3status is an i3status wrapper which extends i3status
@@ -9394,7 +9208,6 @@ own code, responding to click events and updating clock every second.")
              (zero? (system* "py.test" "-vv" "tests" "README.rst")))))))
     (native-inputs
      `(("python-pytest" ,python-pytest)
-       ("python-setuptools" ,python-setuptools)
        ("python-six" ,python-six)))
     (home-page "https://github.com/ionelmc/python-tblib")
     (synopsis "Traceback serialization library")
@@ -9458,8 +9271,6 @@ provides support for parsing, splitting and formatting SQL statements.")
                (base32
                 "04h0m54dyqg49vyarq26mry6kbivnpl47rnmmrk9qn8wpfxviybr"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://greenlet.readthedocs.io/")
     (synopsis "Lightweight in-process concurrent programming")
     (description
@@ -9522,8 +9333,6 @@ to provide a high-level synchronous API on top of the libev event loop.")
                (base32
                 "0ydxrp9myw1mvsz3qfzx5579y5llmqa82pxvqchgp5syczffi450"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-zope-interface" ,python-zope-interface)))
     (home-page "https://twistedmatrix.com/")
@@ -9634,8 +9443,6 @@ data in Python.")
          "10pb864if9qi2pq9lfb9m8f7z7ss6rml80gf1d9h64lap5crjnjj"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; XXX: needs zookeeper
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-six" ,python-six)))
     (home-page "https://kazoo.readthedocs.org")
@@ -9664,8 +9471,6 @@ programming errors.")
                 "1id6sr159p6aa13bxcqyr9gln8sqg1l0ddzns5iws8kk5q1p5cfv"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; XXX: needs zookeeper, kafka, etc.
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-gevent" ,python-gevent)
        ("python-kazoo" ,python-kazoo)
@@ -9727,8 +9532,6 @@ specified in POSIX.1-2001 and POSIX.1-2008.")
                (base32
                 "02vgirw2bcgvpcxhv5hf3yvvb4h5wzd1lpjx8na5psdmaffj6l3z"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python2-setuptools" ,python2-setuptools)))
     (arguments
      `(#:tests? #f
        #:python ,python-2))
@@ -9752,8 +9555,6 @@ etc.")
                (base32
                 "016kf3irrclpkpvcm7q0gmkfibq7jgy30a9v73pp42bq9h9a32bl"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/agoragames/chai")
     (synopsis "Mocking framework for Python")
     (description
@@ -9804,8 +9605,6 @@ datetime type.")
               (base32
                "1jhnxgnw8y3mbzjssixh6qkc7a3afc4fygajhqrqalnilyvpzshq"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://github.com/jpvanhal/inflection")
     (synopsis "Python string transformation library")
     (description
@@ -9828,8 +9627,6 @@ underscored string.")
                (base32
                 "1hz1x9blsbxya1y9nnhnwwdnqmakxi9mc0jkwj0rn6b1h44i0f86"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "http://github.com/toastdriven/pylev")
     (synopsis "Levenshtein distance implementation in Python")
     (description "Pure Python Levenshtein implementation, based off the
@@ -9880,8 +9677,6 @@ docstring and colored output.")
                (base32
                 "0s22aqqkdscyh8sjspyyax7qa1aiz8p4midrnyf39717fhfczm6x"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/ionelmc/python-lazy-object-proxy")
     (synopsis "Lazy object proxy for python")
     (description
@@ -9905,8 +9700,6 @@ until the object is actually required, and caches the result of said call.")
               "0jr4v2pd90i6l1xxbss2m05psbjaxvyvvvpq44wycijpfgjqln8i"))))
   (build-system python-build-system)
   (arguments '(#:tests? #f)) ; XXX: requires internet access
-  (native-inputs
-   `(("python-setuptools" ,python-setuptools)))
   (home-page "http://www.dnspython.org")
   (synopsis "DNS toolkit for Python")
   (description
@@ -9937,8 +9730,6 @@ It supports TSIG authenticated messages and EDNS0.")
              (substitute* "setup.py"
                (("dnspython3") "dnspython"))
              #t)))))
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-dnspython" ,python-dnspython)
        ("python-idna" ,python-idna)))
@@ -9962,8 +9753,6 @@ It supports TSIG authenticated messages and EDNS0.")
                (base32
                 "1jwg9z4rz51mcka1821rwgycsd0mcicyp1kiwjfa2kvg8bm9p2qd"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/hamstah/ukpostcodeparser")
     (synopsis "UK Postcode parser for Python")
     (description
@@ -10022,8 +9811,6 @@ addresses, and phone numbers.")
                (base32
                 "1f5m28vkh4ksq3d80d8mmd2z8wxvc3mgy2pmrv2751dm2xgznm4w"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-pyyaml" ,python-pyyaml)))
     (home-page "https://github.com/mk-fg/pretty-yaml")
@@ -10047,8 +9834,6 @@ YAML-serialized data.")
                (base32
                 "0arc6njvs6i9v9hgvzk5m50296g7zy5m9d7pyb43vdsdgxrci5gy"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://flexmock.readthedocs.org")
     (synopsis "Testing library for Python")
     (description
@@ -10071,8 +9856,6 @@ mocks, stubs and fakes.")
                 "1li49irsqha17nrda4nsb48biyy0rarp9pphf0jpqwm5zr8hv569"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; no tests
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (propagated-inputs
      `(("python-arrow" ,python-arrow)
        ("python-blinker" ,python-blinker)
@@ -11071,8 +10854,6 @@ with an associated set of resolve methods that know how to fetch data.")
           "01hwzjc1zshk4vvxrcghm398fpy4jls66dyz06g07mrwqif8878p"))))
     (build-system python-build-system)
     (arguments `(#:tests? #f)) ; fails to import test modules
-    (native-inputs
-     `(("python-setuptools" ,python-setuptools)))
     (inputs
      `(("python-bcrypt" ,python-bcrypt)
        ("python-click" ,python-click)
@@ -11124,7 +10905,6 @@ transfers.")
       (inherit base)
       (native-inputs
        `(("python2-futures" ,python2-futures)
-         ("python2-setuptools" ,python2-setuptools)
          ,@(package-native-inputs base))))))
 
 (define-public python-setproctitle
