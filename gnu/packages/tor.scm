@@ -208,11 +208,7 @@ networks.")
            ;; After all the patching we run the tests after installing.
            ;; This is also a known issue:
            ;; https://github.com/micahflee/onionshare/issues/284
-           (lambda _ (zero? (system* "nosetests" "test")))))
-       ;; can't compress the egg because it expects to find all the resources
-       ;; inside the egg as though it were a folder.
-       #:configure-flags '("--single-version-externally-managed" "--root=/")
-       ))
+           (lambda _ (zero? (system* "nosetests" "test")))))))
     (native-inputs
      `(("python-nose" ,python-nose)))
     (inputs

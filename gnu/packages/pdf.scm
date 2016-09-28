@@ -629,11 +629,6 @@ using a stylus.")
                (base32
                 "0rz2pg04wnzjjm2f5a8ik9v8s54mv4xrjhv5liqjijqv6awh12gl"))))
     (build-system python-build-system)
-    (arguments
-     ;; Prevent creation of the egg. Without this flag, various artifacts
-     ;; from the build inputs end up in the final python3 output. It also
-     ;; works around https://debbugs.gnu.org/cgi/bugreport.cgi?bug=20765 .
-     `(#:configure-flags '("--single-version-externally-managed" "--root=/")))
     (propagated-inputs
      `(("python-pillow" ,python-pillow)))
     (home-page "http://www.reportlab.com")

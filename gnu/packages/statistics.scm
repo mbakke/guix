@@ -1382,13 +1382,7 @@ and fast file reading.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (replace 'check (lambda _ (zero? (system* "nosetests" "-v"))))
-         (add-after 'unpack 'prevent-generation-of-egg-archive
-          (lambda _
-            (substitute* "setup.py"
-              (("from setuptools import setup")
-               "from distutils.core import setup"))
-            #t)))))
+         (replace 'check (lambda _ (zero? (system* "nosetests" "-v")))))))
     (propagated-inputs
      `(("python-numpy" ,python-numpy)
        ("python-scipy" ,python-scipy)

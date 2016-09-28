@@ -2699,12 +2699,6 @@ sources.")
         (base32
          "19nw3rn7awplcdrz63kg1njqwkbymfg9lwn7l2grhdyhyr2gaa8g"))))
     (build-system python-build-system)
-    (arguments
-     `(;; With standard flags, the install phase attempts to create a zip'd
-       ;; egg file, and fails with an error: 'ZIP does not support timestamps
-       ;; before 1980'
-       #:configure-flags '("--single-version-externally-managed"
-                           "--record=sphinx-rtd-theme.txt")))
     (inputs
      `(("python-docutils" ,python-docutils)
        ("python-sphinx" ,python-sphinx)))
@@ -3739,12 +3733,7 @@ Python's distutils.")
     (arguments
      ;; incompatible with Python 3 (exception syntax)
      `(#:python ,python-2
-       #:tests? #f
-       ;; With standard flags, the install phase attempts to create a zip'd
-       ;; egg file, and fails with an error: 'ZIP does not support timestamps
-       ;; before 1980'
-       #:configure-flags '("--single-version-externally-managed"
-                           "--record=elib.txt")))
+       #:tests? #f))
     (home-page "https://github.com/dieterv/elib.intl")
     (synopsis "Enhanced internationalization for Python")
     (description
@@ -3777,17 +3766,6 @@ services for your Python modules and applications.")
     ;; Note: setuptools used at runtime for pkg_resources
     (arguments
      `(#:phases (modify-phases %standard-phases
-                  (add-before
-                   'install 'disable-egg-compression
-                   (lambda _
-                     ;; Leave the .egg uncompressed since compressing it would
-                     ;; prevent the GC from identifying run-time dependencies.
-                     ;; See <http://bugs.gnu.org/20765>.
-                     (let ((port (open-file "setup.cfg" "a")))
-                       (display "\n[easy_install]\nzip_ok = 0\n"
-                                port)
-                       (close-port port)
-                       #t)))
                   (add-after
                    'install 'check-installed
                    (lambda _
@@ -6101,15 +6079,7 @@ a hash value.")
                        (substitute* "libarchive/ffi.py"
                          (("find_library\\('archive'\\)")
                           (string-append "'" libarchive
-                                         "/lib/libarchive.so'"))))
-
-                     ;; Do not make a compressed egg (see
-                     ;; <http://bugs.gnu.org/20765>).
-                     (let ((port (open-file "setup.cfg" "a")))
-                       (display "\n[easy_install]\nzip_ok = 0\n"
-                                port)
-                       (close-port port)
-                       #t))))))
+                                         "/lib/libarchive.so'")))))))))
     (inputs
      `(("libarchive" ,libarchive)))
     (home-page "https://github.com/Changaco/python-libarchive-c")
@@ -8693,9 +8663,6 @@ CloudFront content delivery network.")
       `(;; Tests fail with "ValueError: _type_ 'v' not supported" on Python 3,
         ;; and on Python 2 they need the dl module deprecated since Python 2.6.
         #:tests? #f
-        ;; Prevent creation of the egg. This works around
-        ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=20765 .
-        #:configure-flags '("--single-version-externally-managed" "--root=/")
         ;; Hard-code the path to pkg-config.
         #:phases
         (modify-phases %standard-phases
@@ -10208,10 +10175,7 @@ failures.")
                 "06032agzhw1i9d9qlhfblnl3dw5hcyxhagn7b120zhrszbjzfbh3"))))
     (build-system python-build-system)
     (arguments
-     `(#:tests? #f ; Fails with recent pytest and pep8. See upstream issues #8 and #12.
-       ;; Prevent creation of the egg. This works around
-       ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=20765 .
-       #:configure-flags '("--single-version-externally-managed" "--root=/")))
+     `(#:tests? #f)) ; Fails with recent pytest and pep8. See upstream issues #8 and #12.
     (native-inputs
      `(("python-pytest" ,python-pytest)))
     (propagated-inputs
@@ -10236,10 +10200,7 @@ failures.")
                 "0flag3n33kbhyjrhzmq990rvg4yb8hhhl0i48q9hw0ll89jp28lw"))))
     (build-system python-build-system)
     (arguments
-     `(;; Prevent creation of the egg. This works around
-       ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=20765 .
-       #:configure-flags '("--single-version-externally-managed" "--root=/")
-       #:phases
+     `(#:phases
        (modify-phases %standard-phases
          (delete 'check)
          (add-after 'install 'check

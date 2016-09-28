@@ -3554,11 +3554,6 @@ the phenotype as it models the data.")
       (build-system python-build-system)
       (arguments
        `(#:python ,python-2
-         ;; With standard flags, the install phase attempts to create a zip'd
-         ;; egg file, and fails with an error: 'ZIP does not support timestamps
-         ;; before 1980'
-         #:configure-flags '("--single-version-externally-managed"
-                             "--record=pbtranscript-tofu.txt")
          #:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'enter-directory
@@ -7514,19 +7509,7 @@ may optionally be provided to further inform the peak-calling process.")
     (build-system python-build-system)
     (arguments
      `(#:python ,python-2 ; python2 only
-       #:tests? #f ; no tests included
-       #:phases
-       (modify-phases %standard-phases
-         ;; When setuptools is used a ".egg" archive is generated and
-         ;; installed.  This makes it hard to actually run PePr.  This issue
-         ;; has been reported upstream:
-         ;; https://github.com/shawnzhangyx/PePr/issues/9
-         (add-after 'unpack 'disable-egg-generation
-           (lambda _
-             (substitute* "setup.py"
-               (("from setuptools import setup")
-                "from distutils.core import setup"))
-             #t)))))
+       #:tests? #f)) ; no tests included
     (propagated-inputs
      `(("python2-numpy" ,python2-numpy)
        ("python2-scipy" ,python2-scipy)
