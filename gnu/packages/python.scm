@@ -1971,8 +1971,7 @@ and sensible default behaviors into your setuptools run.")
      `(("python-six" ,python-six)
        ("python-pbr-0.11" ,python-pbr-0.11)))
     (inputs
-     `(("python-pip" ,python-pip)
-       ;; Tests
+     `(;; Tests
        ("python-testtools" ,python-testtools)))
     (arguments
      '(#:tests? #f)) ; no setup.py test command

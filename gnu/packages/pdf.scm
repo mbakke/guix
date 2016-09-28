@@ -641,14 +641,10 @@ using a stylus.")
     (description "This is the ReportLab PDF Toolkit.  It allows rapid creation
 of rich PDF documents, and also creation of charts in a variety of bitmap and
 vector formats.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-reportlab))))))
+    (license license:bsd-3)))
 
 (define-public python2-reportlab
-  (package
-    (inherit (package-with-python2
-              (strip-python2-variant python-reportlab)))
-    (native-inputs `(("python2-pip" ,python2-pip)))))
+  (package-with-python2 python-reportlab))
 
 (define-public impressive
   (package
