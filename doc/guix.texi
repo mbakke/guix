@@ -12433,7 +12433,6 @@ for instance, the module python-dateutil is packaged under the names
 starts with @code{py} (e.g. @code{pytz}), we keep it and prefix it as
 described above.
 
-
 @subsubsection Specifying Dependencies
 @cindex inputs, for Python packages
 
@@ -12450,6 +12449,11 @@ following check list to determine which dependency goes where.
 @itemize
 
 @item
+We currently package Python 2 with @code{setuptools} and @code{pip}
+installed like Python 3.4 has per default.  Thus you don't need to
+specify either of these as an input.
+
+@item
 Python dependencies required at run time go into
 @code{propagated-inputs}.  They are typically defined with the
 @code{install_requires} keyword in @file{setup.py}, or in the
@@ -12463,8 +12467,7 @@ testing---e.g., those in @code{tests_require}---go into
 propagated because they are not needed at run time, and (2) in a
 cross-compilation context, it's the ``native'' input that we'd want.
 
-Examples are @code{setuptools}, which is usually needed only at build
-time, or the @code{pytest}, @code{mock}, and @code{nose} test
+Examples are the @code{pytest}, @code{mock}, and @code{nose} test
 frameworks.  Of course if any of these packages is also required at
 run-time, it needs to go to @code{propagated-inputs}.
 
