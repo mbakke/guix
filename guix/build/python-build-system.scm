@@ -3,6 +3,7 @@
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -60,25 +61,15 @@
          (major+minor (take components 2)))
     (string-join major+minor ".")))
 
-(define* (install #:key outputs inputs (configure-flags '())
+(define* (install #:key outputs (configure-flags '())
                   #:allow-other-keys)
   "Install a given Python package."
   (let* ((out (assoc-ref outputs "out"))
-         (params (append (list (string-append "--prefix=" out))
-                         configure-flags))
-         (python-version (get-python-version (assoc-ref inputs "python")))
-         (old-path (getenv "PYTHONPATH"))
-         (add-path (string-append out "/lib/python" python-version
-                                  "/site-packages/")))
-        ;; create the module installation directory and add it to PYTHONPATH
-        ;; to make setuptools happy
-        (mkdir-p add-path)
-        (setenv "PYTHONPATH"
-                (string-append (if old-path
-                                   (string-append old-path ":")
-                                   "")
-                               add-path))
-        (call-setuppy "install" params)))
+         (params (append (list (string-append "--prefix=" out)
+                               "--single-version-externally-managed"
+                               "--root=/")
+                         configure-flags)))
+    (call-setuppy "install" params)))
 
 (define* (wrap #:key inputs outputs #:allow-other-keys)
   (define (list-of-files dir)
