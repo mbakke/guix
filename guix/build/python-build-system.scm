@@ -36,13 +36,23 @@
 ;;
 ;; Code:
 
+(define setuptools-shim
+  ;; Run setup.py with "setuptools" being imported, which will patch
+  ;; "distutils". This is needed for packages using "distutils" instead of
+  ;; "setuptools" since the former does not understand the
+  ;; "--single-version-externally-managed" flag.
+  ;; Python code taken from pip 8.1.2 pip/utils/setuptools_build.py
+  (string-append
+   "import setuptools, tokenize;__file__='setup.py';"
+   "exec(compile(getattr(tokenize, 'open', open)(__file__).read()"
+   ".replace('\\r\\n', '\\n'), __file__, 'exec'))"))
 
 (define (call-setuppy command params)
   (if (file-exists? "setup.py")
       (begin
          (format #t "running \"python setup.py\" with command ~s and parameters ~s~%"
                 command params)
-         (zero? (apply system* "python" "setup.py" command params)))
+         (zero? (apply system* "python" "-c" setuptools-shim command params)))
       (error "no setup.py found")))
 
 (define* (build #:rest empty)
