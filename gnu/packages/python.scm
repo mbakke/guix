@@ -1364,6 +1364,7 @@ syntax.")
     (arguments
      ;; With Python 3.x, fails to build with a syntax error.
      `(#:python ,python-2
+       #:use-setuptools? #f                ; still relies on distutils
        #:tests? #f))                       ; no 'python setup.py test' command
     (home-page "http://scons.org/")
     (synopsis "Software construction tool written in Python")
