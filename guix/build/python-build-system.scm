@@ -47,22 +47,25 @@
    "exec(compile(getattr(tokenize, 'open', open)(__file__).read()"
    ".replace('\\r\\n', '\\n'), __file__, 'exec'))"))
 
-(define (call-setuppy command params)
+(define (call-setuppy command params use-setuptools?)
   (if (file-exists? "setup.py")
       (begin
          (format #t "running \"python setup.py\" with command ~s and parameters ~s~%"
                 command params)
-         (zero? (apply system* "python" "-c" setuptools-shim command params)))
+         (if use-setuptools?
+             (zero? (apply system* "python" "-c" setuptools-shim
+                           command params))
+             (zero? (apply system* "python" "./setup.py" command params))))
       (error "no setup.py found")))
 
-(define* (build #:rest empty)
+(define* (build #:key use-setuptools? #:allow-other-keys)
   "Build a given Python package."
-  (call-setuppy "build" '()))
+  (call-setuppy "build" '() use-setuptools?))
 
-(define* (check #:key tests? test-target #:allow-other-keys)
+(define* (check #:key tests? test-target use-setuptools? #:allow-other-keys)
   "Run the test suite of a given Python package."
   (if tests?
-    (call-setuppy test-target '())
+    (call-setuppy test-target '() use-setuptools?)
     #t))
 
 (define (get-python-version python)
@@ -71,15 +74,18 @@
          (major+minor (take components 2)))
     (string-join major+minor ".")))
 
-(define* (install #:key outputs (configure-flags '())
+(define* (install #:key outputs (configure-flags '()) use-setuptools?
                   #:allow-other-keys)
   "Install a given Python package."
   (let* ((out (assoc-ref outputs "out"))
-         (params (append (list (string-append "--prefix=" out)
-                               "--single-version-externally-managed"
-                               "--root=/")
+         (params (append (list (string-append "--prefix=" out))
+                         (if use-setuptools?
+                             ;; distutils does not accept these flags
+                             (list "--single-version-externally-managed"
+                                    "--root=/")
+                             '())
                          configure-flags)))
-    (call-setuppy "install" params)))
+    (call-setuppy "install" params use-setuptools?)))
 
 (define* (wrap #:key inputs outputs #:allow-other-keys)
   (define (list-of-files dir)

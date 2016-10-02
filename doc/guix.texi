@@ -3094,6 +3094,11 @@ the @code{#:python} parameter.  This is a useful way to force a package
 to be built for a specific version of the Python interpreter, which
 might be necessary if the package is only compatible with a single
 interpreter version.
+
+By default guix calls @code{setup.py} under control of
+@code{setuptools}, much like @command{pip} does.  Some packages are not
+compatible with setuptools (and pip), thus you can disable this by
+setting the @code{#:use-setuptools} parameter to @code{#f}.
 @end defvr
 
 @defvr {Scheme Variable} perl-build-system

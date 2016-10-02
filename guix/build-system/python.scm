@@ -177,6 +177,7 @@ pre-defined variants."
                        #:key
                        (tests? #t)
                        (test-target "test")
+                       (use-setuptools? #t)
                        (configure-flags ''())
                        (phases '(@ (guix build python-build-system)
                                    %standard-phases))
@@ -204,6 +205,7 @@ provides a 'setup.py' file as its build system."
                      #:system ,system
                      #:test-target ,test-target
                      #:tests? ,tests?
+                     #:use-setuptools? ,use-setuptools?
                      #:phases ,phases
                      #:outputs %outputs
                      #:search-paths ',(map search-path-specification->sexp
