@@ -137,8 +137,7 @@ installed with setuptools."
     #t))
 
 (define %standard-phases
-  ;; 'configure' and 'build' phases are not needed.  Everything is done during
-  ;; 'install'.
+  ;; 'configure' phase is not needed.
   (modify-phases gnu:%standard-phases
     (add-after 'unpack 'ensure-no-mtimes-pre-1980 ensure-no-mtimes-pre-1980)
     (delete 'configure)
