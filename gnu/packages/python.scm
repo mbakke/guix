@@ -2709,9 +2709,6 @@ sources.")
         (base32
          "19nw3rn7awplcdrz63kg1njqwkbymfg9lwn7l2grhdyhyr2gaa8g"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-docutils" ,python-docutils)
-       ("python-sphinx" ,python-sphinx)))
     (home-page "https://github.com/snide/sphinx_rtd_theme/")
     (synopsis "ReadTheDocs.org theme for Sphinx")
     (description "A theme for Sphinx used by ReadTheDocs.org.")
