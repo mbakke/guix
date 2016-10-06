@@ -716,10 +716,10 @@ and verifies that it matches the intended target hostname.")
                  (string-append "['" prefix "/lib" "']")))
               #t))))))
     (propagated-inputs
-     `(("python-numpy" ,python-numpy)))
+     `(("python-six" ,python-six)
+       ("python-numpy" ,python-numpy)))
     (inputs
-     `(("hdf5" ,hdf5)
-       ("python-six" ,python-six)))
+     `(("hdf5" ,hdf5)))
     (native-inputs
      `(("python-cython" ,python-cython)
        ("python-pkgconfig" ,python-pkgconfig)))
