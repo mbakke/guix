@@ -260,7 +260,17 @@ by two spaces; possible infraction~p at ~{~a~^, ~}")
             "glib:bin"
             "intltool"
             "itstool"
-            "qttools")))
+            "qttools"
+            "python-coverage" "python2-coverage"
+            "python-cython" "python2-cython"
+            "python-docutils" "python2-docutils"
+            "python-mock" "python2-mock"
+            "python-nose" "python2-nose"
+            "python-pbr" "python2-pbr"
+            "python-pytest" "python2-pytest"
+            "python-pytest-cov" "python2-pytest-cov"
+            "python-setuptools-scm" "python2-setuptools-scm"
+            "python-sphinx" "python2-sphinx")))
     (warn-if-package-has-input package inputs input-names message)))
 
 (define (check-inputs-should-not-be-an-input-at-all package)
