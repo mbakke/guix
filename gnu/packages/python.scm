@@ -1811,8 +1811,7 @@ compatibility.")
          "1671jvrvqlmbnc42j7pc5y6vc37q44aiwrq0zic652pxyy2fxvjg"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-testtools" ,python-testtools)
-       ("python-mimeparse" ,python-mimeparse)))
+     `(("python-testtools" ,python-testtools)))
     (home-page "https://launchpad.net/testscenarios")
     (synopsis "Pyunit extension for dependency injection")
     (description
