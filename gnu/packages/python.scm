@@ -4863,8 +4863,8 @@ It is written entirely in Python.")
         (base32
          "171b7ip0hsq5qm83np40h3phlr36ym18w0lay0a8v08kvy3sy1jv"))))
     (build-system python-build-system)
-    (inputs
-     `(("python-six" ,python-six)))
+    (native-inputs
+     `(("python-six" ,python-six))) ; required for conversion, not at run-time
     (home-page
      "http://docs.python.org/3/library/functools.html#functools.singledispatch")
     (synopsis "Backport of singledispatch feature from Python 3.4")
