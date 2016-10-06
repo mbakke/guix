@@ -1677,8 +1677,7 @@ supports coverage of subprocesses.")
     (native-inputs
      `(("unzip" ,unzip)))
     (propagated-inputs
-     `(("python-py" ,python-py)
-       ("python-pytest" ,python-pytest)))
+     `(("python-pytest" ,python-pytest)))
     (home-page "https://github.com/pytest-dev/pytest-mock/")
     (synopsis "Thin-wrapper around the mock package for easier use with py.test")
     (description
