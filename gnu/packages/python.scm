@@ -3392,12 +3392,9 @@ toolkits.")
     (propagated-inputs
      `(("python2-numpy" ,python2-numpy)
        ("python2-scipy" ,python2-scipy)
-       ("python2-pytz" ,python2-pytz)
-       ("python2-cython" ,python2-cython)))
-    (inputs
-     `(("python2-dateutil-2" ,python2-dateutil-2)
-       ("python2-pandas" ,python2-pandas)
-       ("python2-six" ,python2-six)))
+       ("python2-pandas" ,python2-pandas)))
+    (native-inputs
+     `(("python2-cython" ,python2-cython)))
     (native-inputs
      `(("unzip" ,unzip)))
     (home-page "http://research.microsoft.com/en-us/um/redmond/projects/mscompbio/")
