@@ -6324,6 +6324,7 @@ forms, HTTP servers, regular expressions, and more.")
     (build-system python-build-system)
     (native-inputs
      `(("python-six" ,python-six)
+       ;("python-zope-interface" ,python-zope-interface)
        ("python-zope-exceptions" ,python-zope-exceptions)
        ("python-zope-testing" ,python-zope-testing)
        ("unzip" ,unzip)))
