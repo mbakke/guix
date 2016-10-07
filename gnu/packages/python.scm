@@ -2325,7 +2325,7 @@ version numbers.")
               (base32
                "0hddbqjm4jq63y8jf44nswina1crjs16l9snb6m3vvgyg31klrrn"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-vcversioner" ,python-vcversioner)))
     (home-page "http://github.com/Julian/jsonschema")
     (synopsis "Implementation of JSON Schema for Python")
@@ -2838,8 +2838,9 @@ and is very extensible.")
              (system* "nosetests" "-v" "sklearn")))
          (alist-delete 'check %standard-phases)))))
     (inputs
-     `(("openblas" ,openblas)
-       ("python-nose" ,python-nose)))
+     `(("openblas" ,openblas)))
+    (native-inputs
+     `(("python-nose" ,python-nose)))
     (propagated-inputs
      `(("python-numpy" ,python-numpy)
        ("python-scipy" ,python-scipy)))
@@ -3001,9 +3002,10 @@ writing C extensions for Python as easy as Python itself.")
         (base32
          "1bjjhvncraka5s6i4lg644jrxij6bvycxy7an20gcz3a0m11iygp"))))
     (build-system python-build-system)
+    (native-inputs
+     `(("python-nose" ,python-nose)))
     (inputs
-     `(("python-nose" ,python-nose)
-       ("openblas" ,openblas)
+     `(("openblas" ,openblas)
        ("lapack" ,lapack)))
     (native-inputs
      `(("gfortran" ,gfortran)))
@@ -3220,7 +3222,7 @@ that client code uses to construct the grammar directly in Python code.")
            (substitute* "numpydoc/tests/test_plot_directive.py"
              (("3") "2"))))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-docutils" ,python-docutils)
        ("python-sphinx" ,python-sphinx)
        ("python-nose" ,python-nose)))
@@ -5084,7 +5086,7 @@ PEP 8.")
           (base32
             "0yr08a36h8lqlif10l4xcikbbig7q8f41gqywir7rrvnv3mi4aws"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
       `(("python-pytest" ,python-pytest)
         ("python-pytest-runner" ,python-pytest-runner)))
     (home-page "https://github.com/flintwork/mccabe")
@@ -5165,8 +5167,8 @@ complexity of Python source code.")
       `(("python-pep8" ,python-pep8)
         ("python-pyflakes" ,python-pyflakes)
         ("python-mccabe" ,python-mccabe)))
-    (inputs
-      `(("python-mock" ,python-mock)
+    (native-inputs
+      `(("python-mock" ,python-mock) ; TODO: only required for < 3.3
         ("python-nose" ,python-nose)))
     (home-page "https://gitlab.com/pycqa/flake8")
     (synopsis
@@ -5186,7 +5188,7 @@ complexity of Python source code.")
       `(("python-pep8" ,python-pep8-1.5.7)
         ("python-pyflakes" ,python-pyflakes-0.8.1)
         ("python-mccabe" ,python-mccabe-0.2.1)))
-    (inputs
+    (native-inputs
       `(("python-mock" ,python-mock)
         ("python-nose" ,python-nose)))
     (version "2.2.4")
@@ -5216,7 +5218,7 @@ complexity of Python source code.")
         (base32
          "17zqjp9m4d1w3jf2rbbq5xshcw24q1vlcv24gkgfqqyyymajxahx"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-nose" ,python-nose)
        ("python-cython" ,python-cython)))
     (home-page "https://github.com/lepture/mistune")
@@ -5275,7 +5277,7 @@ markdown_py is also provided to convert Markdown files to HTML.")
         (base32
          "0nggns5kikn32yyda2zrj1xdmh49pi3v0drggcdwljbv36r8zdyw"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-nose" ,python-nose)))
     (arguments
      `(#:phases
@@ -5589,7 +5591,7 @@ fractional seconds) of a clock which never goes backwards.")
         (base32
          "02bhhzijfhv8hmi1i54d4b0v43liwhnywhflvxsv4x3zax9s3afq"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
       `(("python-nose" ,python-nose)))
     (home-page "http://webob.org/")
     (synopsis "WSGI request and response object")
@@ -6920,7 +6922,7 @@ applications.")
               (base32
                "1iks5701qnp3dlr3q1d9qm68y2plp2m029irhpz92a44psfkjf1f"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-pytest" ,python-pytest)))
     (synopsis "Namespace control and lazy-import mechanism")
     (description "With apipkg you can control the exported namespace of a Python
@@ -7457,8 +7459,8 @@ Pytest but stripped of Pytest specific details.")
     `(("python-pluggy" ,python-pluggy) ; >=0.3.0,<0.4.0
       ("python-py" ,python-py)
       ("python-virtualenv" ,python-virtualenv)))
-   (inputs
-    `(("python-pytest" ,python-pytest)))
+   (native-inputs
+    `(("python-pytest" ,python-pytest)))  ; >= 2.3.5
    (home-page "http://tox.testrun.org/")
    (synopsis "Virtualenv-based automation of test activities")
    (description "Tox is a generic virtualenv management and test command line
@@ -8029,8 +8031,8 @@ RabbitMQ messaging server is the most popular implementation.")
                 (strip-python2-variant python-kombu))))
     (package
       (inherit kombu)
-      (inputs `(("python2-unittest2" ,python2-unittest2)
-                ,@(package-inputs kombu))))))
+      (native-inputs `(("python2-unittest2" ,python2-unittest2)
+                ,@(package-native-inputs kombu))))))
 
 (define-public python-billiard
   (package
