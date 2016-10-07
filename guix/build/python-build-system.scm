@@ -67,7 +67,15 @@
 (define* (check #:key tests? test-target use-setuptools? #:allow-other-keys)
   "Run the test suite of a given Python package."
   (if tests?
-    (call-setuppy test-target '() use-setuptools?)
+      ;; Running `setup.py test` creates an additional .egg-info directory in
+      ;; build/lib in some cases, e.g. if the source is in a sub-directory
+      ;; (given with `package_dir`). This will by copied to the output, too,
+      ;; so we need to remove.
+      (let ((before (find-files "build" "\\.egg-info$" #:directories? #t)))
+        (call-setuppy test-target '() use-setuptools?)
+        (let* ((after (find-files "build" "\\.egg-info$" #:directories? #t))
+               (inter (lset-difference eqv? after before)))
+          (for-each delete-file-recursively inter)))
     #t))
 
 (define (get-python-version python)
