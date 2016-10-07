@@ -178,9 +178,12 @@ tested on Python version 3.2, 2.7 and 2.6.")
      `(#:tests? #f)) ;; Circular dependency with python-oslotest
     (propagated-inputs
       `(("python-appdirs" ,python-appdirs)
+        ;; TODO: requirements.txt lists also keystoneauth1 and
+        ;; requestsexceptions
         ("python-pyyaml" ,python-pyyaml)))
     (native-inputs
       `(("python-pbr" ,python-pbr)
+        ;; TODO: test-requirements.txt lists a lot more
         ("python-fixtures" ,python-fixtures)
         ("python-mimeparse" ,python-mimeparse)
         ("python-testrepository" ,python-testrepository)

@@ -560,6 +560,7 @@ other HTTP libraries.")
        (sha256
         (base32
          "1yj31j0asmrx4an9xvsaj2icdmzy6pw0glfpqrrkrphwdpi1xkv4"))))
+    ;; TODO: Remove the included test_pyecdsa.py file
     (build-system python-build-system)
     (inputs
      `(("openssl" ,openssl)))
@@ -751,6 +752,8 @@ concepts.")
     (build-system python-build-system)
     (arguments '(#:test-target "check"))
     (native-inputs
+     ;; for tests: nose
+     ;; sphinx!=1.2.0,!=1.3b1,<1.3,>=1.1.2
      `(("python-pbr" ,python-pbr)))
     (home-page "https://launchpad.net/pylockfile")
     (synopsis "Platform-independent file locking module")
@@ -1336,6 +1339,8 @@ backported for previous versions of Python from 2.4 to 3.3.")
      "Parse_type extends the python parse module.")
     (license license:bsd-3)))
 
+;; TODO: python2-parse-type: requirements.append("enum34")
+
 (define-public python-parse
   (package
     (name "python-parse")
@@ -1403,6 +1408,7 @@ software.")
         (base32
          "1h7zx4dfyclalg0fqnfjijpn0f793a9mx8sy3b27gd31nr6dhq3s"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (arguments
      ;; error in setup.cfg: command 'test' has no such option 'buffer'
      '(#:tests? #f))
@@ -1574,6 +1580,7 @@ code introspection, and logging.")
            (("def test_remove_dir_prefix\\(self\\):")
             "@pytest.mark.xfail\n    def test_remove_dir_prefix(self):")))))
     (build-system python-build-system)
+    ;; TODO: build docs, too.
     (propagated-inputs
      `(("python-py" ,python-py)))
     (native-inputs
@@ -1780,6 +1787,7 @@ subprocess and see the output as well as any file modifications.")
         (base32
          "1dyml28ykpl5jb9khdmcdvhy1cxqingys6qvj2k04fzlaj6z3bbx"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (propagated-inputs
      `(("python-mimeparse" ,python-mimeparse)
        ("python-extras" ,python-extras)))
@@ -1809,6 +1817,7 @@ compatibility.")
         (base32
          "1671jvrvqlmbnc42j7pc5y6vc37q44aiwrq0zic652pxyy2fxvjg"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (propagated-inputs
      `(("python-testtools" ,python-testtools)))
     (home-page "https://launchpad.net/testscenarios")
@@ -1835,6 +1844,7 @@ style tests.")
         (base32
          "0cbj3plbllyz42c4b5xxgwaa7mml54lakslrn4kkhinxhdri22md"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (home-page "https://launchpad.net/testresources")
     (synopsis
      "Pyunit extension for managing test resources")
@@ -1950,6 +1960,7 @@ from git information.
         (base32
          "0djxvdwm8s60dbfn7bhf40x6g818p3b3mlwijm1c3bqg7msn271y"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (propagated-inputs
      `(("python-six" ,python-six)))
     (native-inputs
@@ -1979,6 +1990,7 @@ Python tests.")
         (base32
          "1ssqb07c277010i6gzzkbdd46gd9mrj0bi0i8vn560n2k2y4j93m"))))
     (build-system python-build-system)
+    ;; TODO: Think about removing the included test-suite in dir `tests`
     (propagated-inputs
      `(("python-fixtures" ,python-fixtures)
        ("python-subunit" ,python-subunit)
@@ -2248,6 +2260,7 @@ installed with a newer @code{pip} or with wheel's own command line utility.")
        ("python-pytest" ,python-pytest)
        ("python-pytest-cov" ,python-pytest-cov)
        ("python-wheel" ,python-wheel)))
+    ;; extras_require: 'security': ['pyOpenSSL>=0.13', 'ndg-httpsclient', 'pyasn1'],
     (home-page "http://python-requests.org/")
     (synopsis "Python HTTP library")
     (description
@@ -2308,6 +2321,7 @@ version numbers.")
     (build-system python-build-system)
     (native-inputs
      `(("python-vcversioner" ,python-vcversioner)))
+    ;; extras_require = "format" : ["rfc3987", "strict-rfc3339", "webcolors"],
     (home-page "http://github.com/Julian/jsonschema")
     (synopsis "Implementation of JSON Schema for Python")
     (description
@@ -4327,7 +4341,7 @@ without using the configuration machinery.")
        ("python-jsonschema" ,python-jsonschema)
        ("python-pygments" ,python-pygments)
        ("python-requests" ,python-requests) ;; for tests
-       ("python-nose" ,python-nose)))
+       ("python-nose" ,python-nose))) ; TODO: check is this should be native
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("python-sphinx" ,python-sphinx)
@@ -4954,7 +4968,8 @@ It is written entirely in Python.")
     (native-inputs
      `(("python-certifi" ,python-certifi)))
     (propagated-inputs
-     `(("python-backports-abc" ,python-backports-abc)))
+     `(;; abc is required for Python < 3.5 only
+       ("python-backports-abc" ,python-backports-abc)))
     (home-page "http://www.tornadoweb.org/")
     (synopsis "Python web framework and asynchronous networking library")
     (description
@@ -5972,11 +5987,11 @@ responses, rather than doing any computation.")
     (inputs
      `(("openssl" ,openssl)))
     (propagated-inputs
-     `(("python-cffi" ,python-cffi)
+     `(("python-cffi" ,python-cffi) ; TODO: Python < 3.4 only
        ("python-six" ,python-six)
        ("python-pyasn1" ,python-pyasn1)
        ("python-idna" ,python-idna)
-       ("python-iso8601" ,python-iso8601)))
+       ("python-iso8601" ,python-iso8601))) ; TODO: for tests only
     (native-inputs
      `(("python-cryptography-vectors" ,python-cryptography-vectors)
        ("python-hypothesis" ,python-hypothesis)
@@ -6047,8 +6062,8 @@ library.")
          "08cm8d4228fj0qnrysy3qv1a6022zr3dcs25amd14lgxil6vvx26"))))
     (build-system python-build-system)
     (inputs
-      `(("python-virtualenv" ,python-virtualenv)
-        ;; Tests
+      `(;; Tests
+        ("python-virtualenv" ,python-virtualenv)
         ("python-mock" ,python-mock)
         ("python-pytest" ,python-pytest)
         ("python-scripttest" ,python-scripttest)))

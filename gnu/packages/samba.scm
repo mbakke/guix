@@ -185,6 +185,7 @@ Desktops into Active Directory environments using the winbind daemon.")
                (("magic_ret = .*") "magic_ret = 0\n"))
              ;; talloc uses a custom configuration script that runs a
              ;; python script called 'waf'.
+             ;; FIXME: Do not use pre-built waf but out waf package
              (setenv "CONFIG_SHELL" (which "sh"))
              (let ((out (assoc-ref outputs "out")))
                (zero? (system* "./configure"
