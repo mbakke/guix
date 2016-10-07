@@ -3741,9 +3741,12 @@ services for your Python modules and applications.")
      `(#:phases (modify-phases %standard-phases
                   (add-after
                    'install 'check-installed
-                   (lambda _
+                   (lambda* (#:key outputs inputs #:allow-other-keys)
                      (begin
                        (setenv "HOME" (getcwd))
+                       ;; Make installed package available for running the
+                       ;; tests
+                       (add-installed-pythonpath inputs outputs)
                        (and (zero? (system* "python" "selftest.py"
                                             "--installed"))
                             (zero? (system* "python" "test-installed.py"))))))
