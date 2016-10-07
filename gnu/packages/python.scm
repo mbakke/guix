@@ -10188,7 +10188,10 @@ failures.")
        (modify-phases %standard-phases
          (delete 'check)
          (add-after 'install 'check
-           (lambda _ ; It's easier to run tests after install.
+           (lambda* (#:key outputs inputs #:allow-other-keys)
+             ;; It's easier to run tests after install.
+             ;; Make installed package available for running the tests
+             (add-installed-pythonpath inputs outputs)
              (zero? (system* "py.test" "-vv")))))))
     (native-inputs
      `(("python-coverage" ,python-coverage)
