@@ -6385,7 +6385,9 @@ internationalized messages within program source text.")
      `(("python-zope-event" ,python-zope-event)
        ("python-zope-interface" ,python-zope-interface)))
     (native-inputs
-     `(("python-zope-testing" ,python-zope-testing)))
+     `(("python-zope-testing" ,python-zope-testing)
+       ("python-coverage" ,python-coverage)
+       ("python-nose" ,python-nose)))
     (home-page "http://pypi.python.org/pypi/zope.schema")
     (synopsis "Zope data schemas")
     (description "Zope.scheme provides extensions to zope.interface for
