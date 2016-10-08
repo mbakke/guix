@@ -5317,12 +5317,23 @@ term.js Javascript terminal emulator library.")
                (base32
                 "08ay3x4ijarwhl60gqx2i9jzq6pxs20p4snc2d1q5jagh4rn39lb"))))
     (build-system python-build-system)
-    (arguments '(#:test-target "check"))
+    (arguments
+     '(#:test-target "check"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-setuppy
+           ;; Remove the undocumented "extra_path" argument, which adds an
+           ;; intervening directories between site-packages and the package
+           ;; directory.
+           (lambda _
+             (substitute* "setup.py"
+               (("^[ \t]*extra_path *= *'FontTools',") ""))
+             #t)))))
     (home-page "http://github.com/behdad/fonttools")
     (synopsis "Tools to manipulate font files")
     (description
      "FontTools/TTX is a library to manipulate font files from Python.  It
-supports reading and writinfg of TrueType/OpenType fonts, reading and writing
+supports reading and writing of TrueType/OpenType fonts, reading and writing
 of AFM files, reading (and partially writing) of PS Type 1 fonts.  The package
 also contains a tool called “TTX” which converts TrueType/OpenType fonts to and
 from an XML-based format.")
