@@ -28,6 +28,8 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:export (%standard-phases
+            add-installed-pythonpath
+            site-packages
             python-build))
 
 ;; Commentary:
@@ -73,6 +75,24 @@
          (components  (string-split version #\.))
          (major+minor (take components 2)))
     (string-join major+minor ".")))
+
+(define (site-packages inputs outputs)
+  "Return the path of the current output's Python site-package."
+  (let* ((out (assoc-ref outputs "out"))
+         (python (assoc-ref inputs "python")))
+    (string-append out "/lib/python"
+                   (get-python-version python)
+                   "/site-packages/")))
+
+(define (add-installed-pythonpath inputs outputs)
+  "Prepend the Python site-package of OUTPUT to PYTHONPATH.  This is useful
+when running checks after installing the package."
+  (let ((old-path (getenv "PYTHONPATH"))
+        (add-path (site-packages inputs outputs)))
+    (setenv "PYTHONPATH"
+            (string-append add-path
+                           (if old-path (string-append ":" old-path) "")))
+    #t))
 
 (define* (install #:key outputs (configure-flags '()) use-setuptools?
                   #:allow-other-keys)
