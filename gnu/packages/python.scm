@@ -3489,7 +3489,9 @@ functions.")
 libraries = openblas
 library_dirs = ~a/lib
 include_dirs = ~a/include
-[atlas]
+
+# backslash-n to make emacs happy
+\n[atlas]
 library_dirs = ~a/lib
 atlas_libs = openblas
 "
@@ -3499,11 +3501,14 @@ atlas_libs = openblas
           #t)
         (alist-cons-after
          'install 'install-doc
-         (lambda* (#:key outputs #:allow-other-keys)
+         (lambda* (#:key inputs outputs #:allow-other-keys)
            (let* ((data (string-append (assoc-ref outputs "doc") "/share"))
                   (doc (string-append data "/doc/" ,name "-" ,version))
                   (html (string-append doc "/html"))
                   (pyver ,(string-append "PYVER=")))
+             ;; Make installed package available for building the
+             ;; documentation
+             (add-installed-pythonpath inputs outputs)
              (with-directory-excursion "doc"
                ;; Fix generation of images for mathematical expressions.
                (substitute* (find-files "source" "conf\\.py")
