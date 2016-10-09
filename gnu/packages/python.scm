@@ -4286,6 +4286,8 @@ without using the configuration machinery.")
                    (info (string-append data "/info"))
                    (examples (string-append doc "/examples")))
               (setenv "LANG" "en_US.utf8")
+              ;; Make installed package available for running the tests
+              (add-installed-pythonpath inputs outputs)
               (with-directory-excursion "docs"
                 ;; FIXME: html and pdf fail to build
                 ;; (system* "make" "html")
@@ -4305,9 +4307,11 @@ without using the configuration machinery.")
          (delete 'check)
          (add-after
           'install 'check
-          (lambda* (#:key outputs tests? #:allow-other-keys)
+          (lambda* (#:key inputs outputs tests? #:allow-other-keys)
             (if tests?
                 (with-directory-excursion "/tmp"
+                  ;; Make installed package available for running the tests
+                  (add-installed-pythonpath inputs outputs)
                   (setenv "HOME" "/tmp/") ;; required by a test
                   (zero? (system* (string-append (assoc-ref outputs "out")
                                                  "/bin/iptest"))))
