@@ -3260,6 +3260,11 @@ transcendental functions).")
        ("python-pygobject" ,python-pygobject)
        ("gobject-introspection" ,gobject-introspection)
        ("python-tkinter" ,python "tk")
+       ("python-dateutil" ,python-dateutil-2)
+       ("python-numpy" ,python-numpy-bootstrap)
+       ("python-pillow" ,python-pillow)
+       ("python-pytz" ,python-pytz)
+       ("python-six" ,python-six)
        ;; The 'gtk+' package (and 'gdk-pixbuf', 'atk' and 'pango' propagated
        ;; from 'gtk+') provides the required 'typelib' files used by
        ;; 'gobject-introspection'. The location of these files is set with the
@@ -3276,20 +3281,11 @@ transcendental functions).")
        ("python-pycairo" ,python-pycairo)
        ("python-cairocffi" ,python-cairocffi)))
     (inputs
-     `(("python-dateutil" ,python-dateutil-2)
-       ("python-six" ,python-six)
-       ("python-pytz" ,python-pytz)
-       ("python-numpy" ,python-numpy-bootstrap)
-       ("python-sphinx" ,python-sphinx)
-       ("python-numpydoc" ,python-numpydoc)
-       ("python-nose" ,python-nose)
-       ("python-mock" ,python-mock)
-       ("libpng" ,libpng)
+     `(("libpng" ,libpng)
        ("imagemagick" ,imagemagick)
        ("freetype" ,freetype)
        ("cairo" ,cairo)
        ("glib" ,glib)
-       ("python-pillow" ,python-pillow)
        ;; FIXME: Add backends when available.
        ;("python-wxpython" ,python-wxpython)
        ;("python-pyqt" ,python-pyqt)
@@ -3297,6 +3293,10 @@ transcendental functions).")
        ("tk" ,tk)))
     (native-inputs
      `(("pkg-config" ,pkg-config)
+       ("python-sphinx" ,python-sphinx)
+       ("python-numpydoc" ,python-numpydoc)
+       ("python-nose" ,python-nose)
+       ("python-mock" ,python-mock)
        ("texlive" ,texlive)
        ("texinfo" ,texinfo)))
     (arguments
@@ -3321,11 +3321,14 @@ backend = TkAgg~%"
                         (assoc-ref inputs "tk"))))))
         (alist-cons-after
          'install 'install-doc
-         (lambda* (#:key outputs #:allow-other-keys)
+         (lambda* (#:key inputs outputs #:allow-other-keys)
            (let* ((data (string-append (assoc-ref outputs "doc") "/share"))
                   (doc (string-append data "/doc/" ,name "-" ,version))
                   (info (string-append data "/info"))
                   (html (string-append doc "/html")))
+             ;; Make installed package available for building the
+             ;; documentation
+             (add-installed-pythonpath inputs outputs)
              (with-directory-excursion "doc"
                ;; Produce pdf in 'A4' format.
                (substitute* (find-files "." "conf\\.py")
