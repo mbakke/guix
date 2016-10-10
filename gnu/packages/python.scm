@@ -1856,9 +1856,10 @@ use of resources by test cases.")
          "1nkw9wfbvizmpajbj3in8ns07g7lwkiv8hip14jjlwk3cacls6jv"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-testtools" ,python-testtools)
-       ("python-mimeparse" ,python-mimeparse)
-       ("python-testscenarios" ,python-testscenarios)))
+     `(("python-extras" ,python-extras)
+       ("python-mimeparse" ,python-mimeparse)))
+    (native-inputs
+     `(("python-testscenarios" ,python-testscenarios)))
     (home-page "http://launchpad.net/subunit")
     (synopsis "Python implementation of the subunit protocol")
     (description
@@ -1974,11 +1975,11 @@ Python tests.")
          "1ssqb07c277010i6gzzkbdd46gd9mrj0bi0i8vn560n2k2y4j93m"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-testtools" ,python-testtools)))
-    (native-inputs
      `(("python-fixtures" ,python-fixtures)
-       ("python-pbr-minimal" ,python-pbr-minimal) ;; same as for building fixture
        ("python-subunit" ,python-subunit)
+       ("python-testtools" ,python-testtools)))
+    (native-inputs
+     `(("python-pbr-minimal" ,python-pbr-minimal) ;; same as for building fixture
        ("python-mimeparse" ,python-mimeparse)))
     (home-page "https://launchpad.net/testrepository")
     (synopsis "Database for Python test results")
