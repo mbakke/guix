@@ -65,11 +65,8 @@ clients.")
          ;; vdirsyncer requires itself to be installed in order to build
          ;; the manpage.
          (add-after 'install 'manpage
-           (lambda* (#:key outputs #:allow-other-keys)
-             (setenv "PYTHONPATH"
-                     (string-append
-                       (getenv "PYTHONPATH")
-                       ":" (assoc-ref outputs "out")))
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (add-installed-pythonpath inputs outputs)
              (zero? (system* "make" "--directory=docs/" "man"))
              (install-file
                "docs/_build/man/vdirsyncer.1"
