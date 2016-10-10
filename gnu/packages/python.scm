@@ -1714,8 +1714,7 @@ same arguments.")
      `(("unzip" ,unzip)
        ("python-setuptools-scm" ,python-setuptools-scm)))
     (propagated-inputs
-     `(("python-apipkg" ,python-apipkg)
-       ("python-execnet" ,python-execnet)
+     `(("python-execnet" ,python-execnet)
        ("python-pytest" ,python-pytest)
        ("python-py" ,python-py)))
     (home-page
