@@ -1010,7 +1010,8 @@ datetime module, available in Python 2.3+.")
        ("python-pytz" ,python-pytz)
        ("python-dateutil" ,python-dateutil-2)))
     (native-inputs
-     `(("python-nose" ,python-nose)))
+     `(("python-nose" ,python-nose)
+       ("python-cython" ,python-cython)))
     (home-page "http://pandas.pydata.org")
     (synopsis "Data structures for data analysis, time series, and statistics")
     (description
