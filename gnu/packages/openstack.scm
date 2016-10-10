@@ -149,7 +149,6 @@ guidelines}.")
     (native-inputs
       `(("python-fixtures" ,python-fixtures)
         ("python-pbr" ,python-pbr)
-        ("python-six" ,python-six)
         ("python-testtools" ,python-testtools)))
     (home-page "http://www.openstack.org/")
     (synopsis "Mock object framework for Python")
@@ -217,11 +216,11 @@ tested on Python version 3.2, 2.7 and 2.6.")
      ;; when building the package. Skip the tests for now.
      `(#:tests? #f))
     (propagated-inputs
+     `(("python-subunit" ,python-subunit)))
+    (native-inputs
      `(("python-pbr" ,python-pbr)
-       ("python-subunit" ,python-subunit)
-       ("python-testtools" ,python-testtools)))
-    (inputs
-      `(("python-babel" ,python-babel)))
+       ("python-testtools" ,python-testtools)
+       ("python-babel" ,python-babel)))
     (home-page "http://www.openstack.org/")
     (synopsis "Testr wrapper to provide functionality for OpenStack projects")
     (description
@@ -247,10 +246,9 @@ tested on Python version 3.2, 2.7 and 2.6.")
     (propagated-inputs
      `(("python-requests" ,python-requests)
        ("python-six" ,python-six)))
-    (inputs
-     `(("python-pbr" ,python-pbr)))
     (native-inputs
-     `(("python-discover" ,python-discover)
+     `(("python-pbr" ,python-pbr)
+       ("python-discover" ,python-discover)
        ("python-fixtures" ,python-fixtures)
        ("python-mock" ,python-mock)
        ("python-sphinx" ,python-sphinx)
@@ -280,10 +278,9 @@ portions of your testing code.")
     (build-system python-build-system)
     (propagated-inputs
       `(("python-six" ,python-six)))
-    (inputs
-      `(("python-pbr" ,python-pbr)))
     (native-inputs
-      `(;; Tests
+      `(("python-pbr" ,python-pbr)
+        ;; Tests
         ("python-docutils" ,python-docutils)
         ("python-mock" ,python-mock)
         ("python-oslotest" ,python-oslotest)
