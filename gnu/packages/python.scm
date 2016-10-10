@@ -1748,7 +1748,7 @@ result back.")
         (base32
          "0f4w84k8ck82syys7yg9maz93mqzc8p5ymis941x034v44jzq74m"))))
     (build-system python-build-system)
-    (propagated-inputs
+    (native-inputs
      `(("python-pytest" ,python-pytest)))
     (home-page "http://pythonpaste.org/scripttest/")
     (synopsis "Python library to test command-line scripts")
