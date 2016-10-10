@@ -1695,6 +1695,10 @@ throughput (in the same interval).")
        ("python-decorator" ,python-decorator)
        ("python-psutil" ,python-psutil)
        ("python-six" ,python-six)))
+    (inputs
+     ;; Requires setuptools >= 17.1 due to some features used, while our
+     ;; python currently only includes 12.0. TODO: Remove this input.
+     `(("python-setuptools" ,python-setuptools)))
     (home-page "https://github.com/nvbn/thefuck")
     (synopsis "Correct mistyped console command")
     (description
