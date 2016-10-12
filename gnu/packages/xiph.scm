@@ -310,6 +310,10 @@ ogginfo, to obtain information (tags, bitrate, length, etc.) about
                (base32
                 "0cxnd7pjxbgh6l3cbzsw29phpr5cq28fikfhjlp1hc3y5s0gxdjq"))))
     (build-system gnu-build-system)
+    (arguments
+     `(;; Opus Custom is an optional extension of the Opus specification
+       ;; that allows for unsupported frame sizes.  Some programs use it.
+       #:configure-flags '("--enable-custom-modes")))
     (synopsis "Versatile audio codec")
     (description
      "Opus is a totally open, royalty-free, highly versatile audio codec.  Opus
