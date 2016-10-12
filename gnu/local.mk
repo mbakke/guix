@@ -71,6 +71,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/certs.scm			\
   %D%/packages/check.scm			\
   %D%/packages/chez.scm				\
+  %D%/packages/chromium.scm			\
   %D%/packages/ci.scm				\
   %D%/packages/cmake.scm			\
   %D%/packages/code.scm				\
@@ -481,6 +482,18 @@ dist_patch_DATA =						\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/cdparanoia-fpic.patch			\
   %D%/packages/patches/chmlib-inttypes.patch			\
+  %D%/packages/patches/chromium-disable-ad-promo.patch		\
+  %D%/packages/patches/chromium-disable-battery-status-api.patch	\
+  %D%/packages/patches/chromium-disable-gcm-status-check.patch	\
+  %D%/packages/patches/chromium-disable-google-url-tracker.patch	\
+  %D%/packages/patches/chromium-disable-ipv6-probe.patch	\
+  %D%/packages/patches/chromium-disable-missing-api-keys-warning.patch	\
+  %D%/packages/patches/chromium-disable-prediction-service.patch	\
+  %D%/packages/patches/chromium-disable-translation-lang-fetch.patch	\
+  %D%/packages/patches/chromium-disable-web-resource-service.patch	\
+  %D%/packages/patches/chromium-disable-increase-rsa-key-length.patch	\
+  %D%/packages/patches/chromium-system-ffmpeg-r4.patch		\
+  %D%/packages/patches/chromium-system-jinja-r14.patch		\
   %D%/packages/patches/clang-libc-search-path.patch		\
   %D%/packages/patches/clang-3.8-libc-search-path.patch		\
   %D%/packages/patches/clucene-pkgconfig.patch			\
