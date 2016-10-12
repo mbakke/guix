@@ -1,0 +1,15 @@
+description: maintain compatibility with system icu library
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -657,8 +657,7 @@ group("gn_all") {
+     }
+   }
+ 
+-  if ((is_linux && !is_chromeos && !is_chromecast) || (is_win && use_drfuzz) ||
+-      (use_libfuzzer && is_mac)) {
++  if (false) {
+     deps += [
+       "//testing/libfuzzer/fuzzers",
+       "//testing/libfuzzer/tests:libfuzzer_tests",

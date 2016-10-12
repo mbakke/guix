@@ -1,0 +1,65 @@
+description: use system nspr library
+author: Michael Gilbert <mgilbert@debian.org>
+
+--- a/base/time/pr_time_unittest.cc
++++ b/base/time/pr_time_unittest.cc
+@@ -7,7 +7,7 @@
+ 
+ #include "base/compiler_specific.h"
+ #include "base/macros.h"
+-#include "base/third_party/nspr/prtime.h"
++#include <nspr/prtime.h>
+ #include "base/time/time.h"
+ #include "build/build_config.h"
+ #include "testing/gtest/include/gtest/gtest.h"
+--- a/base/time/time.cc
++++ b/base/time/time.cc
+@@ -14,7 +14,7 @@
+ #include "base/logging.h"
+ #include "base/macros.h"
+ #include "base/strings/stringprintf.h"
+-#include "base/third_party/nspr/prtime.h"
++#include <nspr/prtime.h>
+ #include "build/build_config.h"
+ 
+ namespace base {
+--- a/tools/gn/bootstrap/bootstrap.py
++++ b/tools/gn/bootstrap/bootstrap.py
+@@ -510,7 +510,6 @@ def write_gn_ninja(path, root_gen_dir, o
+       'base/third_party/dmg_fp/dtoa_wrapper.cc',
+       'base/third_party/dmg_fp/g_fmt.cc',
+       'base/third_party/icu/icu_utf.cc',
+-      'base/third_party/nspr/prtime.cc',
+       'base/threading/non_thread_safe_impl.cc',
+       'base/threading/post_task_and_reply_impl.cc',
+       'base/threading/sequenced_task_runner_handle.cc',
+@@ -661,7 +660,7 @@ def write_gn_ninja(path, root_gen_dir, o
+         'base/allocator/allocator_shim.cc',
+         'base/allocator/allocator_shim_default_dispatch_to_glibc.cc',
+       ])
+-      libs.extend(['-lrt', '-latomic'])
++      libs.extend(['-lrt', '-latomic', '-lnspr4'])
+       static_libraries['libevent']['include_dirs'].extend([
+           os.path.join(SRC_ROOT, 'base', 'third_party', 'libevent', 'linux')
+       ])
+--- a/base/BUILD.gn
++++ b/base/BUILD.gn
+@@ -58,6 +58,9 @@ config("base_flags") {
+       "-Wno-char-subscripts",
+     ]
+   }
++  ldflags = [
++    "-lnspr4",
++  ]
+ }
+ 
+ config("base_implementation") {
+@@ -868,8 +871,6 @@ component("base") {
+     "third_party/dmg_fp/g_fmt.cc",
+     "third_party/icu/icu_utf.cc",
+     "third_party/icu/icu_utf.h",
+-    "third_party/nspr/prtime.cc",
+-    "third_party/nspr/prtime.h",
+     "third_party/superfasthash/superfasthash.c",
+     "third_party/valgrind/memcheck.h",
+     "threading/non_thread_safe.h",

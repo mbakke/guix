@@ -86,6 +86,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/certs.scm			\
   %D%/packages/check.scm			\
   %D%/packages/chez.scm				\
+  %D%/packages/chromium.scm			\
   %D%/packages/ci.scm				\
   %D%/packages/cmake.scm			\
   %D%/packages/code.scm				\
@@ -540,6 +541,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/chicken-CVE-2017-6949.patch		\
   %D%/packages/patches/chicken-CVE-2017-11343.patch		\
   %D%/packages/patches/chmlib-inttypes.patch			\
+  %D%/packages/patches/chromium-disable-api-keys-warning.patch	\
+  %D%/packages/patches/chromium-disable-third-party-cookies.patch	\
+  %D%/packages/patches/chromium-gn-bootstrap.patch		\
+  %D%/packages/patches/chromium-system-libevent.patch		\
+  %D%/packages/patches/chromium-system-libxml.patch		\
+  %D%/packages/patches/chromium-system-icu.patch		\
+  %D%/packages/patches/chromium-system-nspr.patch		\
   %D%/packages/patches/clang-libc-search-path.patch		\
   %D%/packages/patches/clang-3.8-libc-search-path.patch		\
   %D%/packages/patches/clucene-pkgconfig.patch			\
