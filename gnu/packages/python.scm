@@ -2721,7 +2721,7 @@ sources.")
         (base32
          "0mkimp1fpdan4p3882vzcws4l594k71ich4g0wq97jbra7p602n0"))))
     (build-system python-build-system)
-    (native-inputs
+    (propagated-inputs
      `(("python-pytz" ,python-pytz)
        ("python-six" ,python-six)))
     (home-page "https://github.com/getpelican/feedgenerator")
