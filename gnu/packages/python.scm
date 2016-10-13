@@ -1560,9 +1560,10 @@ code introspection, and logging.")
            (("def test_remove_dir_prefix\\(self\\):")
             "@pytest.mark.xfail\n    def test_remove_dir_prefix(self):")))))
     (build-system python-build-system)
+    (propagated-inputs
+     `(("python-py" ,python-py)))
     (native-inputs
-     `(("python-py" ,python-py)
-       ("python-nose" ,python-nose)
+     `(("python-nose" ,python-nose)
        ("python-mock" ,python-mock)))
     (home-page "http://pytest.org")
     (synopsis "Python testing library")
@@ -3447,9 +3448,10 @@ operators such as union, intersection, and difference.")
         (base32
          "0nhan2qvrw7b7gg5zddwa22kybdv3x1g26vkd7q8lvnkgzrs4dga"))))
     (build-system python-build-system)
+    (propagated-inputs
+     `(("python-six" ,python-six)))
     (inputs
-     `(("python-six" ,python-six)
-       ("readline" ,readline)
+     `(("readline" ,readline)
        ("icu4c" ,icu4c)
        ("pcre" ,pcre)
        ("r" ,r)))
@@ -3892,10 +3894,10 @@ a front-end for C compilers or analysis tools.")
         "0655hzxv57h1a9ja9kwp0ichbkhf3djw32k33d66xp0q37dq2y81"))))
     (build-system python-build-system)
     (inputs
-     `(("libxcb" ,libxcb)
-       ("python-six" ,python-six)))
+     `(("libxcb" ,libxcb)))
     (propagated-inputs
-     `(("python-cffi" ,python-cffi))) ; used at run time
+     `(("python-cffi" ,python-cffi) ; used at run time
+       ("python-six" ,python-six)))
     (arguments
      `(#:phases
        (alist-cons-after
@@ -5159,11 +5161,12 @@ complexity of Python source code.")
           (base32
             "0bs9cz4fr99r2rwig1b8jwaadl1nan7kgpdzqwj0bwbckwbmh7nc"))))
     (build-system python-build-system)
-    (inputs
+    (propagated-inputs
       `(("python-pep8" ,python-pep8)
         ("python-pyflakes" ,python-pyflakes)
-        ("python-mccabe" ,python-mccabe)
-        ("python-mock" ,python-mock)
+        ("python-mccabe" ,python-mccabe)))
+    (inputs
+      `(("python-mock" ,python-mock)
         ("python-nose" ,python-nose)))
     (home-page "https://gitlab.com/pycqa/flake8")
     (synopsis
@@ -5179,11 +5182,12 @@ complexity of Python source code.")
 ;; necessary once python-hacking > 0.10.2 is released.
 (define-public python-flake8-2.2.4
   (package (inherit python-flake8)
-    (inputs
+    (propagated-inputs
       `(("python-pep8" ,python-pep8-1.5.7)
         ("python-pyflakes" ,python-pyflakes-0.8.1)
-        ("python-mccabe" ,python-mccabe-0.2.1)
-        ("python-mock" ,python-mock)
+        ("python-mccabe" ,python-mccabe-0.2.1)))
+    (inputs
+      `(("python-mock" ,python-mock)
         ("python-nose" ,python-nose)))
     (version "2.2.4")
     (source
@@ -7449,11 +7453,12 @@ Pytest but stripped of Pytest specific details.")
     ;; FIXME: Tests require a newer version of pytest, but upgrading our
     ;; pytest breaks other packages.
     '(#:tests? #f))
-   (inputs
-    `(("python-pluggy" ,python-pluggy)
+   (propagated-inputs
+    `(("python-pluggy" ,python-pluggy) ; >=0.3.0,<0.4.0
       ("python-py" ,python-py)
-      ("python-virtualenv" ,python-virtualenv)
-      ("python-pytest" ,python-pytest)))
+      ("python-virtualenv" ,python-virtualenv)))
+   (inputs
+    `(("python-pytest" ,python-pytest)))
    (home-page "http://tox.testrun.org/")
    (synopsis "Virtualenv-based automation of test activities")
    (description "Tox is a generic virtualenv management and test command line
@@ -7500,14 +7505,16 @@ document.")
       (base32
        "1zxczlwqy9bl27d9bc5x99mb5mcsxm350240lp5nx7014xb311lj"))))
    (build-system python-build-system)
-   (inputs
+   (propagated-inputs
     `(("python-dateutil" ,python-dateutil-2)
       ("python-docutils" ,python-docutils)
-      ("python-mock" ,python-mock)
-      ("python-nose" ,python-nose)
-      ("python-tox" ,python-tox)
-      ("python-wheel" ,python-wheel)
       ("python-jmespath" ,python-jmespath)))
+   (inputs
+    `(("python-mock" ,python-mock)
+      ("python-nose" ,python-nose)
+      ("behave" ,behave)
+      ("python-tox" ,python-tox)
+      ("python-wheel" ,python-wheel)))
    (home-page "https://github.com/boto/botocore")
    (synopsis "Low-level interface to AWS")
    (description "Botocore is a Python library that provides a low-level
@@ -7529,17 +7536,18 @@ interface to the Amazon Web Services (AWS) API.")
       (base32
        "0lclasm0wnayd3b8zl9l91i32nbgrhh0ncf9lksss4cv0myfwmfg"))))
    (build-system python-build-system)
-   (inputs
+   (propagated-inputs
     `(("python-colorama" ,python-colorama)
+      ("python-botocore" ,python-botocore)
+      ("python-s3transfer" ,python-s3transfer)
       ("python-docutils" ,python-docutils)
-      ("python-mock" ,python-mock)
+      ("python-rsa" ,python-rsa)))
+   (inputs
+    `(("python-mock" ,python-mock)
       ("python-nose" ,python-nose)
-      ("python-rsa" ,python-rsa)
       ("python-sphinx" ,python-sphinx)
       ("python-tox" ,python-tox)
-      ("python-wheel" ,python-wheel)
-      ("python-botocore" ,python-botocore)
-      ("python-s3transfer" ,python-s3transfer)))
+      ("python-wheel" ,python-wheel)))
    (home-page "http://aws.amazon.com/cli/")
    (synopsis "Command line client for AWS")
    (description "AWS CLI provides a unified command line interface to the
@@ -7665,9 +7673,10 @@ available in Django, but is a standalone package.")
         (base32
          "136kcjbs0s98qkx8a418b05dfblqp0kiiqyx8vhx4rarwc7bqi3n"))))
     (build-system python-build-system)
+    (propagated-inputs
+     `(("python-markupsafe" ,python-markupsafe)))
     (native-inputs
-     `(("python-markupsafe" ,python-markupsafe)
-       ("python-mock" ,python-mock)
+     `(("python-mock" ,python-mock)
        ("python-nose" ,python-nose)))
     (home-page "http://www.makotemplates.org/")
     (synopsis "Templating language for Python")

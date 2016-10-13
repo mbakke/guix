@@ -177,12 +177,13 @@ tested on Python version 3.2, 2.7 and 2.6.")
     (build-system python-build-system)
     (arguments
      `(#:tests? #f)) ;; Circular dependency with python-oslotest
-    (inputs
+    (propagated-inputs
       `(("python-appdirs" ,python-appdirs)
+        ("python-pyyaml" ,python-pyyaml)))
+    (native-inputs
+      `(("python-pbr" ,python-pbr)
         ("python-fixtures" ,python-fixtures)
         ("python-mimeparse" ,python-mimeparse)
-        ("python-pbr" ,python-pbr)
-        ("python-pyyaml" ,python-pyyaml)
         ("python-testrepository" ,python-testrepository)
         ("python-testscenarios" ,python-testscenarios)
         ("python-testtools" ,python-testtools)))
@@ -789,9 +790,10 @@ permanence.")
                          (list git openssh))))))))))
     (native-inputs
      `(("python-pbr" ,python-pbr)))
+    (propagated-inputs
+     `(("python-requests" ,python-requests)))
     (inputs
-     `(("python-requests" ,python-requests)
-       ("git" ,git)
+     `(("git" ,git)
        ("openssh" ,openssh)))
     (home-page "http://docs.openstack.org/infra/git-review/")
     (synopsis "Command-line tool for Gerrit")

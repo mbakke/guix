@@ -395,8 +395,9 @@ three libraries:
                                (which "nosetests") "\"")))
              #t)))))
     (inputs
-     `(("libvirt" ,libvirt)
-       ("python-lxml" ,python-lxml)))
+     `(("libvirt" ,libvirt)))
+    (propagated-inputs
+     `(("python-lxml" ,python-lxml)))
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("python-nose" ,python-nose)))
