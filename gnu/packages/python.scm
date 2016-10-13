@@ -1987,8 +1987,6 @@ and sensible default behaviors into your setuptools run.")
     (native-inputs
      `(("python-pbr-0.11" ,python-pbr-0.11)
        ("python-testtools" ,python-testtools)))
-    (arguments
-     '(#:tests? #f)) ; no setup.py test command
     (home-page "https://launchpad.net/python-fixtures")
     (synopsis "Python test fixture library")
     (description
