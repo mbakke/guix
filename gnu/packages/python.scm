@@ -597,9 +597,11 @@ making them easy to handle and incorporate into other protocols.")
        ("python-psutil" ,python-psutil)
        ("python-six" ,python-six)))
     (home-page "https://github.com/pcmanus/ccm")
-    (synopsis "Cassandra Cluster Manager")
-    (description "A script/library to create, launch and remove an Apache
-Cassandra cluster on localhost.")
+    (synopsis "Cassandra Cluster Manager for Apache Cassandra clusters on
+localhost")
+    (description "Cassandra Cluster Manager is a development tool for testing
+local Cassandra clusters. It creates, launches and removes Cassandra clusters
+on localhost.")
     (license license:asl2.0)))
 
 (define-public python2-ccm
