@@ -2973,18 +2973,17 @@ writing C extensions for Python as easy as Python itself.")
         (base32
          "1bjjhvncraka5s6i4lg644jrxij6bvycxy7an20gcz3a0m11iygp"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-nose" ,python-nose)))
     (inputs
      `(("openblas" ,openblas)
        ("lapack" ,lapack)))
     (native-inputs
-     `(("gfortran" ,gfortran)))
+     `(("python-nose" ,python-nose)
+       ("gfortran" ,gfortran)))
     (arguments
      `(#:phases
-       (alist-cons-before
-        'build 'set-environment-variables
-        (lambda* (#:key inputs #:allow-other-keys)
+       (modify-phases %standard-phases
+        (add-before 'build 'set-environment-variables
+         (lambda* (#:key inputs #:allow-other-keys)
           (call-with-output-file "site.cfg"
             (lambda (port)
               (format port
@@ -2993,7 +2992,8 @@ libraries = openblas
 library_dirs = ~a/lib
 include_dirs = ~a/include
 
-[lapack]
+# backslash-n to make emacs happy
+\n[lapack]
 lapack_libs = lapack
 library_dirs = ~a/lib
 include_dirs = ~a/include
@@ -3006,18 +3006,17 @@ include_dirs = ~a/include
           (substitute* "numpy/distutils/system_info.py"
             (("c = distutils\\.ccompiler\\.new_compiler\\(\\)")
              "c = distutils.ccompiler.new_compiler(); c.set_executables(compiler='gcc',compiler_so='gcc',linker_exe='gcc',linker_so='gcc -shared')"))
-          #t)
+          #t))
         ;; Tests can only be run after the library has been installed and not
         ;; within the source directory.
-        (alist-cons-after
-         'install 'check
-         (lambda _
+        (delete 'check)
+        (add-after 'install 'check
+         (lambda* (#:key outputs inputs #:allow-other-keys)
+           ;; Make installed package available for running the tests
+           (add-installed-pythonpath inputs outputs)
            (with-directory-excursion "/tmp"
              (zero? (system* "python" "-c"
-                             "import numpy; numpy.test(verbose=2)"))))
-         (alist-delete
-          'check
-          %standard-phases)))))
+                             "import numpy; numpy.test(verbose=2)"))))))))
     (home-page "http://www.numpy.org/")
     (synopsis "Fundamental package for scientific computing with Python")
     (description "NumPy is the fundamental package for scientific computing
@@ -3050,10 +3049,10 @@ capabilities.")
        ("python2-matplotlib" ,python2-matplotlib)
        ("python2-pandas" ,python2-pandas)
        ("python2-scikit-learn" ,python2-scikit-learn)
-       ("python2-cython" ,python2-cython)
        ("python2-pysnptools" ,python2-pysnptools)))
     (native-inputs
      `(("unzip" ,unzip)
+       ("python2-cython" ,python2-cython)
        ("python2-mock" ,python2-mock)))
     (home-page "http://research.microsoft.com/en-us/um/redmond/projects/mscompbio/fastlmm/")
     (synopsis "Perform genome-wide association studies on large data sets")
@@ -3068,14 +3067,15 @@ association studies (GWAS) on extremely large data sets.")
     (name "python-numpy")
     (outputs '("out" "doc"))
     (inputs
-     `(("which" ,which)
-       ("python-matplotlib" ,python-matplotlib)
-       ("python-sphinx" ,python-sphinx)
+     `(("which" ,which)))
+    (propagated-inputs
+     `(("python-matplotlib" ,python-matplotlib)
        ("python-pyparsing" ,python-pyparsing)
-       ("python-numpydoc" ,python-numpydoc)
        ,@(package-inputs python-numpy-bootstrap)))
     (native-inputs
      `(("pkg-config" ,pkg-config)
+       ("python-sphinx" ,python-sphinx)
+       ("python-numpydoc" ,python-numpydoc)
        ("texlive" ,texlive)
        ("texinfo" ,texinfo)
        ("perl" ,perl)
@@ -3086,7 +3086,10 @@ association studies (GWAS) on extremely large data sets.")
            ((#:phases phases)
             `(alist-cons-after
               'install 'install-doc
-              (lambda* (#:key outputs #:allow-other-keys)
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                ;; Make installed package available for building the
+                ;; documentation
+                (add-installed-pythonpath inputs outputs)
                 (let* ((data (string-append (assoc-ref outputs "doc") "/share"))
                        (doc (string-append
                              data "/doc/" ,name "-"
