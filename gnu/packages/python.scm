@@ -1560,7 +1560,7 @@ code introspection, and logging.")
            (("def test_remove_dir_prefix\\(self\\):")
             "@pytest.mark.xfail\n    def test_remove_dir_prefix(self):")))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
      `(("python-py" ,python-py)
        ("python-nose" ,python-nose)
        ("python-mock" ,python-mock)))
@@ -1969,7 +1969,7 @@ and sensible default behaviors into your setuptools run.")
     (propagated-inputs
      `(("python-six" ,python-six)
        ("python-pbr-0.11" ,python-pbr-0.11)))
-    (inputs
+    (native-inputs
      `(;; Tests
        ("python-testtools" ,python-testtools)))
     (arguments
@@ -2001,7 +2001,7 @@ Python tests.")
     (propagated-inputs
      `(("python-fixtures-0.3.16" ,python-fixtures-0.3.16)
        ("python-testtools" ,python-testtools)))
-    (inputs
+    (native-inputs
      `(("python-subunit" ,python-subunit)
        ("python-mimeparse" ,python-mimeparse)))
     (home-page "https://launchpad.net/testrepository")
@@ -2499,7 +2499,7 @@ object.")
              (substitute* "tests/test_virtualenv.py"
                (("skipif.*") "skipif(True, reason=\"Guix\")\n"))
              (zero? (system* "py.test")))))))
-    (inputs
+    (native-inputs
      `(("python-mock" ,python-mock)
        ("python-pytest" ,python-pytest)))
     (home-page "https://virtualenv.pypa.io/")

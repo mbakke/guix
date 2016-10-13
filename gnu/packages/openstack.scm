@@ -49,7 +49,7 @@
         ("python-pyyaml" ,python-pyyaml)
         ("python-six" ,python-six)
         ("python-stevedore" ,python-stevedore)))
-    (inputs
+    (native-inputs
       `(("python-pbr" ,python-pbr)
         ;; Tests
         ("python-fixtures" ,python-fixtures)
@@ -84,7 +84,7 @@ all the files it generates a report.")
     (propagated-inputs
      `(("python-six" ,python-six)
        ("python-wrapt" ,python-wrapt)))
-    (inputs
+    (native-inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
         ;; Tests.
@@ -120,7 +120,7 @@ manner.")
         ("python-pep8-1.5.7" ,python-pep8-1.5.7)
         ("python-pyflakes-0.8.1" ,python-pyflakes-0.8.1)
         ("python-six" ,python-six)))
-    (inputs
+    (native-inputs
       `(;; Tests
         ("python-testscenarios" ,python-testscenarios)))
     (home-page "http://github.com/openstack-dev/hacking")
@@ -332,7 +332,7 @@ extensions.")
         ("python-paramiko" ,python-paramiko)
         ("python-pbr" ,python-pbr)
         ("python-six" ,python-six)))
-    (inputs
+    (native-inputs
       `(("python-babel" ,python-babel)
         ("python-mock" ,python-mock)
         ("python-os-testr" ,python-os-testr)
@@ -367,7 +367,7 @@ common features used in Tempest.")
       `(("python-netaddr" ,python-netaddr)
         ("python-six" ,python-six)
         ("python-stevedore" ,python-stevedore)))
-    (inputs
+    (native-inputs
       `(("python-pbr" ,python-pbr)
         ;; Tests
         ("python-oslo.i18n" ,python-oslo.i18n)
@@ -396,7 +396,7 @@ common features used in Tempest.")
         (base32
          "0kvha0rs9295njyl2z6n6zm5dapi5mrl5zwjm0m6ldqrvccyf8c3"))))
     (build-system python-build-system)
-    (inputs
+    (native-inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
         ;; Tests.
@@ -427,7 +427,7 @@ pipeline and used by various modules such as logging.")
     (propagated-inputs
       `(("python-babel" ,python-babel)
         ("python-six" ,python-six)))
-    (inputs
+    (native-inputs
       `(("python-pbr" ,python-pbr)
         ;; Tests
         ("python-mock" ,python-mock)
@@ -468,7 +468,7 @@ in an application or library.")
      ("python-oslo.utils" ,python-oslo.utils)
      ("python-oslo.serialization" ,python-oslo.serialization)
      ("python-six" ,python-six)))
-  (inputs
+  (native-inputs
     `(("python-babel" ,python-babel)
       ("python-iso8601" ,python-iso8601)
       ("python-mock" ,python-mock)
@@ -504,7 +504,7 @@ handlers and support for context specific logging (like resource id’s etc).")
         ("python-simplejson" ,python-simplejson)
         ("python-six" ,python-six)
         ("python-pytz" ,python-pytz)))
-    (inputs
+    (native-inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
         ;; Tests.
@@ -535,7 +535,7 @@ in transmittable and storable formats, such as JSON and MessagePack.")
     (build-system python-build-system)
     (propagated-inputs
       `(("python-requests" ,python-requests)))
-    (inputs
+    (native-inputs
       `(("python-pbr" ,python-pbr)
         ("python-docutils" ,python-docutils)
         ("python-hacking" ,python-hacking)
@@ -570,7 +570,7 @@ from the OpenStack project.")
         ("python-mock" ,python-mock)
         ("python-mox3" ,python-mox3)
         ("python-six" ,python-six)))
-    (inputs
+    (native-inputs
       `(("python-pbr" ,python-pbr)
         ("python-os-client-config" ,python-os-client-config)
         ("python-subunit" ,python-subunit)
@@ -613,7 +613,7 @@ and better support for mocking results.")
         ("python-netifaces" ,python-netifaces)
         ("python-pytz" ,python-pytz)
         ("python-six" ,python-six)))
-    (inputs
+    (native-inputs
       `(("python-babel" ,python-babel)
         ("python-pbr" ,python-pbr)
         ;; Tests.
