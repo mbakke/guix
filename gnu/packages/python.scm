@@ -2337,9 +2337,8 @@ version numbers.")
   (let ((jsonschema (package-with-python2
                      (strip-python2-variant python-jsonschema))))
     (package (inherit jsonschema)
-      (inputs
-       `(("python2-functools32" ,python2-functools32)
-         ,@(package-inputs jsonschema))))))
+      (propagated-inputs
+       `(("python2-functools32" ,python2-functools32))))))
 
 (define-public python-unidecode
   (package
