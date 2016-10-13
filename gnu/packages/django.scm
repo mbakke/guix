@@ -141,7 +141,7 @@ with arguments to the field constructor.")
              #t)))))
     (native-inputs
      `(("python-setuptools-scm" ,python-setuptools-scm)))
-    (inputs
+    (propagated-inputs
      `(("python-py" ,python-py)
        ("python-pytest" ,python-pytest)))
     (home-page "http://pytest-django.readthedocs.org/")

@@ -63,7 +63,7 @@ internal RPC protocols and file formats.")
         (base32
          "1xbgbfg4g43bihkyw1a2giqa2gxmqc5wkh0fzqcb90qi1z1hpi7c"))))
     (build-system python-build-system)
-    (inputs
+    (propagated-inputs
      `(("python-six" ,python-six)))
     (home-page "https://github.com/google/protobuf")
     (synopsis "Protocol buffers is a data interchange format")

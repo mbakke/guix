@@ -315,7 +315,7 @@ ideal (e.g. in LV2 implementations or embedded applications).")
           (base32
             "0kvaf332cqbi47rqzlpdx4mbkvw12mkrzkj8n9l19wk713d4py9w"))))
     (build-system python-build-system)
-    (inputs
+    (propagated-inputs
       `(("python-html5lib" ,python-html5lib)
         ("python-isodate" ,python-isodate)
         ("python-pyparsing" ,python-pyparsing)))

@@ -360,7 +360,7 @@ winner of the 2015 Password Hashing Competition.")
     (native-inputs
      `(("python-pycparser" ,python-pycparser)
        ("python-pytest" ,python-pytest)))
-    (inputs
+    (propagated-inputs
      `(("python-cffi" ,python-cffi)
        ("python-six" ,python-six)))
     (home-page "https://github.com/pyca/bcrypt/")

@@ -665,7 +665,7 @@ provide a coordinated and extensible framework to do computational biology.")
          (add-before 'check 'set-home
            ;; Some tests require a home directory to be set.
            (lambda _ (setenv "HOME" "/tmp") #t)))))
-    (inputs
+    (propagated-inputs
      `(("python-numpy" ,python-numpy)))
     (home-page "http://biopython.org/")
     (synopsis "Tools for biological computation in Python")

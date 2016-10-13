@@ -1701,7 +1701,7 @@ for OpenSMTPD to extend its functionality.")
     (build-system python-build-system)
     (arguments
      `(#:tests? #f)) ; Requires mailman running
-    (inputs
+    (propagated-inputs
      `(("python-six" ,python-six)
        ("python-httplib2" ,python-httplib2)))
     (home-page "https://launchpad.net/mailman.client")
