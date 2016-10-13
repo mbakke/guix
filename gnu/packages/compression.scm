@@ -93,6 +93,33 @@ independent of the input data and can be reduced, if necessary, at some cost
 in compression.")
     (license license:zlib)))
 
+(define-public zlib-minizip
+  (package
+    (name "zlib-minizip")
+    (version (package-version zlib))
+    (source (package-source zlib))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'enter-source
+           (lambda _ (chdir "contrib/minizip") #t))
+         (add-before 'configure 'autoreconf
+           (lambda _
+             (zero? (system* "autoreconf" "-vif")))))))
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)))
+    (propagated-inputs `(("zlib" ,zlib)))
+    (home-page (package-home-page zlib))
+    (synopsis "Zip Compression library")
+    (description
+     "Minizip is a minimalistic library that supports compressing,
+extracting and viewing ZIP archives.  This version is extracted from
+the @code{zlib} source.")
+    (license license:zlib)))
+
 (define-public fastjar
   (package
    (name "fastjar")
