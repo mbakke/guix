@@ -592,6 +592,9 @@ making them easy to handle and incorporate into other protocols.")
     (build-system python-build-system)
     (propagated-inputs
      `(("python-pyyaml" ,python-pyyaml)
+       ;; Not listed in setup.py, but used in ccmlib/node.py for full
+       ;; functionality
+       ("python-psutil" ,python-psutil)
        ("python-six" ,python-six)))
     (home-page "https://github.com/pcmanus/ccm")
     (synopsis "Cassandra Cluster Manager")
