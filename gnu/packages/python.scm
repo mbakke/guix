@@ -1983,10 +1983,9 @@ and sensible default behaviors into your setuptools run.")
          "0djxvdwm8s60dbfn7bhf40x6g818p3b3mlwijm1c3bqg7msn271y"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-six" ,python-six)
-       ("python-pbr-0.11" ,python-pbr-0.11)))
+     `(("python-six" ,python-six)))
     (native-inputs
-     `(;; Tests
+     `(("python-pbr-0.11" ,python-pbr-0.11)
        ("python-testtools" ,python-testtools)))
     (arguments
      '(#:tests? #f)) ; no setup.py test command
