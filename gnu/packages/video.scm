@@ -945,6 +945,10 @@ access to mpv's powerful playback capabilities.")
                        (string-append "-Wl,-rpath=" out "/lib"))
                (zero? (system* "./configure"
                                "--enable-shared"
+                               ;; Spatial SVC is an experimental VP9 encoder
+                               ;; used by some packages (i.e. Chromium).
+                               "--enable-experimental"
+                               "--enable-spatial-svc"
                                "--as=yasm"
                                ;; Limit size to avoid CVE-2015-1258
                                "--size-limit=16384x16384"
