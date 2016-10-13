@@ -9776,10 +9776,10 @@ and/or Xon/Xoff.  The port is accessed in RAW mode.")
                                     "/include/SDL2"))
              #t)))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)))
+     `(("pkg-config" ,pkg-config)
+       ("python-cython" ,python-cython)))
     (inputs
-     `(("python-cython" ,python-cython)
-       ("gstreamer" ,gstreamer)
+     `(("gstreamer" ,gstreamer)
        ("mesa" ,mesa)
        ("sdl-union"
         ,(sdl-union (list sdl2 sdl2-image sdl2-mixer sdl2-ttf)))))

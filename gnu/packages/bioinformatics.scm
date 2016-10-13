@@ -522,13 +522,13 @@ intended to behave exactly the same as the original BWK awk.")
     (build-system python-build-system)
     (arguments `(#:python ,python-2)) ; no Python 3 support
     (inputs
-     `(("python-cython" ,python2-cython)
-       ("python-matplotlib" ,python2-matplotlib)))
+     `(("python-matplotlib" ,python2-matplotlib)))
     (propagated-inputs
      `(("bedtools" ,bedtools)
        ("samtools" ,samtools)))
     (native-inputs
-     `(("python-pyyaml" ,python2-pyyaml)
+     `(("python-cython" ,python2-cython)
+       ("python-pyyaml" ,python2-pyyaml)
        ("python-nose" ,python2-nose)))
     (home-page "https://pythonhosted.org/pybedtools/")
     (synopsis "Python wrapper for BEDtools programs")

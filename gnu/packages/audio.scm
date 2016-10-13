@@ -1355,9 +1355,10 @@ implementation of the Open Sound Control (OSC) protocol.")
                "13vry6xhxm7adnbyj28w1kpwrh0kf7nw83cz1yq74wl21faz2rzw"))))
     (build-system python-build-system)
     (arguments `(#:tests? #f)) ;no tests
+    (native-inputs
+     `(("python-cython" ,python-cython)))
     (inputs
-     `(("python-cython" ,python-cython)
-       ("liblo" ,liblo)))
+     `(("liblo" ,liblo)))
     (home-page "http://das.nasophon.de/pyliblo/")
     (synopsis "Python bindings for liblo")
     (description
