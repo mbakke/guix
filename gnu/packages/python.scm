@@ -1868,104 +1868,65 @@ protocol.")
 (define-public python2-subunit
   (package-with-python2 python-subunit))
 
-;; Recent versions of python-fixtures need a recent version of python-pbr,
-;; which needs a recent version of python-fixtures. To fix this circular
-;; dependency, we keep old versions of python-fixtures and python-pbr to
-;; bootstrap the whole thing:
-;; - python-fixtures-0.3.16 is used to build python-pbr-0.11
-;; - python-pbr-0.11 is used to build python-fixtures
-;; - python-fixtures is used to build python-pbr
-(define-public python-fixtures-0.3.16
+;; Recent versions of python-fixtures and python-testrepository need
+;; python-pbr for packaging, which itself needs these two packages for
+;; testing.
+;; To fix this circular dependency, we use a build of python-pbr, based on the
+;; same source, just without any test dependencies and with tests disabled.
+;; python-pbr-minmal is then used to package python-fixtures and
+;; python-testrepository.
+;; Strictly speaking we currently could remove the test-requirements from the
+;; normal python-pbr package (and save this package) since test are disabled
+;; there anyway. But this may change in future.
+(define python-pbr-minimal
   (package
-    (name "python-fixtures")
-    (version "0.3.16")
+    (name "python-pbr-minimal")
+    (version "1.8.1")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "https://pypi.python.org/packages/source/f/fixtures/fixtures-"
-             version ".tar.gz"))
+       (uri (pypi-uri "pbr" version))
        (sha256
         (base32
-         "0x9r2gwilcig5g54k60bxzg96zabizq1855lrprlb4zckalp9asc"))))
+         "0jcny36cf3s8ar5r4a575npz080hndnrfs4np1fqhv0ym4k7c4p2"))))
     (build-system python-build-system)
     (arguments
-     '(#:tests? #f)) ; no setup.py test command
-    (home-page "https://launchpad.net/python-fixtures")
-    (synopsis "Python test fixture library")
+     `(#:tests? #f))
+    (home-page "http://docs.openstack.org/developer/pbr/")
+    (synopsis "Minimal build of python-pbr used for bootstrapping")
     (description
-     "Fixtures provides a way to create reusable state, useful when writing
-Python tests.")
-    (license (list license:bsd-3 license:asl2.0)))) ; at user's option
-
-(define-public python2-fixtures-0.3.16
-  (package-with-python2 python-fixtures-0.3.16))
-
-(define-public python-pbr-0.11
-  (package
-    (name "python-pbr")
-    (version "0.11.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://pypi.python.org/packages/source/p/pbr/pbr-"
-             version ".tar.gz"))
-       (sha256
-        (base32
-         "0v9gb7gyqf7q9s99l0nnjj9ww9b0jvyqlwm4d56pcyinxydddw6p"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f)) ;; Most tests seem to use the Internet.
-    (propagated-inputs
-      `(("python-fixtures-0.3.16" ,python-fixtures-0.3.16)))
-    (home-page "https://launchpad.net/pbr")
-    (synopsis "Change the default behavior of Python’s setuptools")
-    (description
-      "Python Build Reasonableness (PBR) is a library that injects some useful
-and sensible default behaviors into your setuptools run.")
+     "Used only for bootstrapping python2-pbr, you should not need this.")
     (license license:asl2.0)))
 
-(define-public python2-pbr-0.11
-  (package-with-python2 python-pbr-0.11))
+(define python2-pbr-minimal
+  (package-with-python2 python-pbr-minimal))
 
 (define-public python-pbr
   (package
+    (inherit python-pbr-minimal)
     (name "python-pbr")
-    (version "1.8.1")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (string-append
-               "https://pypi.python.org/packages/source/p/pbr/pbr-"
-               version
-               ".tar.gz"))
-        (sha256
-          (base32
-            "0jcny36cf3s8ar5r4a575npz080hndnrfs4np1fqhv0ym4k7c4p2"))))
-    (build-system python-build-system)
     (arguments
      `(#:tests? #f)) ;; Most tests seem to use the Internet.
     (propagated-inputs
-      `(("python-testrepository" ,python-testrepository)
-        ("git" ,git))) ;; pbr actually uses the "git" binary.
-    (inputs
+      `(("git" ,git))) ;; pbr actually uses the "git" binary.
+    (native-inputs
       `(("python-fixtures" ,python-fixtures)
-        ("python-mimeparse" ,python-mimeparse)
+        ;; discover, coverage, hacking, subunit
         ("python-mock" ,python-mock)
-         ("python-six" ,python-six)
+        ("python-six" ,python-six)
         ("python-sphinx" ,python-sphinx)
         ("python-testrepository" ,python-testrepository)
         ("python-testresources" ,python-testresources)
         ("python-testscenarios" ,python-testscenarios)
         ("python-testtools" ,python-testtools)
         ("python-virtualenv" ,python-virtualenv)))
-    (home-page "https://launchpad.net/pbr")
-    (synopsis "Change the default behavior of Python’s setuptools")
+    (synopsis "Enhance the default behavior of Python’s setuptools")
     (description
       "Python Build Reasonableness (PBR) is a library that injects some useful
-and sensible default behaviors into your setuptools run.")
-    (license license:asl2.0)))
+and sensible default behaviors into your setuptools run.  It will set
+versions, process requirements files and generate AUTHORS and ChangeLog file
+from git information.
+")))
 
 (define-public python2-pbr
   (package-with-python2 python-pbr))
@@ -1985,7 +1946,7 @@ and sensible default behaviors into your setuptools run.")
     (propagated-inputs
      `(("python-six" ,python-six)))
     (native-inputs
-     `(("python-pbr-0.11" ,python-pbr-0.11)
+     `(("python-pbr-minimal" ,python-pbr-minimal)
        ("python-testtools" ,python-testtools)))
     (home-page "https://launchpad.net/python-fixtures")
     (synopsis "Python test fixture library")
@@ -2015,6 +1976,7 @@ Python tests.")
      `(("python-testtools" ,python-testtools)))
     (native-inputs
      `(("python-fixtures" ,python-fixtures)
+       ("python-pbr-minimal" ,python-pbr-minimal) ;; same as for building fixture
        ("python-subunit" ,python-subunit)
        ("python-mimeparse" ,python-mimeparse)))
     (home-page "https://launchpad.net/testrepository")
