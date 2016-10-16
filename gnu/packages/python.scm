@@ -3209,9 +3209,9 @@ that client code uses to construct the grammar directly in Python code.")
              (("3") "2"))))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-docutils" ,python-docutils)
-       ("python-sphinx" ,python-sphinx)
-       ("python-nose" ,python-nose)))
+     `(("python-sphinx" ,python-sphinx)))
+    (native-inputs
+     `(("python-nose" ,python-nose)))
     (home-page "https://pypi.python.org/pypi/numpydoc")
     (synopsis
      "Numpy's Sphinx extensions")
