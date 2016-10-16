@@ -4883,18 +4883,7 @@ falling into the Python interpreter.")
         (base32 "1mz26cxn4x8bbgv0rn0mvj2z05y31rkc8009nvdlb3lam5b4mj3y"))))
     (build-system python-build-system)
     (native-inputs
-     `(("unzip" ,unzip)))
-    (arguments
-     `(#:phases
-       (alist-replace
-        'unpack
-        (lambda* (#:key inputs outputs #:allow-other-keys)
-          (let ((unzip (string-append (assoc-ref inputs "unzip")
-                                      "/bin/unzip"))
-                (source (assoc-ref inputs "source")))
-            (and (zero? (system* unzip source))
-                 (chdir (string-append "testlib-" ,version)))))
-        %standard-phases)))
+     `(("unzip" ,unzip)))  ; for unpacking the source
     (synopsis "Python micro test suite harness")
     (description "A micro unittest suite harness for Python.")
     (home-page "https://github.com/trentm/testlib")
