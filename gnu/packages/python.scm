@@ -2740,9 +2740,6 @@ which can produce feeds in RSS 2.0, RSS 0.91, and Atom formats.")
         (base32
          "1dpq0vb01p36jjwbhhd08ylvrnyvcc82yxx3mwjx6awrycjyw6j7"))))
     (build-system python-build-system)
-    ;; No "test" command supplied to setuptools, so unless there's another way
-    ;; to run tests, we're skipping them!
-    (arguments '(#:tests? #f))
     (home-page "http://pythonhosted.org/blinker/")
     (synopsis "Fast, simple object-to-object and broadcast signaling")
     (description
