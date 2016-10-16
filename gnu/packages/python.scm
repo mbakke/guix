@@ -2569,7 +2569,15 @@ logic-free templating system Mustache.")
                                   "j/joblib/joblib-" version ".tar.gz"))
               (sha256
                (base32
-                "1dvw3f8jgj6h0fxkghbgyclvdzc7l0ig7n0vis70awb5kczb9bs3"))))
+                "1dvw3f8jgj6h0fxkghbgyclvdzc7l0ig7n0vis70awb5kczb9bs3"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove pre-compiled .pyc files from source.
+           (for-each delete-file-recursively
+                     (find-files "." "__pycache__" #:directories? #t))
+           (for-each delete-file (find-files "." "\\.pyc$"))
+           #t))))
     (build-system python-build-system)
     (native-inputs
      `(("python-nose"       ,python-nose)))
