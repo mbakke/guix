@@ -2892,8 +2892,9 @@ mining and data analysis.")
     (build-system python-build-system)
     ;; Tests require a running Redis server
     (arguments '(#:tests? #f))
-    (native-inputs
-     `(("python-pytest" ,python-pytest)))
+    ;; As long as we are not running test, we do not need this input :-)
+    ;;(native-inputs
+    ;; `(("python-pytest" ,python-pytest)))
     (home-page "https://github.com/andymccurdy/redis-py")
     (synopsis "Redis Python client")
     (description
