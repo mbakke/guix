@@ -2881,10 +2881,7 @@ mining and data analysis.")
     (package (inherit scikit-image)
       (native-inputs
        `(("python2-mock" ,python2-mock)
-         ,@(package-native-inputs scikit-image)))
-      (propagated-inputs
-       `(("python2-pytz" ,python2-pytz)
-         ,@(package-propagated-inputs scikit-image))))))
+         ,@(package-native-inputs scikit-image))))))
 
 (define-public python-redis
   (package
