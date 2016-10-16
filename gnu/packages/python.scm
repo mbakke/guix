@@ -8231,8 +8231,7 @@ programmatically interfacing with your system's $EDITOR.")
                 "098as6z1s0gb4dh5xcr1fd2vpm91zj93jzvgawspxf5s4hqs0xhp"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-docutils" ,python-docutils)
-       ("python-sphinx" ,python-sphinx)))
+     `(("python-sphinx" ,python-sphinx)))
     (synopsis "Sphinx extension to include program output")
     (description "A Sphinx extension to literally insert the output of arbitrary
 commands into documents, helping you to keep your command examples up to date.")
