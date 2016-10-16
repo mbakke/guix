@@ -8407,10 +8407,10 @@ Python.")
        ;; https://github.com/getsentry/responses/issues/38
        #:tests? #f))
     (native-inputs
-     `(("python-cookies" ,python-cookies)
-       ("python-mock" ,python-mock)))
+     `(("python-mock" ,python-mock)))
     (propagated-inputs
      `(("python-requests" ,python-requests)
+       ("python-cookies" ,python-cookies)
        ("python-six" ,python-six)))
     (home-page "https://github.com/getsentry/responses")
     (synopsis "Utility for mocking out the `requests` Python library")
