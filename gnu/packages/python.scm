@@ -7098,12 +7098,13 @@ framework which enables you to test server connections locally.")
               (base32
                "0kjj2v2dvmnpdd5h5gk9rzz0f54rhjb0yiz3zg65bmp65slfw65d"))))
     (build-system python-build-system)
+    (propagated-inputs
+     `(("python-six" ,python-six)))
     (native-inputs
      `(("python-pytest" ,python-pytest)
-       ("python-six" ,python-six)))
-    (propagated-inputs
-     `(("python-httplib2" ,python-httplib2)
-       ("python-requests" ,python-requests)))
+       ("python-httplib2" ,python-httplib2)
+       ("python-requests" ,python-requests)
+       ("python-urllib3" ,python-urllib3)))
     (synopsis "Puts a WSGI application in place of a real URI for testing")
     (description "Wsgi_intercept installs a WSGI application in place of a real
 URI for testing.  Testing a WSGI application normally involves starting a
