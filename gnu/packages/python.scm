@@ -2704,7 +2704,15 @@ sources.")
        (uri (pypi-uri "feedgenerator" version))
        (sha256
         (base32
-         "0mkimp1fpdan4p3882vzcws4l594k71ich4g0wq97jbra7p602n0"))))
+         "0mkimp1fpdan4p3882vzcws4l594k71ich4g0wq97jbra7p602n0"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove pre-compiled .pyc files from source.
+           (for-each delete-file-recursively
+                     (find-files "." "__pycache__" #:directories? #t))
+           (for-each delete-file (find-files "." "\\.pyc$"))
+           #t))))
     (build-system python-build-system)
     (propagated-inputs
      `(("python-pytz" ,python-pytz)
