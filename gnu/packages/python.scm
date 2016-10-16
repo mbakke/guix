@@ -8254,8 +8254,7 @@ commands into documents, helping you to keep your command examples up to date.")
                 "08ycivzf7bh4a1zcyp31hbyqs1b2c9r26raa3vxjwwmbfqr3iw4f"))))
     (build-system python-build-system)
     (propagated-inputs
-     `(("python-docutils" ,python-docutils)
-       ("python-sphinx" ,python-sphinx)
+     `(("python-sphinx" ,python-sphinx)
        ("python-zope-interface" ,python-zope-interface)))
     (synopsis "Auto-generate Sphinx API docs from Zope interfaces")
     (description "This package defines an extension for the Sphinx documentation
