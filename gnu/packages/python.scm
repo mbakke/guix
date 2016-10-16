@@ -2872,16 +2872,10 @@ mining and data analysis.")
     (synopsis "Image processing in Python")
     (description
      "Scikit-image is a collection of algorithms for image processing.")
-    (license license:bsd-3)
-    (properties `((python2-variant . ,(delay python2-scikit-image))))))
+    (license license:bsd-3)))
 
 (define-public python2-scikit-image
-  (let ((scikit-image (package-with-python2
-                        (strip-python2-variant python-scikit-image))))
-    (package (inherit scikit-image)
-      (native-inputs
-       `(("python2-mock" ,python2-mock)
-         ,@(package-native-inputs scikit-image))))))
+  (package-with-python2 python-scikit-image))
 
 (define-public python-redis
   (package
