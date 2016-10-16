@@ -6743,7 +6743,7 @@ addon modules.")
               ;; required to parse the keyword 'install_requires' in setup.py.
               (patches (search-patches "python-configobj-setuptools.patch"))))
     (build-system python-build-system)
-    (native-inputs
+    (propagated-inputs
      `(("python-six" ,python-six)))
     (synopsis "Config file reading, writing and validation")
     (description "ConfigObj is a simple but powerful config file reader and
