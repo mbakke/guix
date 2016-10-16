@@ -1432,11 +1432,13 @@ building design matrices.")
                               line)))
             #t))
          (add-after 'install 'check
-          (lambda _
-            (with-directory-excursion "/tmp"
-              (zero? (system* "nosetests"
-                              "--stop"
-                              "-v" "statsmodels"))))))))
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             ;; Make installed package available for running the tests
+             (add-installed-pythonpath inputs outputs)
+             (with-directory-excursion "/tmp"
+               (zero? (system* "nosetests"
+                               "--stop"
+                               "-v" "statsmodels"))))))))
     (propagated-inputs
      `(("python-numpy" ,python-numpy)
        ("python-scipy" ,python-scipy)
