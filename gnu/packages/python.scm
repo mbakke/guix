@@ -9643,8 +9643,8 @@ implementation for Python.")
   (build-system python-build-system)
   (propagated-inputs
    `(("python-wcwidth" ,python-wcwidth)
+     ("python-six" ,python-six)
      ("python-pygments" ,python-pygments)))
-  (native-inputs `(("python-six" ,python-six)))
   (home-page "https://github.com/jonathanslenders/python-prompt-toolkit")
   (synopsis "Library for building command line interfaces in Python")
   (description
