@@ -2383,13 +2383,10 @@ somewhat intelligeble.")
                 "1bfrj70vdjxjw74khbyh6f0dksv7p5rh2346jnlrffyacd3gwjzg"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-coverage" ,python-coverage)
-       ("python-nose" ,python-nose)
-       ("python-mock" ,python-mock)))
-    (propagated-inputs
-     `(("python-blinker" ,python-blinker)
+     `(("python-nose" ,python-nose)
        ("python-cryptography" ,python-cryptography)
-       ("python-pyjwt" ,python-pyjwt)))
+       ("python-pyjwt" ,python-pyjwt)
+       ("python-blinker" ,python-blinker)))
     (home-page "https://github.com/idan/oauthlib")
     (synopsis "OAuth implementation for Python")
     (description
@@ -2403,6 +2400,7 @@ OAuth request-signing logic.")
     (package
       (inherit base)
       (native-inputs `(("python2-unittest2" ,python2-unittest2)
+                       ("python2-mock" ,python2-mock)
                        ,@(package-native-inputs base))))))
 
 (define-public python-itsdangerous
