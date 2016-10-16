@@ -10108,10 +10108,10 @@ List.  Forked from and using the same API as the publicsuffix package.")
     (native-inputs
      `(("python-mock" ,python-mock)
        ("python-nose" ,python-nose)
-       ("python-coverage" ,python-coverage)
-       ("python-dateutil-2" ,python-dateutil-2)))
+       ("python-coverage" ,python-coverage)))
     (propagated-inputs
-     `(("python-six" ,python-six)))
+     `(("python-six" ,python-six)
+       ("python-dateutil-2" ,python-dateutil-2)))
     (arguments
      `(#:phases (modify-phases %standard-phases
         ;; The tests are normally executed via `make test`, but the PyPi
