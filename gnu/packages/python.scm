@@ -2694,6 +2694,36 @@ sources.")
 (define-public python2-sphinx-rtd-theme
   (package-with-python2 python-sphinx-rtd-theme))
 
+(define-public python-rst.linker
+  (package
+    (name "python-rst.linker")
+    (version "1.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "rst.linker" version))
+       (sha256
+        (base32
+         "0bh4lnj2p1nh0wf5pgxgfbrp27xhb1rinahkb5j7s3qprq6qn0sr"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     `(("python-dateutil" ,python-dateutil-2)
+       ("python-six" ,python-six)))
+    (native-inputs
+     `(("python-setuptools-scm" ,python-setuptools-scm)))
+    ;; Test would require path.py, which would introduce a cyclic dependence.
+    (arguments `(#:tests? #f))
+    ;; Note: As of version 1.7 the documentation is not worth building.
+    (home-page "https://github.com/jaraco/rst.linker")
+    (synopsis "Sphinx plugin to add links and timestamps")
+    (description "rst.linker allows to automatically replace text by a
+reStructuredText external reference or timestamps.  It's primary purpose is to
+augment the changelog, but it can be used for other documents, too.")
+    (license license:expat)))
+
+(define-public python2-rst.linker
+  (package-with-python2 python-rst.linker))
+
 (define-public python-feedgenerator
   (package
     (name "python-feedgenerator")
