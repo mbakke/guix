@@ -7421,7 +7421,7 @@ concurrent.futures package from Python 3.2")
        ("python-mock" ,python-mock)
        ("python-tornado" ,python-tornado)))
     (propagated-inputs
-     `(;; packages for https security
+     `(;; extra packages for https security
        ("python-certifi" ,python-certifi)
        ("python-ndg-httpsclient" ,python-ndg-httpsclient)
        ("python-pyasn1" ,python-pyasn1)
