@@ -2259,6 +2259,7 @@ installed with a newer @code{pip} or with wheel's own command line utility.")
      `(("python-py" ,python-py)
        ("python-pytest" ,python-pytest)
        ("python-pytest-cov" ,python-pytest-cov)
+       ;; TODO: pytest-httpbin
        ("python-wheel" ,python-wheel)))
     ;; extras_require: 'security': ['pyOpenSSL>=0.13', 'ndg-httpsclient', 'pyasn1'],
     (home-page "http://python-requests.org/")
@@ -4293,6 +4294,7 @@ standard library.")
      `(#:phases
        (modify-phases %standard-phases
          (replace 'check (lambda _ (zero? (system* "nosetests")))))))
+    ;; TODO: Think about removing the included tests in dir `**/tests`
     (propagated-inputs
      `(("python-ipython-genutils" ,python-ipython-genutils)
        ("python-decorator" ,python-decorator)))
@@ -4832,7 +4834,7 @@ and statistical routines from scipy and statsmodels.")
   (let ((base (package-with-python2 (strip-python2-variant python-seaborn))))
     (package
       (inherit base)
-      (propagated-inputs `(("python2-pytz" ,python2-pytz)
+      (propagated-inputs `(("python2-pytz" ,python2-pytz);TODO: needless,remove
                            ,@(package-propagated-inputs base))))))
 
 (define-public python-sympy

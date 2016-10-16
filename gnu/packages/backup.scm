@@ -514,4 +514,5 @@ deduplication technique used makes Attic suitable for daily backups since only
 changes are stored.")
     (home-page "https://attic-backup.org/")
     (license license:bsd-3)
+    ;; TODO: When removing this package, mind removing python-llfuse-0.41, too
     (properties `((superseded . ,borg)))))
