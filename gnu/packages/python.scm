@@ -9979,8 +9979,9 @@ interface for programs.")
           "0rfyxcy4cr3x848vhx876ifalxd5ghq6l5x813m49h4vq2d4jiq8"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-pytest" ,python-pytest)
-       ("python-requests" ,python-requests)
+     `(("python-pytest" ,python-pytest)))
+    (propagated-inputs
+     `(("python-requests" ,python-requests)
        ("python-six" ,python-six)))
     (home-page "https://github.com/cablehead/python-consul")
     (synopsis "Python client for Consul")
