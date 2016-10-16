@@ -2579,6 +2579,7 @@ logic-free templating system Mustache.")
            (for-each delete-file (find-files "." "\\.pyc$"))
            #t))))
     (build-system python-build-system)
+    ;; Provide nose to enable tests command
     (native-inputs
      `(("python-nose"       ,python-nose)))
     (home-page "http://pythonhosted.org/joblib/")
