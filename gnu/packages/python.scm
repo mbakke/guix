@@ -6881,8 +6881,8 @@ tables.")
         (base32
          "0h9glp1jll3z76ly3kg08aqgxqk0a68p4zi9yn50353bh5nj92v7"))))
     (build-system python-build-system)
-    (native-inputs
-     `(("python-six" ,python-six))) ; for tests
+    (propagated-inputs
+     `(("python-six" ,python-six)))
     (home-page "https://github.com/liris/websocket-client")
     (synopsis "WebSocket client for Python")
     (description "The Websocket-client module provides the low level APIs for
