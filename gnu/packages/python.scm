@@ -6548,7 +6548,7 @@ brokering, etc.) for which the proxy is responsible.")
         (base32
          "1nj9da4ksiyv3h8n2vpzwd0pb03mdsh7zy87hfpx72b6p2zcwg74"))))
     (build-system python-build-system)
-    (native-inputs
+    (propagated-inputs
      `(("python-zope-proxy" ,python-zope-proxy)
        ("python-zope-schema" ,python-zope-schema)))
     (home-page "http://pypi.python.org/pypi/zope.location/")
