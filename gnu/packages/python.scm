@@ -2032,7 +2032,7 @@ executed.")
          (base32
           "0k3np9ymh06yv1ib96sb6wfsxjkqhmik8qfsn119vnhga9ywc52a"))))
     (build-system python-build-system)
-    (native-inputs
+    (propagated-inputs
      `(("python-coverage" ,python-coverage)))
     (home-page "https://github.com/schlamar/cov-core")
     (synopsis "plugin core for use by pytest-cov, nose-cov and nose2-cov")
