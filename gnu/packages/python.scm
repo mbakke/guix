@@ -9116,7 +9116,7 @@ focus on event-based network programming and multiprotocol integration.")
          (base32
           "0nb4h08di432lv7dy2v9kpwgk0w92f24sqc2hw2s9vwr5b8v8xvj"))))
     (build-system python-build-system)
-    (native-inputs
+    (propagated-inputs
      `(("python-twisted" ,python-twisted)))
     (home-page "https://pika.readthedocs.org")
     (synopsis "Pure Python AMQP Client Library")
