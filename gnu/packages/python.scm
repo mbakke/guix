@@ -2858,15 +2858,16 @@ mining and data analysis.")
        (sha256
         (base32 "0jz416fqvpahqyffw8plmszzfj669w8wvf3y9clnr5lr6a7md3kn"))))
     (build-system python-build-system)
+    ;; See DEPENDS.txt for the list of build and run time requiremnts
     (propagated-inputs
      `(("python-matplotlib" ,python-matplotlib)
        ("python-networkx" ,python-networkx)
-       ("python-numpy" ,python-numpy)
        ("python-scipy" ,python-scipy)
-       ("python-six" ,python-six)
        ("python-pillow" ,python-pillow)))
     (native-inputs
-     `(("python-cython" ,python-cython)))
+     `(("python-numpy" ,python-numpy)
+       ("python-cython" ,python-cython)
+       ("python-six" ,python-six)))
     (home-page "http://scikit-image.org/")
     (synopsis "Image processing in Python")
     (description
