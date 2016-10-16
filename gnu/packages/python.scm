@@ -6321,7 +6321,7 @@ dispatching systems can be built.")
         (base32
          "0ks8h73b2g4bkad821qbv0wzjppdrwys33i7ka45ik3wxjg1l8if"))))
     (build-system python-build-system)
-    (propagated-inputs
+    (native-inputs
      `(("python-zope-event" ,python-zope-event)))
     (home-page "https://github.com/zopefoundation/zope.interface")
     (synopsis "Python implementation of the \"design by contract\"
