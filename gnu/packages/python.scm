@@ -2359,9 +2359,9 @@ somewhat intelligeble.")
          "1556v2jppd8mjkkj66pxb5rcazm35jq81r233mdl8hfmz9n3icp1"))))
     (build-system python-build-system)
     (native-inputs
-     `(("python-pytest-runner" ,python-pytest-runner)))
-    (arguments
-     '(#:tests? #f)) ; test suite doesn't work
+     `(("python-pytest" ,python-pytest)
+       ("python-pytest-cov" ,python-pytest-cov)
+       ("python-pytest-runner" ,python-pytest-runner)))
     (home-page "http://github.com/progrium/pyjwt")
     (synopsis "JSON Web Token implementation in Python")
     (description
