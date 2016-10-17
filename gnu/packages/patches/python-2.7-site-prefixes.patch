@@ -1,0 +1,26 @@
+Add all /gnu/store/ prefixes found in PYTHONPATH to the prefixes where
+site-packages (and .pth files) are searched.
+
+*** Python-2.7.11/Lib/site.py.orig	2016-10-17 23:27:23.746149690 +0200
+--- Python-2.7.11/Lib/site.py	2016-10-17 23:44:51.930871644 +0200
+***************
+*** 65,70 ****
+--- 65,82 ----
+  
+  # Prefixes for site-packages; add additional prefixes like /usr/local here
+  PREFIXES = [sys.prefix, sys.exec_prefix]
++ # Guix: Add all /gnu/store-paths in PYTHONPATH--these are all
++ # "prefixes".  This is required to search .pth files in all python
++ # packages contained in /gnu/store which is required to make
++ # .pth-defined namespace packages work.
++ # This is necessary if the packages are not merged into a single
++ # `site-packages` directory (like when using `guix environment`) but
++ # listed in PYTHONPATH (like when running `guix build`).
++ for p in sys.path:
++     if p.startswith('/gnu/store/'):
++         PREFIXES.append(p[:p.find('/', 44)]) # find first pathsep after hash
++ del p
++ 
+  # Enable per user site-packages directory
+  # set it to False to disable the feature or True to force the feature
+  ENABLE_USER_SITE = None
