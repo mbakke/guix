@@ -3500,18 +3500,7 @@ files and writing bioinformatics applications.")
          "1agfz6zqa8nc6cw47yh0s3y14gkpa9wqazwcj7mwwj3ffnw39p3j"))))
     (build-system python-build-system)
     (arguments
-     `(#:python ,python-2  ; requires Python 2.7
-       #:phases
-       (modify-phases %standard-phases
-         (add-after
-          'install 'remove-bin-directory
-          (lambda* (#:key outputs #:allow-other-keys)
-            ;; The "bin" directory only contains wrappers for running
-            ;; the module tests.  They are not needed after the
-            ;; "check" phase.
-            (delete-file-recursively
-             (string-append (assoc-ref outputs "out") "/bin"))
-            #t)))))
+     `(#:python ,python-2))  ; requires Python 2.7
     (propagated-inputs
      `(("python-scipy" ,python2-scipy)
        ("python-numpy" ,python2-numpy)
