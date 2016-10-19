@@ -96,10 +96,9 @@ data units.")
      `(#:phases (modify-phases %standard-phases
         ;; Building the manpage requires khal to be installed.
         (add-after 'install 'manpage
-          (lambda* (#:key outputs #:allow-other-keys)
-            (setenv "PYTHONPATH"
-                    (string-append
-                      (getenv "PYTHONPATH") ":" (assoc-ref outputs "out")))
+          (lambda* (#:key inputs outputs #:allow-other-keys)
+            ;; Make installed package available for running the tests
+            (add-installed-pythonpath inputs outputs)
             (zero? (system* "make" "--directory=doc/" "man"))
             (install-file
               "doc/build/man/khal.1"
