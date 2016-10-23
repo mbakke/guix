@@ -3467,17 +3467,15 @@ interrupted by stop codons.  OrfM finds and prints these ORFs.")
                 "1kjmv891d6qbpp4shhhvkl02ff4q5xlpnls2513sm2cjcrs52f1i"))))
     (build-system python-build-system)
     (arguments `(#:python ,python-2)) ; pbcore requires Python 2.7
-    (inputs
+    (propagated-inputs
      `(("python-cython" ,python2-cython)
        ("python-numpy" ,python2-numpy)
        ("python-pysam" ,python2-pysam)
        ("python-h5py" ,python2-h5py)))
     (native-inputs
-     `(("python-docutils" ,python2-docutils)
-       ("python-nose" ,python2-nose)
-       ("python-sphinx" ,python2-sphinx)))
-    (propagated-inputs
-     `(("python-pyxb" ,python2-pyxb)))
+     `(("python-nose" ,python2-nose)
+       ("python-sphinx" ,python2-sphinx)
+       ("python-pyxb" ,python2-pyxb)))
     (home-page "http://pacificbiosciences.github.io/pbcore/")
     (synopsis "Library for reading and writing PacBio data files")
     (description
