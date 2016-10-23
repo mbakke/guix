@@ -142,8 +142,7 @@ with arguments to the field constructor.")
     (native-inputs
      `(("python-setuptools-scm" ,python-setuptools-scm)))
     (propagated-inputs
-     `(("python-py" ,python-py)
-       ("python-pytest" ,python-pytest)))
+     `(("python-pytest" ,python-pytest)))
     (home-page "http://pytest-django.readthedocs.org/")
     (synopsis "Django plugin for py.test")
     (description "Pytest-django is a plugin for py.test that provides a set of
