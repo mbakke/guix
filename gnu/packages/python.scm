@@ -4332,6 +4332,7 @@ without using the configuration machinery.")
     (propagated-inputs
      `(("python-pyzmq" ,python-pyzmq)
        ("python-terminado" ,python-terminado)))
+    ;; FIXME: Needs more investigation
     (inputs
      `(("readline" ,readline)
        ("which" ,which)
