@@ -7517,15 +7517,16 @@ Pytest but stripped of Pytest specific details.")
        "1vj73ar4rimq3fwy5r2z3jv4g9qbh8rmpmncsc00g0k310acqzxz"))))
    (build-system python-build-system)
    (arguments
-    ;; FIXME: Tests require a newer version of pytest, but upgrading our
-    ;; pytest breaks other packages.
+    ;; FIXME: Tests require pytest-timeout, which itself requires
+    ;; pytest>=2.8.0 for installation.
     '(#:tests? #f))
    (propagated-inputs
     `(("python-pluggy" ,python-pluggy) ; >=0.3.0,<0.4.0
       ("python-py" ,python-py)
       ("python-virtualenv" ,python-virtualenv)))
    (native-inputs
-    `(("python-pytest" ,python-pytest)))  ; >= 2.3.5
+    `(; FIXME: Missing: ("python-pytest-timeout" ,python-pytest-timeout)
+      ("python-pytest" ,python-pytest)))  ; >= 2.3.5
    (home-page "http://tox.testrun.org/")
    (synopsis "Virtualenv-based automation of test activities")
    (description "Tox is a generic virtualenv management and test command line
