@@ -5731,7 +5731,15 @@ printing of sub-tables by specifying a row range.")
        (uri (pypi-uri "tables" version))
        (sha256
         (base32
-         "117s6w7s3yxafpmf3zz3svana7xfrsviw01va1xp7h8ylx8v6r1m"))))
+         "117s6w7s3yxafpmf3zz3svana7xfrsviw01va1xp7h8ylx8v6r1m"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove pre-compiled .pyc files from source.
+           (for-each delete-file-recursively
+                     (find-files "." "__pycache__" #:directories? #t))
+           (for-each delete-file (find-files "." "\\.pyc$"))
+           #t))))
     (build-system python-build-system)
     (arguments
      `(;; FIXME: python-build-system does not pass configure-flags to "build"
