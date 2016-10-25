@@ -5242,7 +5242,15 @@ complexity of Python source code.")
         (uri (pypi-uri "flake8" version))
         (sha256
           (base32
-            "1r9wsry4va45h1rck5hxd3vzsg2q3y6lnl6pym1bxvz8ry19jwx8"))))))
+            "1r9wsry4va45h1rck5hxd3vzsg2q3y6lnl6pym1bxvz8ry19jwx8"))
+        (modules '((guix build utils)))
+        (snippet
+         '(begin
+            ;; Remove pre-compiled .pyc files from source.
+            (for-each delete-file-recursively
+                      (find-files "." "__pycache__" #:directories? #t))
+            (for-each delete-file (find-files "." "\\.pyc$"))
+            #t))))))
 
 (define-public python2-flake8-2.2.4
   (package-with-python2 python-flake8-2.2.4))
