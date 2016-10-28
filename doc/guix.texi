@@ -4836,6 +4836,10 @@ When using this option, you have @emph{absolutely no guarantee} that you
 are communicating with the authentic server responsible for the given
 URL, which makes you vulnerable to ``man-in-the-middle'' attacks.
 
+@item --output=@var{file}
+@itemx -o @var{file}
+Save the downloaded file to @var{file} instead of adding it to the
+store.
 @end table
 
 @node Invoking guix hash

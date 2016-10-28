@@ -1,5 +1,5 @@
 # GNU Guix --- Functional package management for GNU
-# Copyright © 2012, 2015 Ludovic Courtès <ludo@gnu.org>
+# Copyright © 2012, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
 #
 # This file is part of GNU Guix.
 #
@@ -34,6 +34,13 @@ then false; else true; fi
 
 # This one should succeed.
 guix download "file://$abs_top_srcdir/README"
+
+# This one too, even if it cannot talk to the daemon.
+output="t-download-$$"
+trap 'rm -f "$output"' EXIT
+GUIX_DAEMON_SOCKET="/nowhere" guix download -o "$output" \
+		  "file://$abs_top_srcdir/README"
+cmp "$output" "$abs_top_srcdir/README"
 
 # This one should fail.
 if guix download "file:///does-not-exist" "file://$abs_top_srcdir/README"

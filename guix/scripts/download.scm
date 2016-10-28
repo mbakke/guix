@@ -23,12 +23,15 @@
   #:use-module (guix hash)
   #:use-module (guix utils)
   #:use-module (guix base32)
-  #:use-module (guix download)
-  #:use-module ((guix build download) #:select (current-terminal-columns))
-  #:use-module ((guix build syscalls) #:select (terminal-columns))
+  #:use-module ((guix download) #:hide (url-fetch))
+  #:use-module ((guix build download)
+                #:select (url-fetch current-terminal-columns))
+  #:use-module ((guix build syscalls)
+                #:select (terminal-columns))
   #:use-module (web uri)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 binary-ports)
@@ -39,15 +42,31 @@
 ;;; Command-line options.
 ;;;
 
+(define (download-to-file url file)
+  "Download the file at URI to FILE.  Return FILE."
+  (let ((uri (string->uri url)))
+    (match (uri-scheme uri)
+      ((or 'file #f)
+       (copy-file (uri-path uri) file))
+      (_
+       (url-fetch url file)))
+    file))
+
+(define* (download-to-store* url #:key (verify-certificate? #t))
+  (with-store store
+    (download-to-store store url
+                       #:verify-certificate? verify-certificate?)))
+
 (define %default-options
   ;; Alist of default option values.
   `((format . ,bytevector->nix-base32-string)
-    (verify-certificate? . #t)))
+    (verify-certificate? . #t)
+    (download-proc . ,download-to-store*)))
 
 (define (show-help)
   (display (_ "Usage: guix download [OPTION] URL
-Download the file at URL, add it to the store, and print its store path
-and the hash of its contents.
+Download the file at URL to the store or to the given file, and print its
+file name and the hash of its contents.
 
 Supported formats: 'nix-base32' (default), 'base32', and 'base16'
 ('hex' and 'hexadecimal' can be used as well).\n"))
@@ -56,6 +75,8 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
   (format #t (_ "
       --no-check-certificate
                          do not validate the certificate of HTTPS servers "))
+  (format #f (_ "
+  -o, --output=FILE      download to FILE"))
   (newline)
   (display (_ "
   -h, --help             display this help and exit"))
@@ -84,6 +105,12 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
         (option '("no-check-certificate") #f #f
                 (lambda (opt name arg result)
                   (alist-cons 'verify-certificate? #f result)))
+        (option '(#\o "output") #t #f
+                (lambda (opt name arg result)
+                  (alist-cons 'download-proc
+                              (lambda* (url #:key verify-certificate?)
+                                (download-to-file url arg))
+                              (alist-delete 'download result))))
 
         (option '(#\h "help") #f #f
                 (lambda args
@@ -113,24 +140,17 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
 
   (with-error-handling
     (let* ((opts  (parse-options))
-           (store (open-connection))
            (arg   (or (assq-ref opts 'argument)
                       (leave (_ "no download URI was specified~%"))))
            (uri   (or (string->uri arg)
                       (leave (_ "~a: failed to parse URI~%")
                              arg)))
-           (path  (case (uri-scheme uri)
-                    ((file)
-                     (add-to-store store (basename (uri-path uri))
-                                   #f "sha256" (uri-path uri)))
-                    (else
-                     (parameterize ((current-terminal-columns
-                                     (terminal-columns)))
-                       (download-to-store store (uri->string uri)
-                                          (basename (uri-path uri))
-                                          #:verify-certificate?
-                                          (assoc-ref opts
-                                                     'verify-certificate?))))))
+           (fetch (assq-ref opts 'download-proc))
+           (path  (parameterize ((current-terminal-columns
+                                  (terminal-columns)))
+                    (fetch arg
+                           #:verify-certificate?
+                           (assq-ref opts 'verify-certificate?))))
            (hash  (call-with-input-file
                       (or path
                           (leave (_ "~a: download failed~%")
