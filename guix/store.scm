@@ -340,50 +340,58 @@
   (message nix-protocol-error-message)
   (status  nix-protocol-error-status))
 
-(define* (open-connection #:optional (file (%daemon-socket-file))
-                          #:key (reserve-space? #t) cpu-affinity)
-  "Connect to the daemon over the Unix-domain socket at FILE.  When
-RESERVE-SPACE? is true, instruct it to reserve a little bit of extra space on
-the file system so that the garbage collector can still operate, should the
-disk become full.  When CPU-AFFINITY is true, it must be an integer
-corresponding to an OS-level CPU number to which the daemon's worker process
-for this connection will be pinned.  Return a server object."
+(define (open-unix-domain-socket file)
+  "Connect to the Unix-domain socket at FILE and return it.  Raise a
+'&nix-connection-error' upon error."
   (let ((s (with-fluids ((%default-port-encoding #f))
              ;; This trick allows use of the `scm_c_read' optimization.
              (socket PF_UNIX SOCK_STREAM 0)))
         (a (make-socket-address PF_UNIX file)))
 
     (catch 'system-error
-      (cut connect s a)
+      (lambda ()
+        (connect s a)
+        s)
       (lambda args
         ;; Translate the error to something user-friendly.
         (let ((errno (system-error-errno args)))
           (raise (condition (&nix-connection-error
                              (file file)
-                             (errno errno)))))))
+                             (errno errno)))))))))
 
-    (write-int %worker-magic-1 s)
-    (let ((r (read-int s)))
+(define* (open-connection #:optional (file (%daemon-socket-file))
+                          #:key port (reserve-space? #t) cpu-affinity)
+  "Connect to the daemon over the Unix-domain socket at FILE, or, if PORT is
+not #f, use it as the I/O port over which to communicate to a build daemon.
+
+When RESERVE-SPACE? is true, instruct it to reserve a little bit of extra
+space on the file system so that the garbage collector can still operate,
+should the disk become full.  When CPU-AFFINITY is true, it must be an integer
+corresponding to an OS-level CPU number to which the daemon's worker process
+for this connection will be pinned.  Return a server object."
+  (let ((port (or port (open-unix-domain-socket file))))
+    (write-int %worker-magic-1 port)
+    (let ((r (read-int port)))
       (and (eqv? r %worker-magic-2)
-           (let ((v (read-int s)))
+           (let ((v (read-int port)))
              (and (eqv? (protocol-major %protocol-version)
                         (protocol-major v))
                   (begin
-                    (write-int %protocol-version s)
+                    (write-int %protocol-version port)
                     (when (>= (protocol-minor v) 14)
-                      (write-int (if cpu-affinity 1 0) s)
+                      (write-int (if cpu-affinity 1 0) port)
                       (when cpu-affinity
-                        (write-int cpu-affinity s)))
+                        (write-int cpu-affinity port)))
                     (when (>= (protocol-minor v) 11)
-                      (write-int (if reserve-space? 1 0) s))
-                    (let ((s (%make-nix-server s
-                                               (protocol-major v)
-                                               (protocol-minor v)
-                                               (make-hash-table 100)
-                                               (make-hash-table 100))))
-                      (let loop ((done? (process-stderr s)))
-                        (or done? (process-stderr s)))
-                      s))))))))
+                      (write-int (if reserve-space? 1 0) port))
+                    (let ((conn (%make-nix-server port
+                                                  (protocol-major v)
+                                                  (protocol-minor v)
+                                                  (make-hash-table 100)
+                                                  (make-hash-table 100))))
+                      (let loop ((done? (process-stderr conn)))
+                        (or done? (process-stderr conn)))
+                      conn))))))))
 
 (define (close-connection server)
   "Close the connection to SERVER."
