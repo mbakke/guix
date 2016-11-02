@@ -183,9 +183,9 @@ instead of '~a' of type '~a'~%")
 
     session))
 
-(define* (remote-pipe machine command
+(define* (remote-pipe session command
                       #:key (quote? #t))
-  "Run COMMAND (a list) on MACHINE, and return an open input/output port,
+  "Run COMMAND (a list) on SESSION, and return an open input/output port,
 which is also an SSH channel.  When QUOTE? is true, perform shell-quotation of
 all the elements of COMMAND."
   (define (shell-quote str)
@@ -195,9 +195,7 @@ all the elements of COMMAND."
       (lambda ()
         (write str))))
 
-  ;; TODO: Use (ssh popen) instead.
-  (let* ((session (open-ssh-session machine))
-         (channel (make-channel session)))
+  (let* ((channel (make-channel session)))
     (channel-open-session channel)
     (channel-request-exec channel
                           (string-join (if quote?
@@ -298,8 +296,9 @@ hook."
   ;; File name of the temporary GC root we install.
   (format #f "offload-~a-~a" (gethostname) (getpid)))
 
-(define (register-gc-root file machine)
-  "Mark FILE, a store item, as a garbage collector root on MACHINE."
+(define (register-gc-root file session)
+  "Mark FILE, a store item, as a garbage collector root in SESSION.  Return
+the exit status, zero on success."
   (define script
     `(begin
        (use-modules (guix config))
@@ -330,7 +329,7 @@ hook."
              (unless (= EEXIST (system-error-errno args))
                (apply throw args)))))))
 
-  (let ((pipe (remote-pipe machine
+  (let ((pipe (remote-pipe session
                            `("guile" "-c" ,(object->string script)))))
     (read-string pipe)
     (let ((status (channel-get-exit-status pipe)))
@@ -339,10 +338,10 @@ hook."
         ;; Better be safe than sorry: if we ignore the error here, then FILE
         ;; may be GC'd just before we start using it.
         (leave (_ "failed to register GC root for '~a' on '~a' (status: ~a)~%")
-               file (build-machine-name machine) status)))))
+               file (session-get session 'host) status)))))
 
-(define (remove-gc-roots machine)
-  "Remove from MACHINE the GC roots previously installed with
+(define (remove-gc-roots session)
+  "Remove in SESSION the GC roots previously installed with
 'register-gc-root'."
   (define script
     `(begin
@@ -363,24 +362,19 @@ hook."
                        (false-if-exception (delete-file file)))
                      roots)))))
 
-  (let ((pipe (remote-pipe machine
+  (let ((pipe (remote-pipe session
                            `("guile" "-c" ,(object->string script)))))
     (read-string pipe)
     (close-port pipe)))
 
-(define* (offload drv machine
+(define* (offload drv session
                   #:key print-build-trace? (max-silent-time 3600)
                   build-timeout (log-port (build-log-port)))
-  "Perform DRV on MACHINE, assuming DRV and its prerequisites are available
+  "Perform DRV in SESSION, assuming DRV and its prerequisites are available
 there, and write the build log to LOG-PORT.  Return the exit status."
-  (format (current-error-port) "offloading '~a' to '~a'...~%"
-          (derivation-file-name drv) (build-machine-name machine))
-  (format (current-error-port) "@ build-remote ~a ~a~%"
-          (derivation-file-name drv) (build-machine-name machine))
-
   ;; Normally DRV has already been protected from GC when it was transferred.
   ;; The '-r' flag below prevents the build result from being GC'd.
-  (let ((pipe (remote-pipe machine
+  (let ((pipe (remote-pipe session
                            `("guix" "build"
                              "-r" ,%gc-root-file
                              ,(format #f "--max-silent-time=~a"
@@ -418,23 +412,31 @@ there, and write the build log to LOG-PORT.  Return the exit status."
   "Offload DRV to MACHINE.  Prior to the actual offloading, transfer all of
 INPUTS to MACHINE; if building DRV succeeds, retrieve all of OUTPUTS from
 MACHINE."
+  (define session
+    (open-ssh-session machine))
+
   (when (begin
-          (register-gc-root (derivation-file-name drv) machine)
+          (register-gc-root (derivation-file-name drv) session)
           (send-files (cons (derivation-file-name drv) inputs)
-                      machine))
-    (let ((status (offload drv machine
+                      session))
+    (format (current-error-port) "offloading '~a' to '~a'...~%"
+            (derivation-file-name drv) (build-machine-name machine))
+    (format (current-error-port) "@ build-remote ~a ~a~%"
+            (derivation-file-name drv) (build-machine-name machine))
+
+    (let ((status (offload drv session
                            #:print-build-trace? print-build-trace?
                            #:max-silent-time max-silent-time
                            #:build-timeout build-timeout)))
       (if (zero? status)
           (begin
-            (retrieve-files outputs machine)
-            (remove-gc-roots machine)
+            (retrieve-files outputs session)
+            (remove-gc-roots session)
             (format (current-error-port)
                     "done with offloaded '~a'~%"
                     (derivation-file-name drv)))
           (begin
-            (remove-gc-roots machine)
+            (remove-gc-roots session)
             (format (current-error-port)
                     "derivation '~a' offloaded to '~a' failed \
 with exit code ~a~%"
@@ -446,13 +448,13 @@ with exit code ~a~%"
             ;; interprets other non-zero codes as transient build failures.
             (primitive-exit 100))))))
 
-(define (send-files files machine)
-  "Send the subset of FILES that's missing to MACHINE's store.  Return #t on
+(define (send-files files session)
+  "Send the subset of FILES that's missing to SESSION's store.  Return #t on
 success, #f otherwise."
   (define (missing-files files)
-    ;; Return the subset of FILES not already on MACHINE.  Use 'head' as a
+    ;; Return the subset of FILES not already on SESSION.  Use 'head' as a
     ;; hack to make sure the remote end stops reading when we're done.
-    (let* ((pipe (remote-pipe machine
+    (let* ((pipe (remote-pipe session
                               `("guix" "archive" "--missing")
                               #:quote? #f)))
       (format pipe "~{~a~%~}" files)
@@ -462,18 +464,17 @@ success, #f otherwise."
   (with-store store
     (guard (c ((nix-protocol-error? c)
                (warning (_ "failed to export files for '~a': ~s~%")
-                        (build-machine-name machine)
-                        c)
+                        (session-get session 'host) c)
                #f))
 
-      ;; Compute the subset of FILES missing on MACHINE, and send them in
+      ;; Compute the subset of FILES missing on SESSION, and send them in
       ;; topologically sorted order so that they can actually be imported.
       (let* ((files (missing-files (topologically-sorted store files)))
-             (pipe  (remote-pipe machine
+             (pipe  (remote-pipe session
                                  '("guix" "archive" "--import")
                                  #:quote? #f)))
         (format #t (_ "sending ~a store files to '~a'...~%")
-                (length files) (build-machine-name machine))
+                (length files) (session-get session 'host))
 
         (export-paths store files pipe)
         (channel-send-eof! pipe)
@@ -483,12 +484,12 @@ success, #f otherwise."
           (close pipe)
           status)))))
 
-(define (retrieve-files files machine)
-  "Retrieve FILES from MACHINE's store, and import them."
+(define (retrieve-files files session)
+  "Retrieve FILES from SESSION's store, and import them."
   (define host
-    (build-machine-name machine))
+    (session-get session 'host))
 
-  (let ((pipe (remote-pipe machine
+  (let ((pipe (remote-pipe session
                            `("guix" "archive" "--export" ,@files)
                            #:quote? #f)))
     (and pipe
@@ -524,8 +525,9 @@ success, #f otherwise."
 (define (machine-load machine)
   "Return the load of MACHINE, divided by the number of parallel builds
 allowed on MACHINE."
-  (let* ((pipe   (remote-pipe machine '("cat" "/proc/loadavg")))
-         (line   (read-line pipe)))
+  (let* ((session (open-ssh-session machine))
+         (pipe    (remote-pipe session '("cat" "/proc/loadavg")))
+         (line    (read-line pipe)))
     (close-port pipe)
 
     (if (eof-object? line)
