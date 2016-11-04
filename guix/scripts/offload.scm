@@ -21,6 +21,9 @@
   #:use-module (ssh auth)
   #:use-module (ssh session)
   #:use-module (ssh channel)
+  #:use-module (ssh popen)
+  #:use-module (ssh dist)
+  #:use-module (ssh dist node)
   #:use-module (guix config)
   #:use-module (guix records)
   #:use-module (guix store)
@@ -71,6 +74,8 @@
   (private-key     build-machine-private-key      ; file name
                    (default (user-openssh-private-key)))
   (host-key        build-machine-host-key)        ; string
+  (daemon-socket   build-machine-daemon-socket    ; string
+                   (default "/var/guix/daemon-socket/socket"))
   (parallel-builds build-machine-parallel-builds  ; number
                    (default 1))
   (speed           build-machine-speed            ; inexact real
@@ -183,6 +188,53 @@ instead of '~a' of type '~a'~%")
 
     session))
 
+(define* (connect-to-remote-daemon session
+                                   #:optional
+                                   (socket-name "/var/guix/daemon-socket/socket"))
+  "Connect to the remote build daemon listening on SOCKET-NAME over SESSION,
+an SSH session.  Return a <nix-server> object."
+  (define redirect
+    ;; Code run in SESSION to redirect the remote process' stdin/stdout to the
+    ;; daemon's socket, à la socat.  The SSH protocol supports forwarding to
+    ;; Unix-domain sockets but libssh doesn't have an API for that, hence this
+    ;; hack.
+    `(begin
+       (use-modules (ice-9 match) (rnrs io ports))
+
+       (let ((sock   (socket AF_UNIX SOCK_STREAM 0))
+             (stdin  (current-input-port))
+             (stdout (current-output-port)))
+         (setvbuf stdin _IONBF)
+         (setvbuf stdout _IONBF)
+         (connect sock AF_UNIX ,socket-name)
+
+         (let loop ()
+           (match (select (list stdin sock) '() (list stdin stdout sock))
+             ((reads writes ())
+              (when (memq stdin reads)
+                (match (get-bytevector-some stdin)
+                  ((? eof-object?)
+                   (primitive-exit 0))
+                  (bv
+                   (put-bytevector sock bv))))
+              (when (memq sock reads)
+                (match (get-bytevector-some sock)
+                  ((? eof-object?)
+                   (primitive-exit 0))
+                  (bv
+                   (put-bytevector stdout bv))))
+              (loop))
+             (_
+              (primitive-exit 1)))))))
+
+  (let ((channel
+         (open-remote-pipe* session OPEN_BOTH
+                            ;; Sort-of shell-quote REDIRECT.
+                            "guile" "-c"
+                            (object->string
+                             (object->string redirect)))))
+    (open-connection #:port channel)))
+
 (define* (remote-pipe session command
                       #:key (quote? #t))
   "Run COMMAND (a list) on SESSION, and return an open input/output port,
@@ -292,116 +344,6 @@ hook."
     (set-port-revealed! port 1)
     port))
 
-(define %gc-root-file
-  ;; File name of the temporary GC root we install.
-  (format #f "offload-~a-~a" (gethostname) (getpid)))
-
-(define (register-gc-root file session)
-  "Mark FILE, a store item, as a garbage collector root in SESSION.  Return
-the exit status, zero on success."
-  (define script
-    `(begin
-       (use-modules (guix config))
-
-       ;; Note: we can't use 'add-indirect-root' because dangling links under
-       ;; gcroots/auto are automatically deleted by the GC.  This strategy
-       ;; doesn't have this problem, but it requires write access to that
-       ;; directory.
-       (let ((root-directory (string-append %state-directory
-                                            "/gcroots/tmp")))
-         (catch 'system-error
-           (lambda ()
-             (mkdir root-directory))
-           (lambda args
-             (unless (= EEXIST (system-error-errno args))
-               (error "failed to create remote GC root directory"
-                      root-directory (system-error-errno args)))))
-
-         (catch 'system-error
-           (lambda ()
-             (symlink ,file
-                      (string-append root-directory "/" ,%gc-root-file)))
-           (lambda args
-             ;; If FILE already exists, we can assume that either it's a stale
-             ;; reference (which is fine), or another process is already
-             ;; building the derivation represented by FILE (which is fine
-             ;; too.)  Thus, do nothing in that case.
-             (unless (= EEXIST (system-error-errno args))
-               (apply throw args)))))))
-
-  (let ((pipe (remote-pipe session
-                           `("guile" "-c" ,(object->string script)))))
-    (read-string pipe)
-    (let ((status (channel-get-exit-status pipe)))
-      (close-port pipe)
-      (unless (zero? status)
-        ;; Better be safe than sorry: if we ignore the error here, then FILE
-        ;; may be GC'd just before we start using it.
-        (leave (_ "failed to register GC root for '~a' on '~a' (status: ~a)~%")
-               file (session-get session 'host) status)))))
-
-(define (remove-gc-roots session)
-  "Remove in SESSION the GC roots previously installed with
-'register-gc-root'."
-  (define script
-    `(begin
-       (use-modules (guix config) (ice-9 ftw)
-                    (srfi srfi-1) (srfi srfi-26))
-
-       (let ((root-directory (string-append %state-directory
-                                            "/gcroots/tmp")))
-         (false-if-exception
-          (delete-file
-           (string-append root-directory "/" ,%gc-root-file)))
-
-         ;; These ones were created with 'guix build -r' (there can be more
-         ;; than one in case of multiple-output derivations.)
-         (let ((roots (filter (cut string-prefix? ,%gc-root-file <>)
-                              (scandir "."))))
-           (for-each (lambda (file)
-                       (false-if-exception (delete-file file)))
-                     roots)))))
-
-  (let ((pipe (remote-pipe session
-                           `("guile" "-c" ,(object->string script)))))
-    (read-string pipe)
-    (close-port pipe)))
-
-(define* (offload drv session
-                  #:key print-build-trace? (max-silent-time 3600)
-                  build-timeout (log-port (build-log-port)))
-  "Perform DRV in SESSION, assuming DRV and its prerequisites are available
-there, and write the build log to LOG-PORT.  Return the exit status."
-  ;; Normally DRV has already been protected from GC when it was transferred.
-  ;; The '-r' flag below prevents the build result from being GC'd.
-  (let ((pipe (remote-pipe session
-                           `("guix" "build"
-                             "-r" ,%gc-root-file
-                             ,(format #f "--max-silent-time=~a"
-                                      max-silent-time)
-                             ,@(if build-timeout
-                                   (list (format #f "--timeout=~a"
-                                                 build-timeout))
-                                   '())
-                             ,(derivation-file-name drv))
-
-                           ;; Since 'guix build' writes the build log to its
-                           ;; stderr, everything will go directly to LOG-PORT.
-                           ;; #:error-port log-port ;; FIXME
-                           )))
-    ;; Make standard error visible.
-    (channel-set-stream! pipe 'stderr)
-
-    (let loop ((line (read-line pipe)))
-      (unless (eof-object? line)
-        (display line log-port)
-        (newline log-port)
-        (loop (read-line pipe))))
-
-    (let loop ((status (channel-get-exit-status pipe)))
-      (close-port pipe)
-      status)))
-
 (define* (transfer-and-offload drv machine
                                #:key
                                (inputs '())
@@ -415,99 +357,128 @@ MACHINE."
   (define session
     (open-ssh-session machine))
 
-  (when (begin
-          (register-gc-root (derivation-file-name drv) session)
-          (send-files (cons (derivation-file-name drv) inputs)
-                      session))
-    (format (current-error-port) "offloading '~a' to '~a'...~%"
-            (derivation-file-name drv) (build-machine-name machine))
-    (format (current-error-port) "@ build-remote ~a ~a~%"
-            (derivation-file-name drv) (build-machine-name machine))
+  (define store
+    (connect-to-remote-daemon session
+                              (build-machine-daemon-socket machine)))
 
-    (let ((status (offload drv session
-                           #:print-build-trace? print-build-trace?
-                           #:max-silent-time max-silent-time
-                           #:build-timeout build-timeout)))
-      (if (zero? status)
-          (begin
-            (retrieve-files outputs session)
-            (remove-gc-roots session)
-            (format (current-error-port)
-                    "done with offloaded '~a'~%"
-                    (derivation-file-name drv)))
-          (begin
-            (remove-gc-roots session)
-            (format (current-error-port)
-                    "derivation '~a' offloaded to '~a' failed \
-with exit code ~a~%"
-                    (derivation-file-name drv)
-                    (build-machine-name machine)
-                    status)
+  (set-build-options store
+                     #:print-build-trace print-build-trace?
+                     #:max-silent-time max-silent-time
+                     #:timeout build-timeout)
 
-            ;; Use exit code 100 for a permanent build failure.  The daemon
-            ;; interprets other non-zero codes as transient build failures.
-            (primitive-exit 100))))))
+  ;; Protect DRV from garbage collection.
+  (add-temp-root store (derivation-file-name drv))
 
-(define (send-files files session)
-  "Send the subset of FILES that's missing to SESSION's store.  Return #t on
-success, #f otherwise."
-  (define (missing-files files)
-    ;; Return the subset of FILES not already on SESSION.  Use 'head' as a
-    ;; hack to make sure the remote end stops reading when we're done.
-    (let* ((pipe (remote-pipe session
-                              `("guix" "archive" "--missing")
-                              #:quote? #f)))
-      (format pipe "~{~a~%~}" files)
-      (channel-send-eof! pipe)
-      (string-tokenize (read-string pipe))))
+  (send-files (cons (derivation-file-name drv) inputs)
+              store)
+  (format (current-error-port) "offloading '~a' to '~a'...~%"
+          (derivation-file-name drv) (build-machine-name machine))
+  (format (current-error-port) "@ build-remote ~a ~a~%"
+          (derivation-file-name drv) (build-machine-name machine))
 
+  (guard (c ((nix-protocol-error? c)
+             (format (current-error-port)
+                     (_ "derivation '~a' offloaded to '~a' failed: ~a~%")
+                     (derivation-file-name drv)
+                     (build-machine-name machine)
+                     (nix-protocol-error-message c))
+             ;; Use exit code 100 for a permanent build failure.  The daemon
+             ;; interprets other non-zero codes as transient build failures.
+             (primitive-exit 100)))
+    (build-derivations store (list drv)))
+
+  (retrieve-files outputs store)
+  (format (current-error-port) "done with offloaded '~a'~%"
+          (derivation-file-name drv)))
+
+(define (store-import-channel session)
+  "Return an output port to which archives to be exported to SESSION's store
+can be written."
+  ;; Using the 'import-paths' RPC on a remote store would be slow because it
+  ;; makes a round trip every time 32 KiB have been transferred.  This
+  ;; procedure instead opens a separate channel to use the remote
+  ;; 'import-paths' procedure, which consumes all the data in a single round
+  ;; trip.
+  (define import
+    `(begin
+       (use-modules (guix))
+
+       (with-store store
+         (setvbuf (current-input-port) _IONBF)
+         (import-paths store (current-input-port)))))
+
+  (open-remote-output-pipe session
+                           (string-join
+                            `("guile" "-c"
+                              ,(object->string
+                                (object->string import))))))
+
+(define (store-export-channel session files)
+  "Return an input port from which an export of FILES from SESSION's store can
+be read."
+  ;; Same as above: this is more efficient than calling 'export-paths' on a
+  ;; remote store.
+  (define export
+    `(begin
+       (use-modules (guix))
+
+       (with-store store
+         (setvbuf (current-output-port) _IONBF)
+         (export-paths store ',files (current-output-port)))))
+
+  (open-remote-input-pipe session
+                          (string-join
+                           `("guile" "-c"
+                             ,(object->string
+                               (object->string export))))))
+
+(define (send-files files remote)
+  "Send the subset of FILES that's missing to REMOTE, a remote store."
   (with-store store
-    (guard (c ((nix-protocol-error? c)
-               (warning (_ "failed to export files for '~a': ~s~%")
-                        (session-get session 'host) c)
-               #f))
+    ;; Compute the subset of FILES missing on SESSION, and send them in
+    ;; topologically sorted order so that they can actually be imported.
+    (let* ((sorted  (topologically-sorted store files))
+           (session (channel-get-session (nix-server-socket remote)))
+           (node    (make-node session))
+           (missing (node-eval node
+                               `(begin
+                                  (use-modules (guix)
+                                               (srfi srfi-1) (srfi srfi-26))
 
-      ;; Compute the subset of FILES missing on SESSION, and send them in
-      ;; topologically sorted order so that they can actually be imported.
-      (let* ((files (missing-files (topologically-sorted store files)))
-             (pipe  (remote-pipe session
-                                 '("guix" "archive" "--import")
-                                 #:quote? #f)))
-        (format #t (_ "sending ~a store files to '~a'...~%")
-                (length files) (session-get session 'host))
+                                  (with-store store
+                                    (remove (cut valid-path? store <>)
+                                            ',sorted)))))
+           (port    (store-import-channel session)))
+      (format #t (_ "sending ~a store files to '~a'...~%")
+              (length missing) (session-get session 'host))
 
-        (export-paths store files pipe)
-        (channel-send-eof! pipe)
+      (export-paths store missing port)
 
-        ;; Wait for the remote process to complete.
-        (let ((status (channel-get-exit-status pipe)))
-          (close pipe)
-          status)))))
+      ;; Tell the remote process that we're done.  (In theory the
+      ;; end-of-archive mark of 'export-paths' would be enough, but in
+      ;; practice it's not.)
+      (channel-send-eof! port)
 
-(define (retrieve-files files session)
+      ;; Wait for completion of the remote process.
+      (let ((result (zero? (channel-get-exit-status port))))
+        (close-port port)
+        result))))
+
+(define (retrieve-files files remote)
   "Retrieve FILES from SESSION's store, and import them."
-  (define host
-    (session-get session 'host))
+  (let* ((session (channel-get-session (nix-server-socket remote)))
+         (host    (session-get session 'host))
+         (port    (store-export-channel session files)))
+    (format #t (_ "retrieving ~a files from '~a'...~%")
+            (length files) host)
 
-  (let ((pipe (remote-pipe session
-                           `("guix" "archive" "--export" ,@files)
-                           #:quote? #f)))
-    (and pipe
-         (with-store store
-           (guard (c ((nix-protocol-error? c)
-                      (warning (_ "failed to import files from '~a': ~s~%")
-                               host c)
-                      #f))
-             (format (current-error-port) "retrieving ~a files from '~a'...~%"
-                     (length files) host)
-
-             ;; We cannot use the 'import-paths' RPC here because we already
-             ;; hold the locks for FILES.
-             (restore-file-set pipe
-                               #:log-port (current-error-port)
-                               #:lock? #f)
-
-             (close-port pipe))))))
+    ;; We cannot use the 'import-paths' RPC here because we already
+    ;; hold the locks for FILES.
+    (let ((result (restore-file-set port
+                                    #:log-port (current-error-port)
+                                    #:lock? #f)))
+      (close-port port)
+      result)))
 
 
 ;;;

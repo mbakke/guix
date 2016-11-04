@@ -912,6 +912,10 @@ Offloading uses
 communicate with build hosts.  Guile-SSH is compatible with OpenSSH, so
 this key must be an OpenSSH private key file.
 
+@item @code{daemon-socket} (default: @code{"/var/guix/daemon-socket/socket"})
+File name of the Unix-domain socket @command{guix-daemon} is listening
+to on that machine.
+
 @item @code{parallel-builds} (default: @code{1})
 The number of builds that may run in parallel on the machine.
 
