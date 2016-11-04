@@ -650,17 +650,6 @@ defines a total order on machines.)"
              ;; Not now, all the machines are busy.
              (display "# postpone\n")))))))
 
-(define-syntax-rule (with-nar-error-handling body ...)
-  "Execute BODY with any &nar-error suitably reported to the user."
-  (guard (c ((nar-error? c)
-             (let ((file (nar-error-file c)))
-               (if (condition-has-type? c &message)
-                   (leave (_ "while importing file '~a': ~a~%")
-                          file (gettext (condition-message c)))
-                   (leave (_ "failed to import file '~a'~%")
-                          file)))))
-    body ...))
-
 
 ;;;
 ;;; Entry point.
@@ -691,7 +680,7 @@ defines a total order on machines.)"
              (cond ((regexp-exec request-line-rx line)
                     =>
                     (lambda (match)
-                      (with-nar-error-handling
+                      (with-error-handling
                        (process-request (equal? (match:substring match 1) "1")
                                         (match:substring match 2) ; system
                                         (call-with-input-file
