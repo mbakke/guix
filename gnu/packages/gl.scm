@@ -5,6 +5,7 @@
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016 David Thompson <davet@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -249,6 +250,9 @@ also known as DXTn or DXTC) for Mesa.")
          "--enable-gles2"
          "--enable-gbm"
          "--enable-shared-glapi"
+         ;; Without floating point texture support, drivers such as Nouveau
+         ;; are stuck at OpenGL 2.1 instead of OpenGL 3.0+.
+         "--enable-texture-float"
 
          ;; on non-intel systems, drop i915 and i965
          ;; from the default dri drivers
