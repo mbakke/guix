@@ -95,6 +95,7 @@
             path-info-registration-time
             path-info-nar-size
 
+            built-in-builders
             references
             references/substitutes
             requisites
@@ -187,7 +188,8 @@
   (query-substitutable-paths 32)
   (query-valid-derivers 33)
   (optimize-store 34)
-  (verify-store 35))
+  (verify-store 35)
+  (built-in-builders 80))
 
 (define-enumerate-type hash-algo
   ;; hash.hh
@@ -283,7 +285,7 @@
      (write-string (bytevector->base16-string arg) p))))
 
 (define-syntax read-arg
-  (syntax-rules (integer boolean string store-path store-path-list
+  (syntax-rules (integer boolean string store-path store-path-list string-list
                  substitutable-path-list path-info base16)
     ((_ integer p)
      (read-int p))
@@ -295,6 +297,8 @@
      (read-store-path p))
     ((_ store-path-list p)
      (read-store-path-list p))
+    ((_ string-list p)
+     (read-string-list p))
     ((_ substitutable-path-list p)
      (read-substitutable-path-list p))
     ((_ path-info p)
@@ -913,6 +917,23 @@ returned; thus, the resulting list can be shorter than PATHS.  Furthermore,
 that there is no guarantee that the order of the resulting list matches the
 order of PATHS."
              substitutable-path-list))
+
+(define built-in-builders
+  (let ((builders (operation (built-in-builders)
+                             "Return the built-in builders."
+                             string-list)))
+    (lambda (store)
+      "Return the names of the supported built-in derivation builders
+supported by STORE."
+      ;; Check whether STORE's version supports this RPC and built-in
+      ;; derivation builders in general, which appeared in Guix > 0.11.0.
+      ;; Return the empty list if it doesn't.  Note that this RPC does not
+      ;; exist in 'nix-daemon'.
+      (if (or (> (nix-server-major-version store) #x100)
+              (and (= (nix-server-major-version store) #x100)
+                   (>= (nix-server-minor-version store) #x60)))
+          (builders store)
+          '()))))
 
 (define-operation (optimize-store)
   "Optimize the store by hard-linking identical files (\"deduplication\".)

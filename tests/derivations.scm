@@ -205,6 +205,10 @@
                 (= (stat:ino (lstat file1))
                    (stat:ino (lstat file2))))))))
 
+(test-equal "built-in-builders"
+  '("download")
+  (built-in-builders %store))
+
 (test-assert "unknown built-in builder"
   (let ((drv (derivation %store "ohoh" "builtin:does-not-exist" '())))
     (guard (c ((nix-protocol-error? c)

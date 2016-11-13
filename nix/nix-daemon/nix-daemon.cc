@@ -6,6 +6,7 @@
 #include "archive.hh"
 #include "affinity.hh"
 #include "globals.hh"
+#include "builtins.hh"
 
 #include <algorithm>
 
@@ -669,6 +670,14 @@ static void performOp(bool trusted, unsigned int clientVersion,
         stopWork();
         writeInt(errors, to);
         break;
+    }
+
+    case wopBuiltinBuilders: {
+	startWork();
+	auto names = builtinBuilderNames();
+	stopWork();
+	writeStrings(names, to);
+	break;
     }
 
     default:
