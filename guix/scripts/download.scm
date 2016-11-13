@@ -42,25 +42,30 @@
 ;;; Command-line options.
 ;;;
 
-(define (download-to-file url file)
+(define* (download-to-file url file #:key (mirrors %mirrors))
   "Download the file at URI to FILE.  Return FILE."
   (let ((uri (string->uri url)))
     (match (uri-scheme uri)
       ((or 'file #f)
        (copy-file (uri-path uri) file))
       (_
-       (url-fetch url file)))
+       (url-fetch url file #:mirrors mirrors)))
     file))
 
-(define* (download-to-store* url #:key (verify-certificate? #t))
+(define* (download-to-store* url
+                             #:key
+                             (verify-certificate? #t)
+                             (mirrors %mirrors))
   (with-store store
     (download-to-store store url
+                       #:mirrors mirrors
                        #:verify-certificate? verify-certificate?)))
 
 (define %default-options
   ;; Alist of default option values.
   `((format . ,bytevector->nix-base32-string)
     (verify-certificate? . #t)
+    (mirrors . ,%mirrors)
     (download-proc . ,download-to-store*)))
 
 (define (show-help)
@@ -77,6 +82,8 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
                          do not validate the certificate of HTTPS servers "))
   (format #f (_ "
   -o, --output=FILE      download to FILE"))
+  (format #f (_ "
+      --mirrors=FILE     read the list of mirrors from FILE"))
   (newline)
   (display (_ "
   -h, --help             display this help and exit"))
@@ -105,11 +112,17 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
         (option '("no-check-certificate") #f #f
                 (lambda (opt name arg result)
                   (alist-cons 'verify-certificate? #f result)))
+        (option '("mirrors") #t #f
+                (lambda (opt name arg result)
+                  (alist-cons 'mirrors
+                              (call-with-input-file arg read)
+                              result)))
         (option '(#\o "output") #t #f
                 (lambda (opt name arg result)
                   (alist-cons 'download-proc
-                              (lambda* (url #:key verify-certificate?)
-                                (download-to-file url arg))
+                              (lambda* (url #:key mirrors verify-certificate?)
+                                (download-to-file url arg
+                                                  #:mirrors mirrors))
                               (alist-delete 'download result))))
 
         (option '(#\h "help") #f #f
@@ -149,6 +162,7 @@ Supported formats: 'nix-base32' (default), 'base32', and 'base16'
            (path  (parameterize ((current-terminal-columns
                                   (terminal-columns)))
                     (fetch arg
+                           #:mirrors (assq-ref opts 'mirrors)
                            #:verify-certificate?
                            (assq-ref opts 'verify-certificate?))))
            (hash  (call-with-input-file

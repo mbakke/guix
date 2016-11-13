@@ -435,6 +435,7 @@ own.  This helper makes it easier to deal with \"tar bombs\"."
 
 (define* (download-to-store store url #:optional (name (basename url))
                             #:key (log (current-error-port)) recursive?
+                            (mirrors %mirrors)
                             (verify-certificate? #t))
   "Download from URL to STORE, either under NAME or URL's basename if
 omitted.  Write progress reports to LOG.  RECURSIVE? has the same effect as
@@ -451,7 +452,7 @@ whether or not to validate HTTPS server certificates."
          (let ((result
                 (parameterize ((current-output-port log))
                   (build:url-fetch url temp
-                                   #:mirrors %mirrors
+                                   #:mirrors mirrors
                                    #:verify-certificate?
                                    verify-certificate?))))
            (close port)

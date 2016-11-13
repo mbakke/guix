@@ -4840,6 +4840,11 @@ URL, which makes you vulnerable to ``man-in-the-middle'' attacks.
 @itemx -o @var{file}
 Save the downloaded file to @var{file} instead of adding it to the
 store.
+
+@item --mirrors=@var{file}
+Read from @var{file} an association list describing supported values and
+their list of mirrors for @code{mirror://} URIs.  This option is
+primarily meant for internal consumption.
 @end table
 
 @node Invoking guix hash
