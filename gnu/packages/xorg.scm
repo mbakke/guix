@@ -5302,7 +5302,8 @@ draggable titlebars and borders.")
                ".tar.bz2"))
         (sha256
           (base32
-            "06lz6i7rbrp19kgikpaz4c97fw7n31k2h2aiikczs482g2zbdvj6"))))
+           "06lz6i7rbrp19kgikpaz4c97fw7n31k2h2aiikczs482g2zbdvj6"))
+        (patches (search-patches "libxt-guix-search-paths.patch"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc"))                            ;2 MiB of man pages + XML

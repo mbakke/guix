@@ -1,0 +1,126 @@
+--- libXt-1.1.5/src/Intrinsic.c	2015-05-01 07:36:20.000000000 +0200
++++ Intrinsic.c	2016-12-12 00:42:16.567388450 +0100
+@@ -1303,21 +1303,101 @@
+     } else (void) strcpy(*rest, string);
+ }
+ 
+-/*
+- * default path used if environment variable XFILESEARCHPATH
+- * is not defined.  Also substitued for %D.
+- * The exact value should be documented in the implementation
+- * notes for any Xt implementation.
++
++
++/* 
++   Return the default search path for the function
++   XtResolvePathname to use if XFILESEARCHPATH is 
++   not defined.
++
++   It returns the combination the set of values which are the 6 "stems" below,
++   prepended with "/run/current-system/profile", and $GUIX_PROFILE and 
++   "$HOME/.guix-profile"
++
++   These values provide the default paths where Guix/GuixSD  can expect
++   to find resources for installed packages.
+  */
+-static const char *implementation_default_path(void)
++static const char *guix_default_path(void)
+ {
+-#if defined(WIN32)
+-    static char xfilesearchpath[] = "";
+-
+-    return xfilesearchpath;
+-#else
+-    return XFILESEARCHPATHDEFAULT;
+-#endif
++  static const char *search_path_default_stem[] = {
++    "/lib/X11/%L/%T/%N%C%S",
++    "/lib/X11/%l/%T/%N%C%S",
++    "/lib/X11/%T/%N%C%S",
++    "/lib/X11/%L/%T/%N%S",
++    "/lib/X11/%l/%T/%N%S",
++    "/lib/X11/%T/%N%S"
++  };
++
++#define SIZEOF_STEMS  (strlen (search_path_default_stem[0])	\
++		       + strlen (search_path_default_stem[1])	\
++		       + strlen (search_path_default_stem[2])	\
++		       + strlen (search_path_default_stem[3])	\
++		       + strlen (search_path_default_stem[4])	\
++		       + strlen (search_path_default_stem[5]))
++
++
++  int i;
++  const char *current_profile = "/run/current-system/profile";
++  char *home = getenv ("HOME");
++  char *guix_profile = getenv ("GUIX_PROFILE");
++
++  size_t bytesAllocd = SIZEOF_STEMS + 1; 
++
++  /* This function is evaluated multiple times and the calling
++     code assumes that it is idempotent. So we must not allow
++     (say) a changed environment variable to cause it to return
++     something different. */
++  static char *path = NULL;
++  if (path)
++    return path;
++
++  bytesAllocd += 6 * (1 + strlen (current_profile));
++
++  if (guix_profile != NULL)
++    {
++      bytesAllocd += SIZEOF_STEMS;
++      bytesAllocd += 6 * (1 + strlen (guix_profile));
++    }
++
++  if (home != NULL)
++    {
++      bytesAllocd += SIZEOF_STEMS;
++      bytesAllocd += 6 * (1 + strlen(home) + strlen ("/.guix-profile"));
++    }
++
++  path = XtMalloc(bytesAllocd);
++  if (path == NULL) _XtAllocError(NULL);
++
++  memset (path, 0, bytesAllocd);
++  
++  for (i = 0 ; i < 6 ; ++i)
++    {
++      strcat (path, current_profile);
++      strcat (path, search_path_default_stem[i]);
++      strcat (path, ":");
++    }
++
++  if (guix_profile != NULL)
++    for (i = 0 ; i < 6 ; ++i)
++      {
++	strcat (path, guix_profile);
++	strcat (path, search_path_default_stem[i]);
++	strcat (path, ":");
++      }
++
++  if (home != NULL)
++    for (i = 0 ; i < 6 ; ++i)
++      {
++	strcat (path, home);
++	strcat (path, "/.guix-profile");
++	strcat (path, search_path_default_stem[i]);
++	strcat (path, ":");
++      }
++
++  /* Remove final : */
++  path[strlen(path) - 1] = '\0';
++  
++  return path;
+ }
+ 
+ 
+@@ -1345,7 +1425,7 @@
+ {
+     XtPerDisplay pd;
+     static const char *defaultPath = NULL;
+-    const char *impl_default = implementation_default_path();
++    const char *impl_default = guix_default_path();
+     int idef_len = strlen(impl_default);
+     char *massagedPath;
+     int bytesAllocd, bytesLeft;
