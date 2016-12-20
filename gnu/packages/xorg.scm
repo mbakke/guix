@@ -1458,7 +1458,7 @@ treat it as part of their software base when porting.")
 (define-public libxpm
   (package
     (name "libxpm")
-    (version "3.5.11")
+    (version "3.5.12")
     (source
       (origin
         (method url-fetch)
@@ -1468,7 +1468,7 @@ treat it as part of their software base when porting.")
                ".tar.bz2"))
         (sha256
           (base32
-            "07041q4k8m4nirzl7lrqn8by2zylx0xvh6n0za301qqs3njszgf5"))))
+            "1v5xaiw4zlhxspvx76y3hq4wpxv7mpj6parqnwdqvpj8vbinsspx"))))
     (build-system gnu-build-system)
     (inputs
       `(("gettext" ,gettext-minimal)
