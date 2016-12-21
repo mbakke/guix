@@ -199,7 +199,8 @@ in the Mozilla clients.")
                (base32
                 "0945q9yyhax9lkhxs1bjlr5gwknpvhzsa4zxfh127l398i9ci2nw"))
               ;; Create nss.pc and nss-config.
-              (patches (search-patches "nss-pkgconfig.patch"))))
+              (patches (search-patches "nss-pkgconfig.patch"
+                                       "nss-update-expired-test-cert.patch"))))
     (build-system gnu-build-system)
     (outputs '("out" "bin"))
     (arguments
