@@ -102,14 +102,14 @@ tools have full access to view and control running applications.")
 (define-public cairo
   (package
    (name "cairo")
-   (version "1.14.6")
+   (version "1.14.8")
    (source (origin
             (method url-fetch)
-            (uri (string-append "http://cairographics.org/releases/cairo-"
+            (uri (string-append "https://cairographics.org/releases/cairo-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0lmjlzmghmr27y615px9hkm552x7ap6pmq9mfbzr6smp8y2b6g31"))
+              "082ypjlh03ss5616amgjp9ap3xwwccyh2knyyrj1a4d4x65dkwni"))
             (patches (search-patches "cairo-CVE-2016-9082.patch"))))
    (build-system gnu-build-system)
    (propagated-inputs
@@ -150,7 +150,7 @@ Bézier splines, transforming and compositing translucent images, and
 antialiased text rendering.  All drawing operations can be transformed by any
 affine transformation (scale, rotation, shear, etc.).")
    (license license:lgpl2.1) ; or Mozilla Public License 1.1
-   (home-page "http://cairographics.org/")))
+   (home-page "https://cairographics.org/")))
 
 (define-public cairo-xcb
   (package
