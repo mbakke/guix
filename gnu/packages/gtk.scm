@@ -929,15 +929,14 @@ guile-gnome-platform (GNOME developer libraries), and guile-gtksourceview.")
 (define-public cairomm
   (package
     (name "cairomm")
-    (version "1.12.0")
+    (version "1.12.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/cairomm/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
+              (uri (string-append "https://www.cairographics.org/releases/"
+                                  name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1rmgs6zjj2vaxh9hsa0944m23fdn1psycqh7bi984qd8jj1xljm5"))))
+                "16fmigxsaz85c3lgcls7biwyz8zy8c8h3jndfm54cxxas3a7zi25"))))
     (build-system gnu-build-system)
     (arguments
      ;; The examples lack -lcairo.
@@ -948,7 +947,7 @@ guile-gnome-platform (GNOME developer libraries), and guile-gtksourceview.")
        ("freetype" ,freetype)
        ("fontconfig" ,fontconfig)
        ("cairo" ,cairo)))
-    (home-page "http://cairographics.org/")
+    (home-page "https://cairographics.org/")
     (synopsis "C++ bindings to the Cairo 2D graphics library")
     (description
      "Cairomm provides a C++ programming interface to the Cairo 2D graphics
