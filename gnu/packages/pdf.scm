@@ -72,14 +72,14 @@
 (define-public poppler
   (package
    (name "poppler")
-   (version "0.47.0")
+   (version "0.50.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "https://poppler.freedesktop.org/poppler-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0hnjkcqqk87dw3hlda4gh4l7brkslniax9a79g772jn3iwiffwmq"))))
+              "0dmwnh59m75vhii6dw63x8l0qa0ha733pb8bdqzr7lw9nwc37jf9"))))
    (build-system gnu-build-system)
    ;; FIXME:
    ;;  use libcurl:        no
@@ -89,7 +89,7 @@
              ("libpng" ,libpng)
              ("libtiff" ,libtiff)
              ("lcms" ,lcms)
-             ("openjpeg-1" ,openjpeg-1)
+             ("openjpeg-1" ,openjpeg-1) ; prefers openjpeg-1
              ("zlib" ,zlib)
 
              ;; To build poppler-glib (as needed by Evince), we need Cairo and
@@ -117,7 +117,8 @@
             (setenv "CPATH"
                     (string-append (assoc-ref %build-inputs "openjpeg-1")
                                    "/include/openjpeg-1.5"
-                                   ":" (or (getenv "CPATH") ""))))))))
+                                   ":" (or (getenv "CPATH") "")))
+            #t)))))
    (synopsis "PDF rendering library")
    (description
     "Poppler is a PDF rendering library based on the xpdf-3.0 code base.")
