@@ -61,6 +61,7 @@ MODULES =					\
   guix/zlib.scm					\
   guix/build-system.scm				\
   guix/build-system/ant.scm			\
+  guix/build-system/cargo.scm			\
   guix/build-system/cmake.scm			\
   guix/build-system/emacs.scm			\
   guix/build-system/asdf.scm			\
@@ -83,6 +84,7 @@ MODULES =					\
   guix/ui.scm					\
   guix/build/ant-build-system.scm		\
   guix/build/download.scm			\
+  guix/build/cargo-build-system.scm		\
   guix/build/cmake-build-system.scm		\
   guix/build/emacs-build-system.scm		\
   guix/build/asdf-build-system.scm		\
@@ -120,6 +122,7 @@ MODULES =					\
   guix/import/snix.scm				\
   guix/import/cabal.scm				\
   guix/import/cran.scm				\
+  guix/import/crate.scm				\
   guix/import/hackage.scm			\
   guix/import/elpa.scm   			\
   guix/scripts.scm				\
@@ -139,6 +142,7 @@ MODULES =					\
   guix/scripts/lint.scm				\
   guix/scripts/challenge.scm			\
   guix/scripts/import/cran.scm			\
+  guix/scripts/import/crate.scm			\
   guix/scripts/import/gnu.scm			\
   guix/scripts/import/nix.scm			\
   guix/scripts/import/hackage.scm		\
@@ -280,7 +284,8 @@ if HAVE_GUILE_JSON
 SCM_TESTS += 					\
   tests/pypi.scm				\
   tests/cpan.scm				\
-  tests/gem.scm
+  tests/gem.scm					\
+  tests/crate.scm
 
 endif
 
@@ -377,6 +382,8 @@ EXTRA_DIST =						\
   build-aux/generate-authors.scm			\
   build-aux/test-driver.scm				\
   build-aux/run-system-tests.scm			\
+  d3.v3.js						\
+  graph.js						\
   srfi/srfi-37.scm.in					\
   srfi/srfi-64.scm					\
   srfi/srfi-64.upstream.scm				\
@@ -500,6 +507,7 @@ assert-no-store-file-names:
 	     --exclude=*.info-[0-9] --exclude=*.dot				\
 	     --exclude=*.eps --exclude-dir=bootstrap				\
 	     --exclude=guix-prettify.el						\
+	     --exclude=ChangeLog						\
 	     -E "$(storedir)/[a-z0-9]{32}-" $(distdir) ;			\
 	then									\
 	  echo "error: store file names embedded in the distribution" >&2 ;	\

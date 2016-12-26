@@ -6,6 +6,7 @@
 ;;; Copyright © 2016 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Julien Lepiller <julien@lepiller.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -340,9 +341,11 @@ written in Objective Caml.")
     (build-system gnu-build-system)
     (native-inputs
      `(("texlive" ,texlive)
+       ("findlib" ,ocaml-findlib)
        ("hevea" ,hevea)))
     (inputs
      `(("ocaml" ,ocaml)
+       ("lablgtk" ,lablgtk)
        ("camlp5" ,camlp5)))
     (arguments
      `(#:phases
@@ -355,7 +358,8 @@ written in Objective Caml.")
                (zero? (system* "./configure"
                                "-prefix" out
                                "-mandir" mandir
-                               "-browser" browser)))))
+                               "-browser" browser
+                               "-coqide" "opt")))))
          (replace 'build
            (lambda _
              (zero? (system* "make" "-j" (number->string
@@ -493,19 +497,20 @@ Knuth’s LR(1) parser construction technique.")
 (define-public lablgtk
   (package
     (name "lablgtk")
-    (version "2.18.3")
+    (version "2.18.5")
     (source
       (origin
         (method url-fetch)
           (uri (string-append "https://forge.ocamlcore.org/frs/download.php/"
-                              "1479/lablgtk-2.18.3.tar.gz"))
+                              "1627/lablgtk-2.18.5.tar.gz"))
           (sha256
             (base32
-              "1bybn3jafxf4cx25zvn8h2xj9agn1xjbn7j3ywxxqx6az7rfnnwp"))))
+              "0cyj6sfdvzx8hw7553lhgwc0krlgvlza0ph3dk9gsxy047dm3wib"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("camlp4" ,camlp4)
        ("ocaml" ,ocaml)
+       ("findlib" ,ocaml-findlib)
        ("pkg-config" ,pkg-config)))
     ;; FIXME: Add inputs gtkgl-2.0, libpanelapplet-2.0, gtkspell-2.0,
     ;; and gtk+-quartz-2.0 once available.
@@ -520,21 +525,24 @@ Knuth’s LR(1) parser construction technique.")
      `(#:tests? #f ; no check target
 
        ;; opt: also install cmxa files
-       #:make-flags (list "all" "opt")
+       #:make-flags (list "all" "opt"
+                          (string-append "FINDLIBDIR="
+                                         (assoc-ref %outputs "out")
+                                         "/lib/ocaml"))
        ;; Occasionally we would get "Error: Unbound module GtkThread" when
        ;; compiling 'gtkThInit.ml', with 'make -j'.  So build sequentially.
        #:parallel-build? #f
 
        #:phases
          (modify-phases %standard-phases
-           (replace 'install
+           (add-before 'install 'prepare-install
              (lambda* (#:key inputs outputs #:allow-other-keys)
                (let ((out (assoc-ref outputs "out"))
                      (ocaml (assoc-ref inputs "ocaml")))
                  ;; Install into the output and not the ocaml directory.
+                 (mkdir-p (string-append out "/lib/ocaml"))
                  (substitute* "config.make"
                    ((ocaml) out))
-                 (system* "make" "old-install")
                  #t))))))
     (home-page "http://lablgtk.forge.ocamlcore.org/")
     (synopsis "GTK+ bindings for OCaml")

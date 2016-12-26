@@ -16,6 +16,7 @@
 ;;; Copyright © 2016 ng0 <ng0@we.make.ritual.n0.is>
 ;;; Copyright © 2016 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2016 Bake Timmons <b3timmons@speedymail.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -62,6 +63,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages icu4c)
@@ -525,7 +527,7 @@ for efficient socket-like bidirectional reliable communication channels.")
 (define-public libpsl
   (package
     (name "libpsl")
-    (version "0.16.0")
+    (version "0.16.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/rockdaboot/libpsl/"
@@ -533,7 +535,7 @@ for efficient socket-like bidirectional reliable communication channels.")
                                   "/libpsl-" version ".tar.gz"))
               (sha256
                (base32
-                "1ghhwrn3y047ngs6d59z6ssnx6f7zr3fjvxji17ln9r10sj4njvi"))))
+                "1srrd0iyz9p5xgl8q0hrzqg7p8cl9ar0cdb8f54hls4kllf3f80l"))))
     (build-system gnu-build-system)
     (inputs
      `(("icu4c" ,icu4c)
@@ -667,6 +669,34 @@ unavailable.")
 server).  It was primarily designed to be used by one person or a small group
 of people.")
     (license l:expat)))
+
+(define-public wwwoffle
+  (package
+    (name "wwwoffle")
+    (version "2.9j")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://www.gedanken.org.uk/software/"
+                                  "wwwoffle/download/wwwoffle-"
+                                  version ".tgz"))
+              (sha256
+               (base32
+                "1ihil1xq9dp21hf108khxbw6f3baq0w5c0j3af038y6lkmad4vdi"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags '("--with-gnutls")
+       #:tests? #f))                         ; no test target
+    (native-inputs `(("flex" ,flex)))
+    (inputs `(("gnutls" ,gnutls)
+              ("libcrypt", libgcrypt)))
+    (home-page "https://www.gedanken.org.uk/software/wwwoffle/")
+    (synopsis "Caching web proxy optimized for intermittent internet links")
+    (description "WWWOFFLE is a proxy web server that is especially good for
+intermittent internet links.  It can cache HTTP, HTTPS, FTP, and finger
+protocols, and supports browsing and requesting pages while offline, indexing,
+modifying pages and incoming and outgoing headers, monitoring pages for
+changes, and much more.")
+    (license l:gpl2+)))
 
 (define-public libyaml
   (package

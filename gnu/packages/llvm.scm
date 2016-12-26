@@ -60,7 +60,8 @@
      `(#:configure-flags '("-DCMAKE_SKIP_BUILD_RPATH=FALSE"
                            "-DCMAKE_BUILD_WITH_INSTALL_RPATH=FALSE"
                            "-DBUILD_SHARED_LIBS:BOOL=TRUE"
-                           "-DLLVM_ENABLE_FFI:BOOL=TRUE")
+                           "-DLLVM_ENABLE_FFI:BOOL=TRUE"
+                           "-DLLVM_INSTALL_UTILS=ON") ; Needed for rustc.
 
        ;; Don't use '-g' during the build, to save space.
        #:build-type "Release"

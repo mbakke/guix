@@ -22,7 +22,7 @@
 #
 
 BUILT_SOURCES += %D%/libstore/schema.sql.hh
-CLEANFILES += $(BUILT_SOURCES) etc/guix-daemon.service etc/guix-daemon.conf
+CLEANFILES += $(BUILT_SOURCES)
 
 noinst_LIBRARIES = libformat.a libutil.a libstore.a
 
@@ -189,9 +189,9 @@ nodist_systemdservice_DATA = etc/guix-daemon.service etc/guix-publish.service
 
 etc/guix-%.service: etc/guix-%.service.in	\
 			 $(top_builddir)/config.status
-	$(AM_V_GEN)$(MKDIR_P) "`dirname $@`";				\
-	$(SED) -e 's|@''bindir''@|$(bindir)|' <				\
-	       "$(srcdir)/$<" > "$@.tmp";	\
+	$(AM_V_GEN)$(MKDIR_P) "`dirname $@`";	\
+	$(SED) -e 's|@''bindir''@|$(bindir)|' <	\
+	       "$<" > "$@.tmp";		\
 	mv "$@.tmp" "$@"
 
 # The '.conf' jobs for Upstart.
@@ -200,17 +200,23 @@ nodist_upstartjob_DATA = etc/guix-daemon.conf etc/guix-publish.conf
 
 etc/guix-%.conf: etc/guix-%.conf.in	\
 			 $(top_builddir)/config.status
-	$(AM_V_GEN)$(MKDIR_P) "`dirname $@`";				\
-	$(SED) -e 's|@''bindir''@|$(bindir)|' <				\
-	       "$(srcdir)/$<" > "$@.tmp";		\
+	$(AM_V_GEN)$(MKDIR_P) "`dirname $@`";	\
+	$(SED) -e 's|@''bindir''@|$(bindir)|' <	\
+	       "$<" > "$@.tmp";		\
 	mv "$@.tmp" "$@"
+
+CLEANFILES +=					\
+  $(nodist_systemdservice_DATA)			\
+  $(nodist_upstartjob_DATA)
 
 EXTRA_DIST +=					\
   %D%/libstore/schema.sql			\
   %D%/AUTHORS					\
   %D%/COPYING					\
-  etc/guix-daemon.service.in	\
-  etc/guix-daemon.conf.in
+  etc/guix-daemon.service.in			\
+  etc/guix-daemon.conf.in			\
+  etc/guix-publish.service.in			\
+  etc/guix-publish.conf.in
 
 if CAN_RUN_TESTS
 

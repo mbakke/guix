@@ -23,22 +23,11 @@
   #:use-module (guix utils)
   #:use-module ((guix download) #:prefix download:)
   #:use-module (guix import utils)
+  #:use-module (guix import json)
   #:use-module (guix packages)
   #:use-module (guix upstream)
   #:use-module (web uri)
   #:export (%github-updater))
-
-(define (json-fetch* url)
-  "Return a list/hash representation of the JSON resource URL, or #f on
-failure."
-  (call-with-output-file "/dev/null"
-    (lambda (null)
-      (with-error-to-port null
-        (lambda ()
-          (call-with-temporary-output-file
-           (lambda (temp port)
-             (and (url-fetch url temp)
-                  (call-with-input-file temp json->scm)))))))))
 
 (define (find-extension url)
   "Return the extension of the archive e.g. '.tar.gz' given a URL, or
@@ -136,7 +125,7 @@ the package e.g. 'bedtools2'.  Return #f if there is no releases"
                    "https://api.github.com/repos/"
                    (github-user-slash-repository url)
                    "/releases"))
-         (json (json-fetch*
+         (json (json-fetch
                 (if token
                     (string-append api-url "?access_token=" token)
                     api-url))))

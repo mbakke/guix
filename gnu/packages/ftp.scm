@@ -36,16 +36,23 @@
 (define-public lftp
   (package
     (name "lftp")
-    (version "4.7.3")
+    (version "4.7.4")
     (source (origin
               (method url-fetch)
-              (uri (list (string-append "https://lftp.yar.ru/ftp/lftp-"
+              ;; XXX: Downloads from main site redirects to 'get.html' and
+              ;; returns HTTP 200, leading Guix to download that instead.
+              ;; Try official mirror first. See:
+              ;; https://github.com/lavv17/lftp/issues/299 and
+              ;; https://lftp.tech/get.html (mirror list)
+              (uri (list (string-append "ftp://ftp.st.ryukoku.ac.jp/pub/network/"
+                                        "ftp/lftp/lftp-" version ".tar.xz")
+                         (string-append "https://lftp.tech/ftp/lftp-"
                                         version ".tar.xz")
-                         (string-append "https://lftp.yar.ru/ftp/old/lftp-"
+                         (string-append "https://lftp.tech/ftp/old/lftp-"
                                         version ".tar.xz")))
               (sha256
                (base32
-                "0z4flhqvq9w9md1348jdw0lnk0dlljyicz8597inl6jcvjf2a8iv"))))
+                "0b6r1gbpazvml1hvfjm2ccsfxibrjrm3fir912j6kxxn538w8rxz"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
@@ -65,7 +72,7 @@
        #:configure-flags
        (list (string-append "--with-readline="
                             (assoc-ref %build-inputs "readline")))))
-    (home-page "https://lftp.yar.ru/")
+    (home-page "https://lftp.tech/")
     (synopsis "Command-line file transfer program")
     (description
      "LFTP is a sophisticated FTP/HTTP client, and a file transfer program

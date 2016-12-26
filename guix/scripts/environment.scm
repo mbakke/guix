@@ -155,6 +155,9 @@ COMMAND or an interactive shell in that environment.\n"))
   (display (_ "
   -s, --system=SYSTEM    attempt to build for SYSTEM--e.g., \"i686-linux\""))
   (display (_ "
+  -r, --root=FILE        make FILE a symlink to the result, and register it
+                         as a garbage collector root"))
+  (display (_ "
   -C, --container        run command within an isolated container"))
   (display (_ "
   -N, --network          allow containers to access the network"))
@@ -247,6 +250,9 @@ COMMAND or an interactive shell in that environment.\n"))
                    (alist-cons 'file-system-mapping
                                (specification->file-system-mapping arg #f)
                                result)))
+         (option '(#\r "root") #t #f
+                 (lambda (opt name arg result)
+                   (alist-cons 'gc-root arg result)))
          (option '("bootstrap") #f #f
                  (lambda (opt name arg result)
                    (alist-cons 'bootstrap? #t result)))
@@ -323,7 +329,8 @@ profile."
                       #:system system
                       #:hooks (if bootstrap?
                                   '()
-                                  %default-profile-hooks)))
+                                  %default-profile-hooks)
+                      #:locales? (not bootstrap?)))
 
 (define requisites* (store-lift requisites))
 
@@ -522,7 +529,26 @@ message if any test fails."
     (report-error (_ "cannot create container: /proc/self/setgroups does not exist\n"))
     (leave (_ "is your kernel version < 3.19?\n"))))
 
-;; Entry point.
+(define (register-gc-root target root)
+  "Make ROOT an indirect root to TARGET.  This is procedure is idempotent."
+  (let* ((root (string-append (canonicalize-path (dirname root))
+                              "/" root)))
+    (catch 'system-error
+      (lambda ()
+        (symlink target root)
+        ((store-lift add-indirect-root) root))
+      (lambda args
+        (if (and (= EEXIST (system-error-errno args))
+                 (equal? (false-if-exception (readlink root)) target))
+            (with-monad %store-monad
+              (return #t))
+            (apply throw args))))))
+
+
+;;;
+;;; Entry point.
+;;;
+
 (define (guix-environment . args)
   (with-error-handling
     (let* ((opts       (parse-args args))
@@ -578,7 +604,9 @@ message if any test fails."
                                                                system))
                                  (prof-drv   (inputs->profile-derivation
                                               inputs system bootstrap?))
-                                 (profile -> (derivation->output-path prof-drv)))
+                                 (profile -> (derivation->output-path prof-drv))
+                                 (gc-root -> (assoc-ref opts 'gc-root)))
+
               ;; First build the inputs.  This is necessary even for
               ;; --search-paths.  Additionally, we might need to build bash for
               ;; a container.
@@ -587,6 +615,9 @@ message if any test fails."
                                        (list prof-drv bash)
                                        (list prof-drv))
                                    opts)
+                (mwhen gc-root
+                  (register-gc-root profile gc-root))
+
                 (cond
                  ((assoc-ref opts 'dry-run?)
                   (return #t))

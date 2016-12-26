@@ -6,6 +6,7 @@
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Marius Bakke <mbakke@fastmail.com>
+;;; Copyright © 2016 Raoul Bonnal <ilpuccio.febo@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1803,7 +1804,7 @@ preparation protocols.")
 (define-public cutadapt
   (package
     (name "cutadapt")
-    (version "1.8")
+    (version "1.12")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1812,27 +1813,30 @@ preparation protocols.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "161bp87y6gd6r5bmvjpn2b1k942i3fizfpa139f0jn6jv1wcp5h5"))))
+                "19smhh6444ikn4jlmyhvffw4m5aw7yg07rqsk7arg8dkwyga1i4v"))))
     (build-system python-build-system)
     (arguments
-     ;; tests must be run after install
-     `(#:phases (alist-cons-after
-                 'install 'check
-                 (lambda* (#:key inputs outputs #:allow-other-keys)
-                   (setenv "PYTHONPATH"
-                           (string-append
-                            (getenv "PYTHONPATH")
-                            ":" (assoc-ref outputs "out")
-                            "/lib/python"
-                            (string-take (string-take-right
-                                          (assoc-ref inputs "python") 5) 3)
-                            "/site-packages"))
-                   (zero? (system* "nosetests" "-P" "tests")))
-                 (alist-delete 'check %standard-phases))))
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; The tests must be run after installation.
+         (delete 'check)
+         (add-after 'install 'check
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (setenv "PYTHONPATH"
+                     (string-append
+                      (getenv "PYTHONPATH")
+                      ":" (assoc-ref outputs "out")
+                      "/lib/python"
+                      (string-take (string-take-right
+                                    (assoc-ref inputs "python") 5) 3)
+                      "/site-packages"))
+             (zero? (system* "nosetests" "-P" "tests")))))))
+    (inputs
+     `(("python-xopen" ,python-xopen)))
     (native-inputs
      `(("python-cython" ,python-cython)
        ("python-nose" ,python-nose)))
-    (home-page "https://code.google.com/p/cutadapt/")
+    (home-page "https://cutadapt.readthedocs.io/en/stable/")
     (synopsis "Remove adapter sequences from nucleotide sequencing reads")
     (description
      "Cutadapt finds and removes adapter sequences, primers, poly-A tails and
@@ -2016,7 +2020,7 @@ identify enrichments with functional annotations of the genome.")
 (define-public diamond
   (package
     (name "diamond")
-    (version "0.8.27")
+    (version "0.8.29")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2025,7 +2029,7 @@ identify enrichments with functional annotations of the genome.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "0g0zdyfnri9v7nfbh8f7zqs4af1xydqkiw8m0cx4jc2ql4chpf6a"))))
+                "1mnhj7y13pk2bhfichjma5aw8ssdiqyria61ip1kps6facqlal3z"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ; no "check" target
@@ -3478,7 +3482,7 @@ trimming, pruning, condensing, drawing (ASCII graphics or SVG).")
 (define-public orfm
   (package
     (name "orfm")
-    (version "0.5.3")
+    (version "0.6.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3486,7 +3490,7 @@ trimming, pruning, condensing, drawing (ASCII graphics or SVG).")
                     version "/orfm-" version ".tar.gz"))
               (sha256
                (base32
-                "0vb6d771gl4mix8bwx919x5ayy9pkj44n7ki336nz3rz2rx4c7gk"))))
+                "19hwp13n82isdvk16710l9m35cmzf0q3fsrcn3r8c5r67biiz39s"))))
     (build-system gnu-build-system)
     (inputs `(("zlib" ,zlib)))
     (native-inputs
@@ -4263,7 +4267,7 @@ viewer.")
        `(("perl" ,perl)
          ("zlib" ,zlib)))
       (supported-systems '("x86_64-linux"))
-      (home-page "https://code.google.com/p/mosaik-aligner/")
+      (home-page "https://github.com/wanpinglee/MOSAIK")
       (synopsis "Map nucleotide sequence reads to reference genomes")
       (description
        "MOSAIK is a program for mapping second and third-generation sequencing
@@ -4924,7 +4928,7 @@ application of SortMeRNA is filtering rRNA from metatranscriptomic data.")
 (define-public star
   (package
     (name "star")
-    (version "2.5.2a")
+    (version "2.5.2b")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/alexdobin/STAR/archive/"
@@ -4932,7 +4936,7 @@ application of SortMeRNA is filtering rRNA from metatranscriptomic data.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "0xjlsm4p9flln111hv4xx7xy94c2nl53zvdvbk9winmiradjsdra"))
+                "1na6np880r1zaamiy00hy8bid5anpy0kgf63587v2yl080krk2zq"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -4941,6 +4945,7 @@ application of SortMeRNA is filtering rRNA from metatranscriptomic data.")
                   ;; Remove pre-built binaries and bundled htslib sources.
                   (delete-file-recursively "bin/MacOSX_x86_64")
                   (delete-file-recursively "bin/Linux_x86_64")
+                  (delete-file-recursively "bin/Linux_x86_64_static")
                   (delete-file-recursively "source/htslib")
                   #t))))
     (build-system gnu-build-system)
@@ -7807,7 +7812,7 @@ may optionally be provided to further inform the peak-calling process.")
      `(("python2-numpy" ,python2-numpy)
        ("python2-scipy" ,python2-scipy)
        ("python2-pysam" ,python2-pysam)))
-    (home-page "https://code.google.com/p/pepr-chip-seq/")
+    (home-page "https://github.com/shawnzhangyx/PePr")
     (synopsis "Peak-calling and prioritization pipeline for ChIP-Seq data")
     (description
      "PePr is a ChIP-Seq peak calling or differential binding analysis tool

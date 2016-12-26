@@ -289,9 +289,12 @@ DIRECTORY.  Those authority certificates are checked when
                               (string-suffix? ".pem" file)))
                    '())))
     (for-each (lambda (file)
-                (set-certificate-credentials-x509-trust-file!
-                 cred (string-append directory "/" file)
-                 x509-certificate-format/pem))
+                (let ((file (string-append directory "/" file)))
+                  ;; Protect against dangling symlinks.
+                  (when (file-exists? file)
+                    (set-certificate-credentials-x509-trust-file!
+                     cred file
+                     x509-certificate-format/pem))))
               (or files '()))
     cred))
 

@@ -50,6 +50,19 @@
                        (add-to-store store "guix.scm" #t
                                      "sha256" s)))))))
 
+(test-assert "options->transformation, with-source, replacement"
+  ;; Same, but this time the original package has a 'replacement' field.  We
+  ;; expect that replacement to be set to #f in the new package.
+  (let* ((p (dummy-package "guix.scm" (replacement coreutils)))
+         (s (search-path %load-path "guix.scm"))
+         (t (options->transformation `((with-source . ,s)))))
+    (with-store store
+      (let ((new (t store p)))
+        (and (not (eq? new p))
+             (string=? (package-source new)
+                       (add-to-store store "guix.scm" #t "sha256" s))
+             (not (package-replacement new)))))))
+
 (test-assert "options->transformation, with-source, with version"
   ;; Our pseudo-package is called 'guix.scm' so the 'guix.scm-2.0' source
   ;; should be applicable, and its version should be extracted.

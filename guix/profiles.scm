@@ -919,10 +919,14 @@ files for the truetype fonts of the @var{manifest} entries."
 (define* (profile-derivation manifest
                              #:key
                              (hooks %default-profile-hooks)
+                             (locales? #t)
                              system)
   "Return a derivation that builds a profile (aka. 'user environment') with
 the given MANIFEST.  The profile includes additional derivations returned by
-the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
+the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc.
+
+When LOCALES? is true, the build is performed under a UTF-8 locale; this adds
+a dependency on the 'glibc-utf8-locales' package."
   (mlet %store-monad ((system (if system
                                   (return system)
                                   (current-system)))
@@ -939,6 +943,19 @@ the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
                           extras)
               (manifest-inputs manifest)))
 
+    (define glibc-utf8-locales                    ;lazy reference
+      (module-ref (resolve-interface '(gnu packages base))
+                  'glibc-utf8-locales))
+
+    (define set-utf8-locale
+      ;; Some file names (e.g., in 'nss-certs') are UTF-8 encoded so
+      ;; install a UTF-8 locale.
+      #~(begin
+          (setenv "LOCPATH"
+                  #$(file-append glibc-utf8-locales "/lib/locale/"
+                                 (package-version glibc-utf8-locales)))
+          (setlocale LC_ALL "en_US.utf8")))
+
     (define builder
       (with-imported-modules '((guix build profiles)
                                (guix build union)
@@ -952,6 +969,8 @@ the monadic procedures listed in HOOKS--such as an Info 'dir' file, etc."
 
             (setvbuf (current-output-port) _IOLBF)
             (setvbuf (current-error-port) _IOLBF)
+
+            #+(if locales? set-utf8-locale #t)
 
             (define search-paths
               ;; Search paths of MANIFEST's packages, converted back to their
@@ -1099,7 +1118,8 @@ case when generations have been deleted (there are \"holes\")."
   "Link GENERATION, a string, to the empty profile.  An error is raised if
 that fails."
   (let* ((drv  (run-with-store store
-                 (profile-derivation (manifest '()))))
+                 (profile-derivation (manifest '())
+                                     #:locales? #f)))
          (prof (derivation->output-path drv "out")))
     (build-derivations store (list drv))
     (switch-symlinks generation prof)))

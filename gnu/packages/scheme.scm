@@ -578,7 +578,7 @@ mixed.")
                       (list (string-append "PREFIX=" out)
                             (string-append "LDFLAGS=-Wl,-rpath=" out "/lib")))
        #:test-target "test"))
-    (home-page "https://code.google.com/p/chibi-scheme/")
+    (home-page "https://github.com/ashinn/chibi-scheme")
     (synopsis "Small embeddable Scheme implementation")
     (description
      "Chibi-Scheme is a very small library with no external dependencies

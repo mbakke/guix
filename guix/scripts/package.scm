@@ -200,7 +200,8 @@ specified in MANIFEST, a manifest object."
                      (profile-derivation manifest
                                          #:hooks (if bootstrap?
                                                      '()
-                                                     %default-profile-hooks))))
+                                                     %default-profile-hooks)
+                                         #:locales? (not bootstrap?))))
          (prof     (derivation->output-path prof-drv)))
     (show-what-to-build store (list prof-drv)
                         #:use-substitutes? use-substitutes?

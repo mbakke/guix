@@ -10,7 +10,7 @@
 @include version.texi
 
 @c Identifier of the OpenPGP key used to sign tarballs and such.
-@set OPENPGP-SIGNING-KEY-ID 3CE464558A84FDC69DB40CFB090B11993D9AEBB5
+@set OPENPGP-SIGNING-KEY-ID BCA689B636553801C3C62150197A5888235FACAC
 
 @copying
 Copyright @copyright{} 2012, 2013, 2014, 2015, 2016 Ludovic Courtès@*
@@ -358,6 +358,9 @@ When installed on a running GNU/Linux system---thereafter called a
 without interference.  Its data lives exclusively in two directories,
 usually @file{/gnu/store} and @file{/var/guix}; other files on your
 system, such as @file{/etc}, are left untouched.
+
+Once installed, Guix can be updated by running @command{guix pull}
+(@pxref{Invoking guix pull}).
 
 @menu
 * Binary Installation::         Getting Guix running in no time!
@@ -2308,6 +2311,7 @@ this option is primarily useful when the daemon was running with
 @section Invoking @command{guix pull}
 
 @cindex upgrading Guix
+@cindex updating Guix
 @cindex @command{guix pull}
 @cindex pull
 Packages are installed or upgraded to the latest version available in
@@ -2403,10 +2407,12 @@ profile as well as all of their dependencies are transferred (due to
 target machine.  The @code{--missing} option can help figure out which
 items are missing from the target store.
 
-Archives are stored in the ``Nix archive'' or ``Nar'' format, which is
-comparable in spirit to `tar', but with a few noteworthy differences
+@cindex nar, archive format
+@cindex normalized archive (nar)
+Archives are stored in the ``normalized archive'' or ``nar'' format, which is
+comparable in spirit to `tar', but with differences
 that make it more appropriate for our purposes.  First, rather than
-recording all Unix metadata for each file, the Nar format only mentions
+recording all Unix metadata for each file, the nar format only mentions
 the file type (regular, directory, or symbolic link); Unix permissions
 and owner/group are dismissed.  Second, the order in which directory
 entries are stored always follows the order of file names according to
@@ -3183,6 +3189,19 @@ If the system is not defined within its own @code{.asd} file of the same
 name, then the @code{#:asd-file} parameter should be used to specify
 which file the system is defined in.
 
+@end defvr
+
+@defvr {Scheme Variable} cargo-build-system
+@cindex Rust programming language
+@cindex Cargo (Rust build system)
+This variable is exported by @code{(guix build-system cargo)}.  It
+supports builds of packages using Cargo, the build tool of the
+@uref{https://www.rust-lang.org, Rust programming language}.
+
+In its @code{configure} phase, this build system replaces dependencies
+specified in the @file{Carto.toml} file with inputs to the Guix package.
+The @code{install} phase installs the binaries, and it also installs the
+source code and @file{Cargo.toml} file.
 @end defvr
 
 @defvr {Scheme Variable} cmake-build-system
@@ -5146,6 +5165,10 @@ R package:
 guix import cran Cairo
 @end example
 
+When @code{--recursive} is added, the importer will traverse the
+dependency graph of the given upstream package recursively and generate
+package expressions for all those packages that are not yet in Guix.
+
 When @code{--archive=bioconductor} is added, metadata is imported from
 @uref{http://www.bioconductor.org/, Bioconductor}, a repository of R
 packages for for the analysis and comprehension of high-throughput
@@ -5267,6 +5290,11 @@ signatures,, emacs, The GNU Emacs Manual}).
 identifier.
 @end itemize
 @end table
+
+@item crate
+@cindex crate
+Import metadata from the crates.io Rust package repository
+@uref{https://crates.io, crates.io}.
 @end table
 
 The structure of the @command{guix import} code is modular.  It would be
@@ -5383,6 +5411,8 @@ the updater for @uref{http://elpa.gnu.org/, ELPA} packages;
 the updater for @uref{http://cran.r-project.org/, CRAN} packages;
 @item bioconductor
 the updater for @uref{http://www.bioconductor.org/, Bioconductor} R packages;
+@item cpan
+the updater for @uref{http://www.cpan.org/, CPAN} packages;
 @item pypi
 the updater for @uref{https://pypi.python.org, PyPI} packages.
 @item gem
@@ -5391,6 +5421,8 @@ the updater for @uref{https://rubygems.org, RubyGems} packages.
 the updater for @uref{https://github.com, GitHub} packages.
 @item hackage
 the updater for @uref{https://hackage.haskell.org, Hackage} packages.
+@item crate
+the updater for @uref{https://crates.io, Crates} packages.
 @end table
 
 For instance, the following command only checks for updates of Emacs
@@ -5698,11 +5730,13 @@ Consider packages for @var{system}---e.g., @code{x86_64-linux}.
 Packages and their dependencies form a @dfn{graph}, specifically a
 directed acyclic graph (DAG).  It can quickly become difficult to have a
 mental model of the package DAG, so the @command{guix graph} command
-provides a visual representation of the DAG.  @command{guix graph}
-emits a DAG representation in the input format of
+provides a visual representation of the DAG.  By default,
+@command{guix graph} emits a DAG representation in the input format of
 @uref{http://www.graphviz.org/, Graphviz}, so its output can be passed
-directly to the @command{dot} command of Graphviz.  The general
-syntax is:
+directly to the @command{dot} command of Graphviz.  It can also emit an
+HTML page with embedded JavaScript code to display a ``chord diagram''
+in a Web browser, using the @uref{https://d3js.org/, d3.js} library.
+The general syntax is:
 
 @example
 guix graph @var{options} @var{package}@dots{}
@@ -5819,6 +5853,15 @@ the values listed above.
 
 @item --list-types
 List the supported graph types.
+
+@item --backend=@var{backend}
+@itemx -b @var{backend}
+Produce a graph using the selected @var{backend}.
+
+@item --list-backends
+List the supported graph backends.
+
+Currently, the available backends are Graphviz and d3.js.
 
 @item --expression=@var{expr}
 @itemx -e @var{expr}
@@ -5954,6 +5997,21 @@ The @code{--container} option requires Linux-libre 3.19 or newer.
 The available options are summarized below.
 
 @table @code
+@item --root=@var{file}
+@itemx -r @var{file}
+@cindex persistent environment
+@cindex garbage collector root, for environments
+Make @var{file} a symlink to the profile for this environment, and
+register it as a garbage collector root.
+
+This is useful if you want to protect your environment from garbage
+collection, to make it ``persistent''.
+
+When this option is omitted, the environment is protected from garbage
+collection only for the duration of the @command{guix environment}
+session.  This means that next time you recreate the same environment,
+you could have to rebuild or re-download packages.
+
 @item --expression=@var{expr}
 @itemx -e @var{expr}
 Create an environment for the package or list of packages that
@@ -6829,6 +6887,7 @@ swap partition on @file{/dev/sda2}, you would run:
 
 @example
 mkswap /dev/sda2
+swapon /dev/sda2
 @end example
 
 @node Proceeding with the Installation
@@ -6908,6 +6967,14 @@ in the new system is initially empty; other users' passwords need to be
 initialized by running the @command{passwd} command as @code{root},
 unless your configuration specifies otherwise
 (@pxref{user-account-password, user account passwords}).
+
+@cindex upgrading GuixSD
+From then on, you can update GuixSD whenever you want by running
+@command{guix pull} as @code{root} (@pxref{Invoking guix pull}), and
+then running @command{guix system reconfigure} to build a new system
+generation with the latest packages and services (@pxref{Invoking guix
+system}).  We recommend doing that regularly so that your system
+includes the latest security updates (@pxref{Security Updates}).
 
 Join us on @code{#guix} on the Freenode IRC network or on
 @file{guix-devel@@gnu.org} to share your experience---good or not so
@@ -7591,7 +7658,7 @@ for RAID-4, RAID-5 or RAID-6, or @code{raid10} for RAID-10.
 @cindex LUKS
 The following example specifies a mapping from @file{/dev/sda3} to
 @file{/dev/mapper/home} using LUKS---the
-@url{http://code.google.com/p/cryptsetup,Linux Unified Key Setup}, a
+@url{https://gitlab.com/cryptsetup/cryptsetup,Linux Unified Key Setup}, a
 standard mechanism for disk encryption.
 The @file{/dev/mapper/home}
 device can then be used as the @code{device} of a @code{file-system}
@@ -8247,9 +8314,12 @@ The list of URLs where to look for substitutes by default.
 @item @code{extra-options} (default: @code{'()})
 List of extra command-line options for @command{guix-daemon}.
 
+@item @code{log-file} (default: @code{"/var/log/guix-daemon.log"})
+File where @command{guix-daemon}'s standard output and standard error
+are written.
+
 @item @code{lsof} (default: @var{lsof})
-@itemx @code{lsh} (default: @var{lsh})
-The lsof and lsh packages to use.
+The lsof package to use.
 
 @end table
 @end deftp
@@ -10150,13 +10220,14 @@ Users need to be in the @code{lp} group to access the D-Bus service.
 The @code{(gnu services databases)} module provides the following services.
 
 @deffn {Scheme Procedure} postgresql-service [#:postgresql postgresql] @
-       [#:config-file] [#:data-directory ``/var/lib/postgresql/data'']
+       [#:config-file] [#:data-directory ``/var/lib/postgresql/data''] @
+       [#:port 5432] [#:locale ``en_US.utf8'']
 Return a service that runs @var{postgresql}, the PostgreSQL database
 server.
 
-The PostgreSQL daemon loads its runtime configuration from
-@var{config-file} and stores the database cluster in
-@var{data-directory}.
+The PostgreSQL daemon loads its runtime configuration from @var{config-file},
+creates a database cluster with @var{locale} as the default
+locale, stored in @var{data-directory}.  It then listens on @var{port}.
 @end deffn
 
 @deffn {Scheme Procedure} mysql-service [#:config (mysql-configuration)]
@@ -10177,6 +10248,9 @@ or @var{mysql}.
 
 For MySQL, a temporary root password will be displayed at activation time.
 For MariaDB, the root password is empty.
+
+@item @code{port} (default: @code{3306})
+TCP port on which the database server listens for incoming connections.
 @end table
 @end deftp
 
@@ -11934,7 +12008,10 @@ accessible in other @code{cuirass-configuration} fields.
 Data type representing the configuration of Cuirass.
 
 @table @asis
-@item @code{cache-directory} (default: @code{""})
+@item @code{log-file} (default: @code{"/var/log/cuirass.log"})
+Location of the log file.
+
+@item @code{cache-directory} (default: @code{"/var/cache/cuirass"})
 Location of the repository cache.
 
 @item @code{user} (default: @code{"cuirass"})
@@ -11963,6 +12040,9 @@ from source.
 
 @item @code{one-shot?} (default: @code{#f})
 Only evaluate specifications and build derivations once.
+
+@item @code{cuirass} (default: @code{cuirass})
+The Cuirass package to use.
 @end table
 @end deftp
 
@@ -12506,6 +12586,9 @@ The number of seconds to wait for keyboard input before booting.  Set to
 
 @item @code{theme} (default: @var{%default-theme})
 The @code{grub-theme} object describing the theme to use.
+
+@item @code{grub} (default: @code{grub})
+The GRUB package to use.
 @end table
 
 @end deftp

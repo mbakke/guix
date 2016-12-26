@@ -717,6 +717,13 @@ number generator")
              (string-append "PREFIX=" (assoc-ref %outputs "out")))
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'patch-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((pem (string-append (assoc-ref inputs "libressl")
+                                       "/etc/ssl/cert.pem")))
+               (substitute* "http.c"
+                 (("/etc/ssl/cert.pem") pem))
+               #t)))
          (delete 'configure)))) ; no './configure' script
     (native-inputs
      `(("pkg-config" ,pkg-config)))

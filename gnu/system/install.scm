@@ -255,8 +255,8 @@ the user's target storage device rather than on the RAM disk."
                     (persistent? #f)
                     (max-database-size (* 5 (expt 2 20)))))) ;5 MiB
 
-(define (installation-services)
-  "Return the list services for the installation image."
+(define %installation-services
+  ;; List of services of the installation system.
   (let ((motd (plain-file "motd" "
 Welcome to the installation of the Guix System Distribution!
 
@@ -377,8 +377,7 @@ Use Alt-F2 for documentation.
                   (home-directory "/home/guest"))))
 
     (issue %issue)
-
-    (services (installation-services))
+    (services %installation-services)
 
     ;; We don't need setuid programs so pass the empty list so we don't pull
     ;; additional programs here.
@@ -393,6 +392,7 @@ Use Alt-F2 for documentation.
                      grub                  ;mostly so xrefs to its manual work
                      cryptsetup
                      mdadm
+                     dosfstools         ;mkfs.fat, for the UEFI boot partition
                      btrfs-progs
                      wireless-tools iw wpa-supplicant-minimal iproute
                      ;; XXX: We used to have GNU fdisk here, but as of version

@@ -17,6 +17,7 @@
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Rene Saavedra <rennes@openmailbox.org>
+;;; Copyright © 2016 ng0 <ng0@libertad.pw>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -72,6 +73,8 @@
   #:use-module (gnu packages slang)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages video)
+  #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg)
@@ -242,13 +245,15 @@ for ARCH and optionally VARIANT, or #f if there is no such configuration."
        ("bc" ,bc)
        ("openssl" ,openssl)
        ("kmod" ,kmod)
-       ,@(if configuration-file
-             `(("kconfig" ,(configuration-file
-                            (system->linux-architecture
-                             (or (%current-target-system)
-                                 (%current-system)))
-                            #:variant (version-major+minor version))))
-             '())))
+       ,@(match (and configuration-file
+                     (configuration-file
+                      (system->linux-architecture
+                       (or (%current-target-system) (%current-system)))
+                      #:variant (version-major+minor version)))
+           (#f                                    ;no config for this platform
+            '())
+           ((? string? config)
+            `(("kconfig" ,config))))))
     (arguments
      `(#:modules ((guix build gnu-build-system)
                   (guix build utils)
@@ -327,14 +332,14 @@ It has been modified to remove all non-free binary blobs.")
 (define %intel-compatible-systems '("x86_64-linux" "i686-linux"))
 
 (define-public linux-libre
-  (make-linux-libre "4.8.14"
-                    "06rh1j2m4x6kv7prgg2pakw81b7w75dxrl31ch1psf44yqy51q6q"
+  (make-linux-libre "4.8.15"
+                    "0msgi44mh1ighfawysrzrljikwrapkvk418d6h0v45vj2i5rwln9"
                     %intel-compatible-systems
                     #:configuration-file kernel-config))
 
 (define-public linux-libre-4.4
-  (make-linux-libre "4.4.38"
-                    "038mzv5dj7cj5vywiafniai2f56wh7k2yirv0ac61nvg2v25r2jk"
+  (make-linux-libre "4.4.39"
+                    "0aqi44xshib7lx9zjc0kj2v172ywa0iy2kb6z0whbiw3f841hv43"
                     %intel-compatible-systems
                     #:configuration-file kernel-config))
 
@@ -345,8 +350,8 @@ It has been modified to remove all non-free binary blobs.")
                     #:configuration-file kernel-config))
 
 ;; Avoid rebuilding kernel variants when there is a minor version bump.
-(define %linux-libre-version "4.8.14")
-(define %linux-libre-hash "06rh1j2m4x6kv7prgg2pakw81b7w75dxrl31ch1psf44yqy51q6q")
+(define %linux-libre-version "4.8.15")
+(define %linux-libre-hash "0msgi44mh1ighfawysrzrljikwrapkvk418d6h0v45vj2i5rwln9")
 
 (define-public linux-libre-arm-generic
   (make-linux-libre %linux-libre-version
@@ -579,7 +584,7 @@ slabtop, and skill.")
 (define-public usbutils
   (package
     (name "usbutils")
-    (version "006")
+    (version "008")
     (source
      (origin
       (method url-fetch)
@@ -587,10 +592,11 @@ slabtop, and skill.")
                           "usbutils-" version ".tar.xz"))
       (sha256
        (base32
-        "03pd57vv8c6x0hgjqcbrxnzi14h8hcghmapg89p8k5zpwpkvbdfr"))))
+        "132clk14j4nm8crln2jymdbbc2vhzar2j2hnxyh05m79pbq1lx24"))))
     (build-system gnu-build-system)
     (inputs
-     `(("libusb" ,libusb)))
+     `(("libusb" ,libusb)
+       ("eudev" ,eudev)))
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (home-page "http://www.linux-usb.org/")
@@ -850,14 +856,14 @@ MIDI functionality to the Linux-based operating system.")
 (define-public alsa-utils
   (package
     (name "alsa-utils")
-    (version "1.1.2")
+    (version "1.1.3")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://ftp.alsa-project.org/pub/utils/"
                                  name "-" version ".tar.bz2"))
              (sha256
               (base32
-               "0wcha78c2sm8qqk5r3w83cvm8fp6fb1zpd35kmcm24kxhz007xks"))))
+               "0z0nnqp1707bm02dys2d16m88lsg5nd26bqaf14rl3za9sjifwhj"))))
     (build-system gnu-build-system)
     (arguments
      ;; XXX: Disable man page creation until we have DocBook.
@@ -876,7 +882,8 @@ MIDI functionality to the Linux-based operating system.")
              ;; Don't try to mkdir /var/lib/alsa.
              (substitute* "Makefile"
                (("\\$\\(MKDIR_P\\) .*ASOUND_STATE_DIR.*")
-                "true\n")))))))
+                "true\n"))
+             #t)))))
     (inputs
      `(("libsamplerate" ,libsamplerate)
        ("ncurses" ,ncurses)
@@ -892,6 +899,68 @@ MIDI functionality to the Linux-based operating system.")
     ;; This is mostly GPLv2+ but a few files such as 'alsactl.c' are
     ;; GPLv2-only.
     (license license:gpl2)))
+
+(define-public alsa-plugins
+  (package
+    (name "alsa-plugins")
+    (version "1.1.1")
+    (source (origin
+             (method url-fetch)
+             (uri (string-append "ftp://ftp.alsa-project.org/pub/plugins/"
+                                 name "-" version ".tar.bz2"))
+             (sha256
+              (base32
+               "1w81z5jlwqhd1l2m7qrq69lc4k9dnrg1wn52jsl2hrf3hbhd394f"))))
+    (build-system gnu-build-system)
+    ;; TODO: Split libavcodec and speex if possible. It looks like they can not
+    ;; be split, there are references to both in files.
+    ;; TODO: Remove OSS related plugins, they add support to run native
+    ;; ALSA applications on OSS however we do not offer OSS and OSS is
+    ;; obsolete.
+    (outputs '("out" "pulseaudio"))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'split
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             ;; Distribute the binaries to the various outputs.
+             (let* ((out (assoc-ref outputs "out"))
+                    (pua (assoc-ref outputs "pulseaudio"))
+                    (pualib (string-append pua "/lib/alsa-lib"))
+                    (puaconf (string-append pua "/share/alsa/alsa.conf.d")))
+               (mkdir-p puaconf)
+               (mkdir-p pualib)
+               (chdir (string-append out "/share"))
+               (for-each (lambda (file)
+                           (rename-file file (string-append puaconf "/" (basename file))))
+                         (find-files out "\\.(conf|example)"))
+               (for-each (lambda (file)
+                           (rename-file file (string-append pualib "/" (basename file))))
+                         (find-files out ".*pulse\\.(la|so)"))
+               (chdir "..")
+               ;; We have moved the files to output pulsaudio, the
+               ;; directory is now empty.
+               (delete-file-recursively (string-append out "/share"))
+               #t))))))
+    (inputs
+     `(("alsa-lib" ,alsa-lib)
+       ("speex" ,speex) ; libspeexdsp resampling plugin
+       ("libsamplerate" ,libsamplerate) ; libsamplerate resampling plugin
+       ("ffmpeg" ,ffmpeg) ; libavcodec resampling plugin, a52 plugin
+       ("pulseaudio" ,pulseaudio))) ; PulseAudio plugin
+    (native-inputs
+     `(("pkg-config" ,pkg-config)))
+    (home-page "http://www.alsa-project.org/")
+    (synopsis "Plugins for the Advanced Linux Sound Architecture (ALSA)")
+    (description
+     "The Advanced Linux Sound Architecture (ALSA) provides audio and
+MIDI functionality to the Linux-based operating system.  This package enhances ALSA
+by providing additional plugins which include: upmixing, downmixing, jackd and
+pulseaudio support for native alsa applications, format conversion (s16 to a52), and
+external rate conversion.")
+    (license (list license:gpl2+
+                   ;; `rate/rate_samplerate.c': LGPL v2.1 or later.
+                   license:lgpl2.1+))))
 
 (define-public iptables
   (package
@@ -924,7 +993,7 @@ packet filter.")
 (define-public iproute
   (package
     (name "iproute2")
-    (version "4.8.0")
+    (version "4.9.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -932,7 +1001,7 @@ packet filter.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "12dk5hn1zlraqk2p0z8dv2xgsz0x9v8l3vcvf51fzj0v8b45j2d3"))))
+                "1i0n071hiqxw1gisngw2jln3kcp9sh47n6fj5hdwqrvp7w20zwy0"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                                ; no test suite
@@ -960,7 +1029,7 @@ packet filter.")
        ("flex" ,flex)
        ("bison" ,bison)))
     (home-page
-     "http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2")
+     "https://wiki.linuxfoundation.org/networking/iproute2")
     (synopsis
      "Utilities for controlling TCP/IP networking and traffic in Linux")
     (description
@@ -1866,7 +1935,7 @@ compliance.")
 (define-public wireless-regdb
   (package
     (name "wireless-regdb")
-    (version "2016.05.02")
+    (version "2016.06.10")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1874,7 +1943,7 @@ compliance.")
                     "wireless-regdb-" version ".tar.xz"))
               (sha256
                (base32
-                "07n6gcwfbddz3awbdflv3dhxjszsqq2lrdwih0a0ahcliac4qry9"))
+                "1dxqy7a7zpzya30ff00s8k1qgrlndrwys99gc0r8yg0vab1z3vfg"))
 
               ;; We're building 'regulatory.bin' by ourselves.
               (snippet '(delete-file "regulatory.bin"))))
@@ -2302,7 +2371,7 @@ capabilities of the Linux kernel.")
 (define-public libraw1394
   (package
     (name "libraw1394")
-    (version "2.1.0")
+    (version "2.1.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2310,7 +2379,7 @@ capabilities of the Linux kernel.")
                     name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0kwnf4ha45c04mhc4yla672aqmvqqihxix1gvblns5cd2pc2cc8b"))))
+                "0pm5b415j1qdzyw38wdv8h7ff4yx20831z1727mpsb6jc6bwdk03"))))
     (build-system gnu-build-system)
     (home-page "https://ieee1394.wiki.kernel.org/index.php/Main_Page")
     (synopsis "Interface library for the Linux IEEE1394 drivers")
@@ -2630,7 +2699,7 @@ and copy/paste text in the console and in xterm.")
 (define-public btrfs-progs
   (package
     (name "btrfs-progs")
-    (version "4.8.5")
+    (version "4.9")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/kernel/"
@@ -2638,7 +2707,7 @@ and copy/paste text in the console and in xterm.")
                                   "btrfs-progs-v" version ".tar.xz"))
               (sha256
                (base32
-                "1vq83a8sz8dnshbyaghacqvcwv2n1kh53yjv87rxx9dc4b0b2iyj"))))
+                "18y88avadn4wb3xmczd6pfcjr7ik62dw4phk6fmkms2j8vmvl9z2"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "static"))      ; static versions of binaries in "out" (~16MiB!)
@@ -2665,11 +2734,11 @@ and copy/paste text in the console and in xterm.")
     (native-inputs `(("pkg-config" ,pkg-config)
                      ("asciidoc" ,asciidoc)
                      ("xmlto" ,xmlto)
-                     ;; For building documentation
+                     ;; For building documentation.
                      ("libxml2" ,libxml2)
                      ("docbook-xml" ,docbook-xml)
                      ("docbook-xsl" ,docbook-xsl)
-                     ;; For tests
+                     ;; For tests.
                      ("which" ,which)))
     (home-page "https://btrfs.wiki.kernel.org/")
     (synopsis "Create and manage btrfs copy-on-write file systems")
@@ -2993,14 +3062,14 @@ the default @code{nsswitch} and the experimental @code{umich_ldap}.")
 (define-public mcelog
   (package
     (name "mcelog")
-    (version "144")
+    (version "146")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://git.kernel.org/cgit/utils/cpu/mce/"
                                   "mcelog.git/snapshot/v" version ".tar.gz"))
               (sha256
                (base32
-                "03jyhsl0s59sfqykj5p6gkb03k4w1h9ay31yxym1dnzis5sq99pa"))
+                "0jjx4q1mfa380319cqz86nw5wv6jnbpvq2r8n0dyh87mhvrgb4wi"))
               (file-name (string-append name "-" version ".tar.gz"))
               (modules '((guix build utils)))
               (snippet

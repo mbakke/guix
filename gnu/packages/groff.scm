@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,6 +22,7 @@
   #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
   #:use-module (gnu packages bison)
@@ -56,3 +58,42 @@ formatted output based on formatting commands contained within the text.  It
 is usually the formatter of \"man\" documentation pages.")
    (license gpl3+)
    (home-page "http://www.gnu.org/software/groff/")))
+
+;; There are no releases, so we take the latest commit.
+(define-public roffit
+  (let ((commit "e5228388e3faf2b7f1ae5bd048ad46ed565304c6")
+        (revision "1"))
+    (package
+      (name "roffit")
+      (version (string-append "0.11-" revision "." (string-take commit 9)))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/bagder/roffit.git")
+                      (commit commit)))
+                (file-name (string-append "roffit-" commit "-checkout"))
+                (sha256
+                 (base32
+                  "1y7ndbqciy7h0khlpi1bv4v1614vhybnmm4jysj6fwxkw9cwv1nc"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:test-target "test"
+         #:make-flags
+         (list (string-append "INSTALLDIR="
+                              (assoc-ref %outputs "out") "/bin"))
+         #:phases
+         (modify-phases %standard-phases
+           (delete 'configure)
+           (add-before 'install 'pre-install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (mkdir-p (string-append (assoc-ref outputs "out")
+                                       "/bin"))
+               #t)))))
+      (inputs
+       `(("perl" ,perl)))
+      (home-page "https://daniel.haxx.se/projects/roffit/")
+      (synopsis "Convert nroff files to HTML")
+      (description
+       "Roffit is a program that reads an nroff file and outputs an HTML file.
+It is typically used to display man pages on a web site.")
+      (license expat))))

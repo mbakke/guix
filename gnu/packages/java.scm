@@ -783,7 +783,7 @@ build process and its dependencies, whereas Make uses Makefile format.")
     (license license:gpl2+)))
 
 (define-public icedtea-7
-  (let* ((version "2.6.7")
+  (let* ((version "2.6.8")
          (drop (lambda (name hash)
                  (origin
                    (method url-fetch)
@@ -800,7 +800,7 @@ build process and its dependencies, whereas Make uses Makefile format.")
                       version ".tar.xz"))
                 (sha256
                  (base32
-                  "1r4y1afjdm72j4lkd1jsim595zy5s3hvc3dnl13f5a7wrxp2v4nh"))
+                  "0p95402viz6dnfkhhn18hrvm7wqfvij0xnxvp9nqj3aq3gzk0h45"))
                 (modules '((guix build utils)))
                 (snippet
                  '(substitute* "Makefile.in"
@@ -927,25 +927,25 @@ build process and its dependencies, whereas Make uses Makefile format.")
       (native-inputs
        `(("openjdk-src"
           ,(drop "openjdk"
-                 "0y38vgvzw2xggfg0nlalv42amy5sv6vzvjxik8bvkm1sajzazb2w"))
+                 "1qscircx5z9rnyx4k6lzxbrl5q6f9shag962zl0f52cyrcma5gp6"))
          ("corba-drop"
           ,(drop "corba"
-                 "0r778nhmzcnf6jkl50f6f279vbzh96rcwr74vb0930wgl2g46j80"))
+                 "0f25l1db5v9ib4v5wb32wjblb2zzx8f8qgr2g84yg26aq2m8swig"))
          ("jaxp-drop"
           ,(drop "jaxp"
-                 "02y7zaw4irjvbihpr4pbrl64pxjx5anfxms3i24rp1q6aj2n1gcz"))
+                 "1z4i404i3rrf5zmch8z2rslqm7vs1wzjhvjf6kgkdvnrka7a86xs"))
          ("jaxws-drop"
           ,(drop "jaxws"
-                 "1xrhdgykpi7amyyirzchp4mjrx2j3xm6nqg4bbfy2kxv7daw3z69"))
+                 "06h49jgf76408j1qhhkksly8fbyw1wisyvgi1csvj2f63bkr6c3m"))
          ("jdk-drop"
           ,(drop "jdk"
-                 "108d560iabk334lcifr5xf1w075a6c918smpbcaccsrln8qd6g79"))
+                 "0qg76gjlnyrjskzz019fi47vqdxpa51sdhcyx4lsa25j5vsih4gc"))
          ("langtools-drop"
           ,(drop "langtools"
-                 "1r5llvhxzdihyz6rmr6ri9wz8zvbw4gmlllhb340p86liqqh1rqk"))
+                 "04w82l34z83n8cd901bvmlrdk825nw5ijgny5cn1idnhplzcckh0"))
          ("hotspot-drop"
           ,(drop "hotspot"
-                 "0p3arg01jfdnbx856qfhhzp7s9yzmqwa1fspk5spmmxb9m7mj4h4"))
+                 "153i1panv3mzwh39dc8rxr9hj5920y86a4m8djxsk6qnyd4gamfa"))
          ,@(fold alist-delete (package-native-inputs icedtea-6)
                  '("openjdk6-src"))))
       (inputs
@@ -953,7 +953,7 @@ build process and its dependencies, whereas Make uses Makefile format.")
          ,@(package-inputs icedtea-6))))))
 
 (define-public icedtea-8
-  (let* ((version "3.1.0")
+  (let* ((version "3.2.0")
          (drop (lambda (name hash)
                  (origin
                    (method url-fetch)
@@ -962,7 +962,7 @@ build process and its dependencies, whereas Make uses Makefile format.")
                          "/icedtea8/" version "/" name ".tar.xz"))
                    (sha256 (base32 hash))))))
     (package (inherit icedtea-7)
-      (version "3.1.0")
+      (version "3.2.0")
       (source (origin
                 (method url-fetch)
                 (uri (string-append
@@ -970,7 +970,7 @@ build process and its dependencies, whereas Make uses Makefile format.")
                       version ".tar.xz"))
                 (sha256
                  (base32
-                  "1d1kj8a6jbvcbzhmfrx2pca7pinsvpxd7zij9h93g13dmm0ncqbm"))
+                  "104g2x5nhnqqvx6x29phx5vlrhlqy7qax83b9bqj1y619irrg8gj"))
                 (modules '((guix build utils)))
                 (snippet
                  '(substitute* "Makefile.am"
@@ -985,6 +985,8 @@ build process and its dependencies, whereas Make uses Makefile format.")
                "--enable-bootstrap"
                "--enable-nss"
                "--disable-downloading"
+               "--disable-system-pcsc"
+               "--disable-system-sctp"
                "--disable-tests"      ;they are run in the check phase instead
                "--with-openjdk-src-dir=./openjdk.src"
                ,(string-append "--with-jdk-home=" jdk))))
@@ -1038,31 +1040,31 @@ build process and its dependencies, whereas Make uses Makefile format.")
        `(("jdk" ,icedtea-7 "jdk")
          ("openjdk-src"
           ,(drop "openjdk"
-                 "1p6xgf00w754y3xdrccs67gjhb0181q49dk67h5v43aixkx7z7y1"))
+                 "093r3vlmbdx78w9s6d8lv4q65i0s9wq6an6i2g2d1zaf0js4043c"))
          ("corba-drop"
           ,(drop "corba"
-                 "088wnyfdhqkvc41pl3swnynbxx7x5lha6qg7q0biai6ya114scsy"))
+                 "11r3h9snnj7m5bqnzc5ryd85igdv7xlwzs0zy24p9ii6gsc0f9lh"))
          ("jaxp-drop"
           ,(drop "jaxp"
-                 "18xc4sib85z2zhz4k5lvi5b4vn88zqjpa3wi8gav81vz5gyysn3d"))
+                 "1mp6ps15jk8v4nnvkmbvkk7g35icdjv7892q2a4f7b268yjcgmk1"))
          ("jaxws-drop"
           ,(drop "jaxws"
-                 "1my72q2zjly4imn834zgf4rysn48gbr8i81rxzrfdqgzzinxf6l1"))
+                 "1fb5hikzzx8292nhdbp0snqn66fwnnv4rkjsk1zsjvrv4z5vk18j"))
          ("jdk-drop"
           ,(drop "jdk"
-                 "1ab2h7pppph82h3xhh1m5dha77j3wnhksq7c7f8yfcsyhr5hm243"))
+                 "1if9c5grp0km7pyn4mhfwi2ynh3ix20l1fqbfcy68sl2py7psmcj"))
          ("langtools-drop"
           ,(drop "langtools"
-                 "07bzcw2ml4apjfd0ydc3v44fnnwinwri114fig2mdcn1n388szra"))
+                 "0kbah4h4pllk0gf50mp5f6720f5ci0ixqylccppb484hp95pblcl"))
          ("hotspot-drop"
           ,(drop "hotspot"
-                 "0x5ic8cz3w9s8m8ynh31qlf47c6nwc512bp8ddwgmvsdxyiiwn1k"))
+                 "1gqz9qqsi61838dj08s01sa51zlnkvrk3hy721211dhnmkvlzmwx"))
          ("nashorn-drop"
           ,(drop "nashorn"
-                 "0zyd8pyv1il8c9npw7wz1mwxhlq510ill20nhc7i8fq7gignzcsn"))
+                 "04697l95g6y6n5dvy55k2040c6qp5hfz16qaibwzs594m3gzwwjz"))
          ("shenandoah-drop"
           ,(drop "shenandoah"
-                 "1shisljn60zw9j4nahh07vw85gj25gfiy7z196fdw0pi95va6qwk"))
+                 "0k6h7jk5i98jnld2ivy4bhydmkzrp25c3l6gwhvczvrhn7mlbnfx"))
          ,@(fold alist-delete (package-native-inputs icedtea-7)
                  '("gcj" "openjdk-src" "corba-drop" "jaxp-drop" "jaxws-drop"
                    "jdk-drop" "langtools-drop" "hotspot-drop")))))))

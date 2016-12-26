@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
+;;; Copyright © 2016 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -42,8 +43,12 @@
 (define-record-type* <cuirass-configuration>
   cuirass-configuration make-cuirass-configuration
   cuirass-configuration?
+  (cuirass          cuirass-configuration-cuirass ;package
+                    (default cuirass))
+  (log-file         cuirass-configuration-log-file ;string
+                    (default "/var/log/cuirass.log"))
   (cache-directory  cuirass-configuration-cache-directory ;string (dir-name)
-                    (default ""))
+                    (default "/var/cache/cuirass"))
   (user             cuirass-configuration-user ;string
                     (default "cuirass"))
   (group            cuirass-configuration-group ;string
@@ -52,8 +57,8 @@
                     (default 60))
   (database         cuirass-configuration-database ;string (file-name)
                     (default "/var/run/cuirass/cuirass.db"))
-  (specifications   cuirass-configuration-specifications ;string (file-name)
-                    (default ""))
+  (specifications   cuirass-configuration-specifications ;specification-alist
+                    (default '()))
   (use-substitutes? cuirass-configuration-use-substitutes? ;boolean
                     (default #f))
   (one-shot?        cuirass-configuration-one-shot? ;boolean
@@ -63,10 +68,14 @@
   "Return a <shepherd-service> for the Cuirass service with CONFIG."
   (and
    (cuirass-configuration? config)
-   (let ((cache-directory  (cuirass-configuration-cache-directory config))
+   (let ((cuirass          (cuirass-configuration-cuirass config))
+         (cache-directory  (cuirass-configuration-cache-directory config))
+         (log-file         (cuirass-configuration-log-file config))
+         (user             (cuirass-configuration-user config))
+         (group            (cuirass-configuration-group config))
          (interval         (cuirass-configuration-interval config))
          (database         (cuirass-configuration-database config))
-         (specifications   (cuirass-configuration-specifications config))
+         (specs            (cuirass-configuration-specifications config))
          (use-substitutes? (cuirass-configuration-use-substitutes? config))
          (one-shot?        (cuirass-configuration-one-shot? config)))
      (list (shepherd-service
@@ -75,16 +84,19 @@
             (requirement '(guix-daemon))
             (start #~(make-forkexec-constructor
                       (list (string-append #$cuirass "/bin/cuirass")
-                            #$@(if (string=? "" cache-directory)
+                            "--cache-directory" #$cache-directory
+                            #$@(if (null? specs)
                                    '()
-                                   (list "--cache-directory" cache-directory))
-                            #$@(if (string=? "" specifications)
-                                   '()
-                                   (list "--specifications" specifications))
+                                   (let ((str (format #f "'~S" specs)))
+                                     (list "--specifications"
+                                           (plain-file "specs.scm" str))))
                             "--database" #$database
                             "--interval" #$(number->string interval)
                             #$@(if use-substitutes? '("--use-substitutes") '())
-                            #$@(if one-shot? '("--one-shot") '()))))
+                            #$@(if one-shot? '("--one-shot") '()))
+                      #:user #$user
+                      #:group #$group
+                      #:log-file #$log-file))
             (stop #~(make-kill-destructor)))))))
 
 (define (cuirass-account config)
@@ -102,11 +114,32 @@
            (home-directory (string-append "/var/run/" cuirass-user))
            (shell #~(string-append #$shadow "/sbin/nologin"))))))
 
+(define (cuirass-activation config)
+  "Return the activation code for CONFIG."
+  (let ((cache (cuirass-configuration-cache-directory config))
+        (db    (dirname (cuirass-configuration-database config)))
+        (user  (cuirass-configuration-user config))
+        (group (cuirass-configuration-group config)))
+    (with-imported-modules '((guix build utils))
+      #~(begin
+          (use-modules (guix build utils))
+
+          (mkdir-p #$cache)
+          (mkdir-p #$db)
+
+          (let ((uid (passwd:uid (getpw #$user)))
+                (gid (group:gid (getgr #$group))))
+            (chown #$cache uid gid)
+            (chown #$db uid gid))))))
+
 (define cuirass-service-type
   (service-type
    (name 'cuirass)
    (extensions
     (list
+     (service-extension profile-service-type      ;for 'info cuirass'
+                        (compose list cuirass-configuration-cuirass))
+     (service-extension activation-service-type cuirass-activation)
      (service-extension shepherd-root-service-type cuirass-shepherd-service)
      (service-extension account-service-type cuirass-account)))))
 

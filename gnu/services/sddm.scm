@@ -220,7 +220,7 @@ Relogin="              (if (sddm-configuration-relogin? config)
    (name "sddm-greeter")
    (auth
     (list
-     ;; Load environment form /etc/environment and ~/.pam_environment
+     ;; Load environment from /etc/environment and ~/.pam_environment
      (pam-entry
       (control "required")
       (module "pam_env.so"))

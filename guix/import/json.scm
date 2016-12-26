@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014 David Thompson <davet@gnu.org>
-;;; Copyright © 2015 Eric Bavier <bavier@member.fsf.org>
+;;; Copyright © 2015, 2016 Eric Bavier <bavier@member.fsf.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,14 +19,17 @@
 
 (define-module (guix import json)
   #:use-module (json)
-  #:use-module (guix utils)
+  #:use-module (guix http-client)
   #:use-module (guix import utils)
+  #:use-module (srfi srfi-34)
   #:export (json-fetch))
 
 (define (json-fetch url)
   "Return an alist representation of the JSON resource URL, or #f on failure."
-  (call-with-temporary-output-file
-   (lambda (temp port)
-     (and (url-fetch url temp)
-          (hash-table->alist
-           (call-with-input-file temp json->scm))))))
+  (guard (c ((and (http-get-error? c)
+                  (= 404 (http-get-error-code c)))
+             #f))                       ;"expected" if package is unknown
+    (let* ((port (http-fetch url))
+           (result (hash-table->alist (json->scm port))))
+      (close-port port)
+      result)))

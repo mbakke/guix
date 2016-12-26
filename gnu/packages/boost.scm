@@ -120,7 +120,7 @@ across a broad spectrum of applications.")
     (build-system gnu-build-system)
     (propagated-inputs
       `(("boost" ,boost))) ; inclusion of header files
-    (home-page "https://code.google.com/p/multidimalgorithm/")
+    (home-page "https://gitlab.com/mdds/mdds")
     (synopsis "Multi-dimensional C++ data structures and indexing algorithms")
     (description "Mdds (multi-dimensional data structure) provides a
 collection of multi-dimensional data structures and indexing algorithms

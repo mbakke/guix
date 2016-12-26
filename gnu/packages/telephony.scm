@@ -2,7 +2,7 @@
 ;;; Copyright © 2014 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 David Hashe <david.hashe@dhashe.com>
-;;; Copyright © 2015 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015, 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
 ;;; Copyright © 2016 Francesco Frassinelli <fraph24@gmail.com>
 ;;; Copyright © 2016 ng0 <ng0@libertad.pw>
@@ -210,6 +210,7 @@ internet.")
              (method url-fetch)
              (uri (string-append "https://github.com/cisco/libsrtp/archive/v"
                                   version ".tar.gz"))
+             (file-name (string-append name "-" version ".tar.gz"))
              (sha256
               (base32
                "1w2g623qkd7gdyydglx2hr4s2y237lg0nszjmy7z8d2iq8hvb9sn"))))
@@ -217,7 +218,25 @@ internet.")
      `(("procps" ,procps)))
     (build-system gnu-build-system)
     (arguments
-     `(#:test-target "runtest"))
+     '(#:test-target "runtest"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-mips-variable-in-testsuite
+           ;; This comes from https://github.com/cisco/libsrtp/pull/151
+           (lambda _
+             (substitute* "test/srtp_driver.c"
+               (("mips ") "mips_est ")
+               (("mips\\)") "mips_est)"))
+             #t))
+         (add-after 'unpack 'patch-dictionary-location
+           ;; With the above changes, the rtpw_test.sh test finally runs, and fails
+           (lambda _
+             (substitute* "test/rtpw.c"
+               (("/usr/share/dict/words")
+                (string-append (assoc-ref %build-inputs "procps")
+                               "/share/doc/procps-ng"))
+                (("words.txt") "FAQ"))
+             #t)))))
     (synopsis "Secure RTP (SRTP) Reference Implementation")
     (description "This package provides an implementation of the Secure
 Real-time Transport Protocol (SRTP), the Universal Security Transform (UST),
@@ -299,14 +318,14 @@ address of one of the participants.")
 (define-public mumble
   (package
     (name "mumble")
-    (version "1.2.17")
+    (version "1.2.18")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://mumble.info/snapshot/"
                                   name "-" version ".tar.gz"))
               (sha256
                (base32
-                "176br3b0pv5sz3zvgzsz9rxr3n79irlm902h7n1wh4f6vbph2dhw"))
+                "1ajmdzf2jqbnm4hm53wv8bzazffflzs3z8hhbl70kfci4v4arxz0"))
               (modules '((guix build utils)))
               (snippet
                `(begin

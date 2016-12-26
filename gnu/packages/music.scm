@@ -251,6 +251,18 @@ many input formats and provides a customisable Vi-style user interface.")
            ;; testsuite.
            (lambda _
              (zero? (system* "make" "-C" "tests" "check"))))
+         (add-before 'build 'set-lilypond
+           ;; This phase sets the default path for lilypond to its current
+           ;; location in the store.
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let* ((lilypond (string-append (assoc-ref inputs "lilypond")
+                                             "/bin/lilypond")))
+               (substitute* "src/core/prefops.c"
+                 (("g_string_new \\(\"lilypond\"\\);")
+                  (string-append "g_string_new (\""
+                                 lilypond
+                                 "\");"))))
+             #t))
          (add-after 'install 'correct-filename
            ;; "graft-derivation/shallow" from the (guix grafts) module runs in
            ;; the C locale, expecting file names to be ASCII encoded. This
@@ -283,11 +295,10 @@ many input formats and provides a customisable Vi-style user interface.")
        ("libsndfile" ,libsndfile)
        ("libtool" ,libtool)
        ("libxml2" ,libxml2)
+       ("lilypond", lilypond)
        ("portaudio" ,portaudio)
        ("portmidi" ,portmidi)
        ("rubberband" ,rubberband)))
-    (propagated-inputs
-     `(("lilypond", lilypond)))
     (synopsis "Graphical music notation, front-end to GNU Lilypond")
     (description
      "GNU Denemo is a music notation editor that provides a convenient
@@ -1612,7 +1623,7 @@ capabilities, custom envelopes, effects, etc.")
 (define-public yoshimi
   (package
     (name "yoshimi")
-    (version "1.4.1")
+    (version "1.5.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/yoshimi/"
@@ -1620,7 +1631,7 @@ capabilities, custom envelopes, effects, etc.")
                                   "/yoshimi-" version ".tar.bz2"))
               (sha256
                (base32
-                "133sx42wb66g803pcrgdwph40wh94knvab3yfqkgm0001jv4v14y"))))
+                "10s1i18xlmvqfrnr0zn2mj2b28i7p62dlqzzzkmpaapqj1gsgpz5"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f ; there are no tests

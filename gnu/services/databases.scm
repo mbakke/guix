@@ -48,6 +48,10 @@
   postgresql-configuration?
   (postgresql     postgresql-configuration-postgresql ;<package>
                   (default postgresql))
+  (port           postgresql-configuration-port
+                  (default 5432))
+  (locale         postgresql-configuration-locale
+                  (default "en_US.utf8"))
   (config-file    postgresql-configuration-file)
   (data-directory postgresql-configuration-data-directory))
 
@@ -80,13 +84,18 @@ host	all	all	::1/128 	trust"))
 
 (define postgresql-activation
   (match-lambda
-    (($ <postgresql-configuration> postgresql config-file data-directory)
+    (($ <postgresql-configuration> postgresql port locale config-file data-directory)
      #~(begin
          (use-modules (guix build utils)
                       (ice-9 match))
 
          (let ((user (getpwnam "postgres"))
-               (initdb (string-append #$postgresql "/bin/initdb")))
+               (initdb (string-append #$postgresql "/bin/initdb"))
+               (initdb-args
+                (append
+                 (if #$locale
+                     (list (string-append "--locale=" #$locale))
+                     '()))))
            ;; Create db state directory.
            (mkdir-p #$data-directory)
            (chown #$data-directory (passwd:uid user) (passwd:gid user))
@@ -101,14 +110,19 @@ host	all	all	::1/128 	trust"))
                 (lambda ()
                   (setgid (passwd:gid user))
                   (setuid (passwd:uid user))
-                  (primitive-exit (system* initdb "-D" #$data-directory)))
+                  (primitive-exit
+                   (apply system*
+                          initdb
+                          "-D"
+                          #$data-directory
+                          initdb-args)))
                 (lambda ()
                   (primitive-exit 1))))
              (pid (waitpid pid))))))))
 
 (define postgresql-shepherd-service
   (match-lambda
-    (($ <postgresql-configuration> postgresql config-file data-directory)
+    (($ <postgresql-configuration> postgresql port locale config-file data-directory)
      (let ((start-script
             ;; Wrapper script that switches to the 'postgres' user before
             ;; launching daemon.
@@ -121,6 +135,7 @@ host	all	all	::1/128 	trust"))
                               (system* postgres
                                        (string-append "--config-file="
                                                       #$config-file)
+                                       "-p" (number->string #$port)
                                        "-D" #$data-directory)))))
        (list (shepherd-service
               (provision '(postgres))
@@ -140,6 +155,8 @@ host	all	all	::1/128 	trust"))
                                           (const %postgresql-accounts))))))
 
 (define* (postgresql-service #:key (postgresql postgresql)
+                             (port 5432)
+                             (locale "en_US.utf8")
                              (config-file %default-postgres-config)
                              (data-directory "/var/lib/postgresql/data"))
   "Return a service that runs @var{postgresql}, the PostgreSQL database server.
@@ -149,6 +166,8 @@ and stores the database cluster in @var{data-directory}."
   (service postgresql-service-type
            (postgresql-configuration
             (postgresql postgresql)
+            (port port)
+            (locale locale)
             (config-file config-file)
             (data-directory data-directory))))
 
@@ -160,7 +179,8 @@ and stores the database cluster in @var{data-directory}."
 (define-record-type* <mysql-configuration>
   mysql-configuration make-mysql-configuration
   mysql-configuration?
-  (mysql mysql-configuration-mysql (default mariadb)))
+  (mysql mysql-configuration-mysql (default mariadb))
+  (port mysql-configuration-port (default 3306)))
 
 (define %mysql-accounts
   (list (user-group
@@ -175,10 +195,11 @@ and stores the database cluster in @var{data-directory}."
 
 (define mysql-configuration-file
   (match-lambda
-    (($ <mysql-configuration> mysql)
-     (plain-file "my.cnf" "[mysqld]
+    (($ <mysql-configuration> mysql port)
+     (mixed-text-file "my.cnf" "[mysqld]
 datadir=/var/lib/mysql
 socket=/run/mysqld/mysqld.sock
+port=" (number->string port) "
 "))))
 
 (define (%mysql-activation config)

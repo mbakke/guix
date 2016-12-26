@@ -74,6 +74,7 @@ things the parser might find in the XML document (like start tags).")
 (define-public libxml2
   (package
     (name "libxml2")
+    (replacement libxml2/fixed)
     (version "2.9.4")
     (source (origin
              (method url-fetch)
@@ -100,6 +101,15 @@ things the parser might find in the XML document (like start tags).")
      "Libxml2 is the XML C parser and toolkit developed for the Gnome
 project (but it is usable outside of the Gnome platform).")
     (license license:x11)))
+
+(define libxml2/fixed
+  (package
+    (inherit libxml2)
+    (source
+      (origin
+        (inherit (package-source libxml2))
+        (patches (search-patches "libxml2-CVE-2016-4658.patch"
+                                 "libxml2-CVE-2016-5131.patch"))))))
 
 (define-public python-libxml2
   (package (inherit libxml2)

@@ -61,7 +61,7 @@
 (define-public calibre
   (package
     (name "calibre")
-    (version "2.63.0")
+    (version "2.74.0")
     (source
       (origin
         (method url-fetch)
@@ -70,7 +70,7 @@
                             version ".tar.xz"))
         (sha256
          (base32
-          "1rwgv6rsmy3ljfwcpv42w203ghngw86s5kzb0yjm1zgsxmas2wh6"))
+          "1dpz1682zd8anvgafk2m5m123dxy1bc07ysj0z1my7zqaq1cyrm3"))
         ;; Remove non-free or doubtful code, see
         ;; https://lists.gnu.org/archive/html/guix-devel/2015-02/msg00478.html
         (modules '((guix build utils)))
@@ -83,7 +83,7 @@
     (build-system python-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)
-       ("qt" ,qt) ; for qmake
+       ("qtbase" ,qtbase) ; for qmake
        ;; xdg-utils is supposed to be used for desktop integration, but it
        ;; also creates lots of messages
        ;; mkdir: cannot create directory '/homeless-shelter': Permission denied
@@ -118,9 +118,8 @@
        ("python2-mechanize" ,python2-mechanize)
        ("python2-netifaces" ,python2-netifaces)
        ("python2-pillow" ,python2-pillow)
-       ("python2-pyqt" ,python2-pyqt-5.5)
+       ("python2-pyqt" ,python2-pyqt)
        ("python2-sip" ,python2-sip)
-       ("qt" ,qt)
        ("sqlite" ,sqlite)))
     (arguments
      `(#:python ,python-2

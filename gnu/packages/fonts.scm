@@ -605,7 +605,7 @@ languages, plus Greek and Cyrillic.")
 (define-public font-gnu-unifont
   (package
     (name "font-gnu-unifont")
-    (version "9.0.02")
+    (version "9.0.06")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -613,7 +613,7 @@ languages, plus Greek and Cyrillic.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "1ss6cp2bs8mzz3jqjbmmi877jfdb1jjcd29dvyk3i8qy7r0d44qm"))))
+                "0ybyraxi8pngibazfq4zlsqmg8kn5xlhvaiwnxb11znhfi61vi87"))))
     (build-system gnu-build-system)
     (outputs '("out" ; TrueType version
                "pcf" ; PCF (bitmap) version
@@ -625,9 +625,9 @@ languages, plus Greek and Cyrillic.")
        #:tests? #f          ; no check target
        #:phases
        (modify-phases %standard-phases
-         (replace 'configure
-                  (lambda _
-                    (setenv "CC" "gcc")))
+         (replace
+          'configure
+          (lambda _ (setenv "CC" "gcc") #t))
          (replace
           'install
           (lambda* (#:key outputs #:allow-other-keys)

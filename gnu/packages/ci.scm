@@ -34,6 +34,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages texinfo)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
@@ -185,8 +186,8 @@ their dependencies.")
       (license l:gpl3+))))
 
 (define-public cuirass
-  (let ((commit "7248c0038f3d0bfcf6c469d534efb4a13952c112")
-        (revision "1"))
+  (let ((commit "cbdb59af8e7a1b40d687f80e62c5892686d384d2")
+        (revision "2"))
     (package
       (name "cuirass")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -198,7 +199,7 @@ their dependencies.")
                 (file-name (string-append name "-" version))
                 (sha256
                  (base32
-                  "0hkwh2pcz3wzg1n533ch2w7vwr97yr369q4ki0yqk99wfipjrydw"))))
+                  "0qmhchazg8wyrfn6d2im4jg7d52gb0xp8afjan5szl3bpphi4s28"))))
       (build-system gnu-build-system)
       (arguments
        '(#:phases
@@ -211,22 +212,30 @@ their dependencies.")
                (let* ((out    (assoc-ref outputs "out"))
                       (json   (assoc-ref inputs "guile-json"))
                       (sqlite (assoc-ref inputs "guile-sqlite3"))
+                      (git    (assoc-ref inputs "git"))
                       (guix   (assoc-ref inputs "guix"))
                       (mods   (string-append json "/share/guile/site/2.0:"
                                              sqlite "/share/guile/site/2.0:"
                                              guix "/share/guile/site/2.0")))
+                 ;; Make sure 'cuirass' can find the 'git' and 'evaluate'
+                 ;; commands, as well as the relevant Guile modules.
                  (wrap-program (string-append out "/bin/cuirass")
+                   `("PATH" ":" prefix (,(string-append out "/bin")
+                                        ,(string-append git "/bin")))
                    `("GUILE_LOAD_PATH" ":" prefix (,mods))
-                   `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,mods)))))))))
+                   `("GUILE_LOAD_COMPILED_PATH" ":" prefix (,mods)))
+                 #t))))))
       (inputs
        `(("guile" ,guile-2.0)
          ("guile-json" ,guile-json)
          ("guile-sqlite3" ,guile-sqlite3)
-         ("guix" ,guix)))
+         ("guix" ,guix)
+         ("git" ,git)))
       (native-inputs
        `(("autoconf" ,autoconf)
          ("automake" ,automake)
-         ("pkg-config" ,pkg-config)))
+         ("pkg-config" ,pkg-config)
+         ("texinfo" ,texinfo)))
       (synopsis "Continuous integration system")
       (description
        "Cuirass is a continuous integration tool using GNU Guix.  It is

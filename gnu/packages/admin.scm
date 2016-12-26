@@ -1568,14 +1568,14 @@ done with the @code{auditctl} utility.")
 (define-public nmap
   (package
     (name "nmap")
-    (version "7.31")
+    (version "7.40")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nmap.org/dist/nmap-" version
                                   ".tar.bz2"))
               (sha256
                (base32
-                "0hiqb28950kn4bjsmw0ksfyss7j2qdmgrj3xsjf7073pq01lx7yb"))
+                "121i9mgyc28ra2825akd0ix5qyssv4xc2qlx296mam6hzxgnc54y"))
               (modules '((guix build utils)))
               (snippet
                '(map delete-file-recursively

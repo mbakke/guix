@@ -1,0 +1,15 @@
+Add placeholder for kinit's store file name.
+
+diff --git a/src/kdeinitinterface.cpp b/src/kdeinitinterface.cpp
+index 22fa5e5..3d40937 100644
+--- a/src/kdeinitinterface.cpp
++++ b/src/kdeinitinterface.cpp
+@@ -52,7 +52,7 @@ void KDEInitInterface::ensureKdeinitRunning()
+     // If not found in system paths, search other paths
+     if (srv.isEmpty()) {
+         const QStringList searchPaths = QStringList()
+-            << QCoreApplication::applicationDirPath() // then look where our application binary is located
++            << QString::fromUtf8("@SUBSTITUTEME@/bin") // using QStringLiteral would be more efficient, but breaks guix store reference detection.
+             << QLibraryInfo::location(QLibraryInfo::BinariesPath); // look where exec path is (can be set in qt.conf)
+         srv = QStandardPaths::findExecutable(QStringLiteral("kdeinit5"), searchPaths);
+         if (srv.isEmpty()) {

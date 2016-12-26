@@ -719,7 +719,7 @@ built-in caching support.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://cpan/authors/id/G/GR/GRODITI/"
+       (uri (string-append "mirror://cpan/authors/id/I/IL/ILMARI/"
                            "DBIx-Class-IntrospectableM2M-" version ".tar.gz"))
        (sha256
         (base32

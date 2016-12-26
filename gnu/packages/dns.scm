@@ -140,7 +140,7 @@ high-volume and high-reliability applications. The name BIND stands for
 (define-public dnscrypt-proxy
   (package
     (name "dnscrypt-proxy")
-    (version "1.7.0")
+    (version "1.8.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -148,7 +148,7 @@ high-volume and high-reliability applications. The name BIND stands for
                     "dnscrypt-proxy-" version ".tar.bz2"))
               (sha256
                (base32
-                "1qw2nib0d5ia8581lbdnjxgn9c7pf2qw8vhpnnh1wjcjj3gpgbqx"))
+                "1dz0knslf7ysc2xx33ljrdlqyr4b0fpm9ifrwvwgcjaxgh94l7m8"))
               (modules '((guix build utils)))
               (snippet
                ;; Delete bundled libltdl. XXX: This package also bundles
@@ -261,15 +261,17 @@ asynchronous fashion.")
 (define-public yadifa
   (package
     (name "yadifa")
-    (version "2.2.1-6281")
+    (version "2.2.3")
     (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://cdn.yadifa.eu/sites/default/files/releases/"
-                           name "-" version ".tar.gz"))
-       (sha256
-        (base32
-         "0vj71z7i9lfbnp93k28aplwldp5mfli0kvrbwmha6fjha6kcr910"))))
+     (let ((revision "6711"))
+       (origin
+         (method url-fetch)
+         (uri
+          (string-append "http://cdn.yadifa.eu/sites/default/files/releases/"
+                         name "-" version "-" revision ".tar.gz"))
+         (sha256
+          (base32
+           "0ikfm40gx0zjw3gnxsw3rn1k4wb8jacgklja3ygcj1knq6hy2zaa")))))
     (build-system gnu-build-system)
     (native-inputs
      `(("which" ,which)))
@@ -283,6 +285,8 @@ asynchronous fashion.")
        #:configure-flags (list "--sysconfdir=/etc"      "--localstatedir=/var"
                                "--enable-shared"        "--disable-static"
                                "--enable-messages"      "--enable-ctrl"
+                               "--enable-nsec"          "--enable-nsec3"
+                               "--enable-tsig"          "--enable-caching"
                                ;; NSID is a rarely-used debugging aid, that also
                                ;; causes the build to fail. Just disable it.
                                "--disable-nsid")))

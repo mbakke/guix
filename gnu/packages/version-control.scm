@@ -889,16 +889,14 @@ large, complex patch files.")
 (define-public cssc
   (package
     (name "cssc")
-    (version "1.3.0")
+    (version "1.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/" name "/CSSC-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0bkw6fjh20ppvn54smv05461lm1vcwvn02avx941c4acafmkl1cm"))
-              (patches (search-patches "cssc-gets-undeclared.patch"
-                                       "cssc-missing-include.patch"))))
+                "15191dh8hr46cvssmv4v52gymiiyk6ca9j1bfimlqakcqab6y51h"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases

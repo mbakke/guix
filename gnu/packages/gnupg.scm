@@ -188,7 +188,7 @@ specifications are building blocks of S/MIME and TLS.")
 (define-public npth
   (package
     (name "npth")
-    (version "1.2")
+    (version "1.3")
     (source
      (origin
       (method url-fetch)
@@ -197,7 +197,7 @@ specifications are building blocks of S/MIME and TLS.")
             version ".tar.bz2"))
       (sha256
        (base32
-        "12n0nvhw4fzwp0k7gjv3rc6pdml0qiinbbfiz4ilg6pl5kdxvnvd"))))
+        "0am86vblapwz84254qpmhz0chk70g6qzh3wdxcs0gvba8d01ka5w"))))
     (build-system gnu-build-system)
     (home-page "https://www.gnupg.org")
     (synopsis "Non-preemptive thread library")
@@ -213,20 +213,23 @@ compatible to GNU Pth.")
 (define-public gnupg
   (package
     (name "gnupg")
-    (version "2.1.16")
+    (version "2.1.17")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/gnupg/gnupg-" version
                                   ".tar.bz2"))
               (sha256
                (base32
-                "0i483m9q032a0s50f1izb213g4h5i7pcgn395m6hvl3sg2kadfa9"))))
+                "1js308b46ifx1gim0c9nivr5yxhans7iq1yvkf7zl2928gdm9p65"))
+              (patches
+               ;; This fixes a test failure on 32bit. Remove for next version.
+               ;; https://lists.gnu.org/archive/html/guix-devel/2016-12/msg00869.html
+               (search-patches "gnupg-test-segfault-on-32bit-arch.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("pkg-config" ,pkg-config)))
     (inputs
-     `(("adns" ,adns)
-       ("bzip2" ,bzip2)
+     `(("bzip2" ,bzip2)
        ("curl" ,curl)
        ("gnutls" ,gnutls)
        ("libassuan" ,libassuan)
@@ -585,14 +588,14 @@ including tools for signing keys, keyring analysis, and party preparation.
 (define-public pinentry-tty
   (package
     (name "pinentry-tty")
-    (version "0.9.7")
+    (version "1.0.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/pinentry/pinentry-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "1cp7wjqr6nx31mdclr61s2h84ijqjl0ph99kgj4vyawpjj1j1633"))))
+                "0ni7g4plq6x78p32al7m8h2zsakvg1rhfz0qbc3kdc7yq7nw4whn"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-pinentry-tty")))

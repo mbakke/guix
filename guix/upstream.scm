@@ -241,12 +241,16 @@ and 'interactive' (default)."
                    ((archive-type)
                     (match (and=> (package-source package) origin-uri)
                       ((? string? uri)
-                       (or (file-extension uri) "gz"))
+                       (file-extension (basename uri)))
                       (_
                        "gz")))
                    ((url signature-url)
                     (find2 (lambda (url sig-url)
-                             (string-suffix? archive-type url))
+                             ;; Some URIs lack a file extension, like
+                             ;; 'https://crates.io/???/0.1/download'.  In that
+                             ;; case, pick the first URL.
+                             (or (not archive-type)
+                                 (string-suffix? archive-type url)))
                            urls
                            (or signature-urls (circular-list #f)))))
        (let ((tarball (download-tarball store url signature-url

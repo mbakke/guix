@@ -317,18 +317,17 @@ through the pass command.")
 (define-public argon2
   (package
     (name "argon2")
-    (version "20160406")
+    (version "20161029")
     (source
      (origin
        (method url-fetch)
        (uri
-        (string-append
-         "https://codeload.github.com/P-H-C/phc-winner-"
-         name "/tar.gz/" version))
+        (string-append "https://github.com/P-H-C/phc-winner-argon2/archive/"
+                       version ".tar.gz"))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
         (base32
-         "0g6wa94sh639xl1qc8z21q43r1mp8y77r1zf8nwx5pfsxd8fmyzv"))))
+         "1rymikbysasdadm325jx69i0q19d9srqkny69jwmhswlidr4j07y"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"

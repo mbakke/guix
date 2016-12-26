@@ -23,12 +23,101 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
+  #:use-module (gnu packages apr)
+  #:use-module (gnu packages boost)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages gl)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages tls)
-  #:use-module (gnu packages qt))
+  #:use-module (gnu packages qt)
+  #:use-module (gnu packages version-control))
+
+(define-public kdevelop
+  (package
+    (name "kdevelop")
+    (version "5.0.2")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "mirror://kde/stable/kdevelop"
+                            "/" version "/src/kdevelop-"
+                            version ".tar.xz"))
+        (sha256
+         (base32
+          "0rl6csmzf14gf0r0mk7z2lj7cq8fggf5qmlbxq6j68vp2q0pj0cv"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)
+       ("pkg-config" ,pkg-config)
+       ("qttools" ,qttools)))
+    (inputs
+     `(("kdevplatform" ,kdevplatform)
+       ("kdevelop-pg-qt" ,kdevelop-pg-qt)
+       ("qtbase" ,qtbase)
+       ("qtdeclarative" ,qtdeclarative)
+       ("qtquickcontrols" ,qtquickcontrols)
+       ("qtwebkit" ,qtwebkit)
+       ("karchive" ,karchive)
+       ("kcmutils" ,kcmutils)
+       ("kconfig" ,kconfig)
+       ("kdeclarative" ,kdeclarative)
+       ("kdoctools" ,kdoctools)
+       ("kguiaddons" ,kguiaddons)
+       ("ki18n" ,ki18n)
+       ("kio" ,kio)
+       ("kiconthemes" ,kiconthemes)
+       ("kitemmodels" ,kitemmodels)
+       ("kitemviews" ,kitemviews)
+       ("kjobwidgets" ,kjobwidgets)
+       ("knotifyconfig" ,knotifyconfig)
+       ("knotifications" ,knotifications)
+       ("kparts" ,kparts)
+       ("kcrash" ,kcrash)
+       ("knewstuff" ,knewstuff)
+       ("krunner" ,krunner)
+       ("kxmlgui" ,kxmlgui)
+       ("libksysguard" ,libksysguard)
+       ("threadweaver" ,threadweaver)
+       ("ktexteditor" ,ktexteditor)
+       ("kwindowsystem" ,kwindowsystem)
+       ("plasma" ,plasma-framework)
+       ("grantlee" ,grantlee)
+       ("libepoxy" ,libepoxy)
+       ("clang" ,clang)
+       ("shared-mime-info" ,shared-mime-info)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'check) ;; there are some issues with the test suite
+         (add-after 'install 'wrap-executable
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let* ((out  (assoc-ref outputs "out"))
+                    (kdevplatform (assoc-ref inputs "kdevplatform"))
+                    (kio (assoc-ref inputs "kio"))
+                    (qtquickcontrols (assoc-ref inputs "qtquickcontrols"))
+                    (qtdeclarative (assoc-ref inputs "qtdeclarative"))
+                    (plugins "/lib/plugins")
+                    (qml "/qml"))
+               (wrap-program (string-append out "/bin/kdevelop")
+                 `("QT_PLUGIN_PATH" ":" prefix
+                   (,(string-append out plugins)
+                    ,(string-append kdevplatform plugins)
+                    ,(string-append kio plugins)))
+                 `("QML2_IMPORT_PATH" ":" prefix
+                   (,(string-append qtquickcontrols qml)
+                    ,(string-append qtdeclarative qml))))))))))
+    (home-page "https://kdevelop.org")
+    (synopsis "IDE for C, C++, Python, Javascript and PHP")
+    (description "The KDevelop IDE provides semantic syntax highlighting, as
+well as code navigation and completion for C, C++ (using Clang/LLVM), QML,
+JavaScript, Python and PHP.  It also integrates with a debugger, different
+build systems (CMake, QMake, custom Makefiles) and version control
+software (Git, Subversion, Mercurial, CVS and Bazaar).")
+    (license license:lgpl2.1+)))
 
 (define-public kdevelop-pg-qt
   (package
@@ -52,6 +141,79 @@
     (description "KDevelop-PG-Qt is the parser generator used in KDevplatform
 for some KDevelop language plugins (Ruby, PHP, CSS...).")
     (license license:lgpl2.0+)))
+
+(define-public kdevplatform
+  (package
+    (name "kdevplatform")
+    (version "5.0.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/KDE/kdevplatform/archive/v"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "1m8c0ixv91diyy9bvq53d4jik4zrnf7bix7clad4ywxnlpcs4ahr"))
+              (file-name (string-append name "-" version ".tar.gz"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     `(("extra-cmake-modules" ,extra-cmake-modules)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("apr" ,apr)
+       ("apr-util" ,apr-util)
+       ("boost" ,boost)
+       ("karchive" ,karchive)
+       ("kconfigwidgets" ,kconfigwidgets)
+       ("kcmutils" ,kcmutils)
+       ("kiconthemes" ,kiconthemes)
+       ("kdeclarative" ,kdeclarative)
+       ("kdoctools" ,kdoctools)
+       ("kguiaddons" ,kguiaddons)
+       ("kinit" ,kinit)
+       ("kitemmodels" ,kitemmodels)
+       ("knewstuff" ,knewstuff)
+       ("knotifications" ,knotifications)
+       ("knotifyconfig" ,knotifyconfig)
+       ("kwindowsystem" ,kwindowsystem)
+       ("kio" ,kio)
+       ("ki18n" ,ki18n)
+       ("kparts" ,kparts)
+       ("kservice" ,kservice)
+       ("grantlee" ,grantlee)
+       ("libkomparediff2" ,libkomparediff2)
+       ("sonnet" ,sonnet)
+       ("threadweaver" ,threadweaver)
+       ("ktexteditor" ,ktexteditor)
+       ("qtbase" ,qtbase)
+       ("qtdeclarative" ,qtdeclarative)
+       ("qtscript" ,qtscript)
+       ("qtwebkit" ,qtwebkit)
+       ("qtx11extras" ,qtx11extras)
+       ("plasma" ,plasma-framework)
+       ("subversion" ,subversion)
+       ("zlib" ,zlib)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'check)
+         (add-after 'install 'check ;; add-after 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
+               (setenv "QT_PLUGIN_PATH"
+                       (string-append out "/lib/plugins:"
+                                      (getenv "QT_PLUGIN_PATH")))
+               (setenv "XDG_DATA_DIRS"
+                       (string-append out "/share:"
+                                      (getenv "XDG_DATA_DIRS")))
+               (zero?
+                (system* "ctest" "-R" ;; almost all tests require a display
+                         "filteringstrategy|kdevvarlengtharray|kdevhash"))))))))
+    (home-page "https://github.com/KDE/kdevplatform")
+    (synopsis "Framework to build integrated development environments (IDEs)")
+    (description "KDevPlatform is the basis of KDevelop and contains some
+plugins, as well as code to create plugins, or complete applications.")
+    (license license:gpl3+)))
 
 (define-public libkomparediff2
   (package
@@ -105,14 +267,13 @@ used in KDE development tools Kompare and KDevelop.")
     (inputs
      `(("kconfigwidgets" ,kconfigwidgets)
        ("kiconthemes" ,kiconthemes)
-       ("kdbusaddons" ,kdbusaddons)
-       ("kdoctools" ,kdoctools)
-       ("kinit" ,kinit)
-       ("knewstuff" ,knewstuff)
-       ("knotifications" ,knotifications)
        ("kwindowsystem" ,kwindowsystem)
-       ("kio" ,kio)
        ("ki18n" ,ki18n)
+       ("kauth" ,kauth)
+       ("kcompletion" ,kcompletion)
+       ("kconfig" ,kconfig)
+       ("kcoreaddons" ,kcoreaddons)
+       ("kwidgetsaddons" ,kwidgetsaddons)
        ("kservice" ,kservice)
        ("qtbase" ,qtbase)
        ("qtscript" ,qtscript)

@@ -68,17 +68,17 @@
                      arch "-linux"
                      "/20131110/guile-2.0.9.tar.xz")))
 
-(define-public guix-0.11.0
+(define-public guix-0.12.0
   (package
     (name "guix")
-    (version "0.11.0")
+    (version "0.12.0")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://alpha.gnu.org/gnu/guix/guix-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "1cwrbpv4dq7aczwksmcfw9w8r2bzrb5ld9zvjcr90i804hjpcb93"))))
+               "1jgy5mlygmhxdqhrp6vr8w83ndcm5mk64xfravr8l2d7hq8y40b2"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list
@@ -121,7 +121,7 @@
                    ;; XXX FIXME: These tests fail within the build container.
                    (lambda _
                      (substitute* "tests/syscalls.scm"
-                       (("^\\(test-assert \"(clone|setns|pivot-root)\"" all)
+                       (("^\\(test-(assert|equal) \"(clone|setns|pivot-root)\"" all)
                         (string-append "(test-skip 1)\n" all)))
                      (substitute* "tests/containers.scm"
                        (("^\\(test-(assert|equal)" all)
@@ -226,9 +226,9 @@ the Nix package manager.")
   ;;
   ;; Note: use a very short commit id; with a longer one, the limit on
   ;; hash-bang lines would be exceeded while running the tests.
-  (let ((commit "8d125cfc2e5cb0825bb40893ec3e940f85f1b235"))
-    (package (inherit guix-0.11.0)
-      (version (string-append "0.11.0-8." (string-take commit 4)))
+  (let ((commit "b291b3271a025dfe41e1a7fdfadd393373b0128d"))
+    (package (inherit guix-0.12.0)
+      (version (string-append "0.12.0-2." (string-take commit 4)))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -238,10 +238,10 @@ the Nix package manager.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0h73m1zad67qqn7ygypcqscicvqj31wwkxsr85d5lr77v6bx7b6z"))
+                  "1hris387xn2wk4lcl20x1zyhiz96060w34xs1x13b4vmvkkvcpg4"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (arguments
-       (substitute-keyword-arguments (package-arguments guix-0.11.0)
+       (substitute-keyword-arguments (package-arguments guix-0.12.0)
          ((#:configure-flags flags)
           ;; Set 'DOT_USER_PROGRAM' to the empty string so we don't keep a
           ;; reference to Graphviz, whose closure is pretty big (too big for

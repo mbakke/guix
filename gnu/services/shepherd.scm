@@ -82,7 +82,7 @@
                     (loop (+ 1 fd))))
 
                 ;; Start shepherd.
-                (execl (string-append #$shepherd "/bin/shepherd")
+                (execl #$(file-append shepherd "/bin/shepherd")
                        "shepherd" "--config" #$shepherd-conf)))))
 
 (define shepherd-root-service-type

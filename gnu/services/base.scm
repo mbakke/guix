@@ -37,7 +37,6 @@
   #:use-module ((gnu packages base)
                 #:select (canonical-package glibc))
   #:use-module (gnu packages package-management)
-  #:use-module (gnu packages ssh)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages terminals)
   #:use-module ((gnu build file-systems)
@@ -610,7 +609,7 @@ strings or string-valued gexps."
            (dup2 (open-fdes #$tty O_RDONLY) 0)
            (close-fdes 1)
            (dup2 (open-fdes #$tty O_WRONLY) 1)
-           (execl (string-append #$kbd "/bin/unicode_start")
+           (execl #$(file-append kbd "/bin/unicode_start")
                   "unicode_start"))
           (else
            (zero? (cdr (waitpid pid))))))))
@@ -623,7 +622,7 @@ strings or string-valued gexps."
       (documentation (string-append "Load console keymap (loadkeys)."))
       (provision '(console-keymap))
       (start #~(lambda _
-                 (zero? (system* (string-append #$kbd "/bin/loadkeys")
+                 (zero? (system* #$(file-append kbd "/bin/loadkeys")
                                  #$@files))))
       (respawn? #f)))))
 
@@ -655,7 +654,7 @@ strings or string-valued gexps."
              (start #~(lambda _
                         (and #$(unicode-start device)
                              (zero?
-                              (system* (string-append #$kbd "/bin/setfont")
+                              (system* #$(file-append kbd "/bin/setfont")
                                        "-C" #$device #$font)))))
              (stop #~(const #t))
              (respawn? #f)))))
@@ -737,7 +736,7 @@ the message of the day, among other things."
        (requirement '(user-processes host-name udev))
 
        (start  #~(make-forkexec-constructor
-                  (list (string-append #$mingetty "/sbin/mingetty")
+                  (list #$(file-append mingetty "/sbin/mingetty")
                         "--noclear" #$tty
                         #$@(if auto-login
                                #~("--autologin" #$auto-login)
@@ -872,7 +871,7 @@ the tty to run, among other things."
            (provision '(nscd))
            (requirement '(user-processes))
            (start #~(make-forkexec-constructor
-                     (list (string-append #$(nscd-configuration-glibc config)
+                     (list #$(file-append (nscd-configuration-glibc config)
                                           "/sbin/nscd")
                            "-f" #$nscd.conf "--foreground")
 
@@ -1058,7 +1057,7 @@ public key, with GUIX."
              (format #t "registering public key '~a'...~%" key)
              (close-port (current-input-port))
              (dup port 0)
-             (execl (string-append #$guix "/bin/guix")
+             (execl #$(file-append guix "/bin/guix")
                     "guix" "archive" "--authorize")
              (exit 1)))
           (else
@@ -1090,10 +1089,10 @@ failed to register hydra.gnu.org public key: ~a~%" status))))))))
                     (default %default-substitute-urls))
   (extra-options    guix-configuration-extra-options ;list of strings
                     (default '()))
+  (log-file         guix-configuration-log-file   ;string
+                    (default "/var/log/guix-daemon.log"))
   (lsof             guix-configuration-lsof       ;<package>
-                    (default lsof))
-  (lsh              guix-configuration-lsh        ;<package>
-                    (default lsh)))
+                    (default lsof)))
 
 (define %default-guix-configuration
   (guix-configuration))
@@ -1104,14 +1103,14 @@ failed to register hydra.gnu.org public key: ~a~%" status))))))))
     (($ <guix-configuration> guix build-group build-accounts
                              authorize-key? keys
                              use-substitutes? substitute-urls extra-options
-                             lsof lsh)
+                             log-file lsof)
      (list (shepherd-service
             (documentation "Run the Guix daemon.")
             (provision '(guix-daemon))
             (requirement '(user-processes))
             (start
              #~(make-forkexec-constructor
-                (list (string-append #$guix "/bin/guix-daemon")
+                (list #$(file-append guix "/bin/guix-daemon")
                       "--build-users-group" #$build-group
                       #$@(if use-substitutes?
                              '()
@@ -1119,10 +1118,11 @@ failed to register hydra.gnu.org public key: ~a~%" status))))))))
                       "--substitute-urls" #$(string-join substitute-urls)
                       #$@extra-options)
 
-                ;; Add 'lsof' (for the GC) and 'lsh' (for offloading) to the
-                ;; daemon's $PATH.
+                ;; Add 'lsof' (for the GC) to the daemon's $PATH.
                 #:environment-variables
-                (list (string-append "PATH=" #$lsof "/bin:" #$lsh "/bin"))))
+                (list (string-append "PATH=" #$lsof "/bin"))
+
+                #:log-file #$log-file))
             (stop #~(make-kill-destructor)))))))
 
 (define (guix-accounts config)
@@ -1186,7 +1186,7 @@ failed to register hydra.gnu.org public key: ~a~%" status))))))))
             (provision '(guix-publish))
             (requirement '(guix-daemon))
             (start #~(make-forkexec-constructor
-                      (list (string-append #$guix "/bin/guix")
+                      (list #$(file-append guix "/bin/guix")
                             "publish" "-u" "guix-publish"
                             "-p" #$(number->string port)
                             (string-append "--listen=" #$host))))
@@ -1340,7 +1340,7 @@ item of @var{packages}."
                     ;; The first one is for udev, the second one for eudev.
                     (setenv "UDEV_CONFIG_FILE" #$udev.conf)
                     (setenv "EUDEV_RULES_DIRECTORY"
-                            (string-append #$rules "/lib/udev/rules.d"))
+                            #$(file-append rules "/lib/udev/rules.d"))
 
                     (let ((pid (primitive-fork)))
                       (case pid
@@ -1353,11 +1353,11 @@ item of @var{packages}."
                          (wait-for-udevd)
 
                          ;; Trigger device node creation.
-                         (system* (string-append #$udev "/bin/udevadm")
+                         (system* #$(file-append udev "/bin/udevadm")
                                   "trigger" "--action=add")
 
                          ;; Wait for things to settle down.
-                         (system* (string-append #$udev "/bin/udevadm")
+                         (system* #$(file-append udev "/bin/udevadm")
                                   "settle")
                          pid)))))
          (stop #~(make-kill-destructor))
@@ -1428,7 +1428,7 @@ extra rules from the packages listed in @var{rules}."
                        ;; 'gpm' runs in the background and sets a PID file.
                        ;; Note that it requires running as "root".
                        (false-if-exception (delete-file "/var/run/gpm.pid"))
-                       (fork+exec-command (list (string-append #$gpm "/sbin/gpm")
+                       (fork+exec-command (list #$(file-append gpm "/sbin/gpm")
                                                 #$@options))
 
                        ;; Wait for the PID file to appear; declare failure if
@@ -1443,7 +1443,7 @@ extra rules from the packages listed in @var{rules}."
 
             (stop #~(lambda (_)
                       ;; Return #f if successfully stopped.
-                      (not (zero? (system* (string-append #$gpm "/sbin/gpm")
+                      (not (zero? (system* #$(file-append gpm "/sbin/gpm")
                                            "-k"))))))))))
 
 (define gpm-service-type
@@ -1472,7 +1472,7 @@ This service is not part of @var{%base-services}."
                            (default kmscon))
   (virtual-terminal        kmscon-configuration-virtual-terminal)
   (login-program           kmscon-configuration-login-program
-                           (default #~(string-append #$shadow "/bin/login")))
+                           (default (file-append shadow "/bin/login")))
   (login-arguments         kmscon-configuration-login-arguments
                            (default '("-p")))
   (hardware-acceleration?  kmscon-configuration-hardware-acceleration?
@@ -1490,7 +1490,7 @@ This service is not part of @var{%base-services}."
 
        (define kmscon-command
          #~(list
-            (string-append #$kmscon "/bin/kmscon") "--login"
+            #$(file-append kmscon "/bin/kmscon") "--login"
             "--vt" #$virtual-terminal
             #$@(if hardware-acceleration? '("--hwaccel") '())
             "--" #$login-program #$@login-arguments))

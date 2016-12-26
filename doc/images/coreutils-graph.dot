@@ -1,25 +1,25 @@
 digraph "Guix package" {
-  "70481600" [label = "coreutils-8.24", shape = box, fontname = Helvetica];
-  "70481600" -> "50717824" [color = red];
-  "70481600" -> "57499200" [color = red];
-  "70481600" -> "57496320" [color = red];
-  "70481600" -> "69877504" [color = red];
-  "50717824" [label = "perl-5.16.1", shape = box, fontname = Helvetica];
-  "57499200" [label = "acl-2.2.52", shape = box, fontname = Helvetica];
-  "57499200" -> "70563904" [color = red];
-  "57499200" -> "50717824" [color = red];
-  "57499200" -> "70563520" [color = red];
-  "70563904" [label = "gettext-0.19.6", shape = box, fontname = Helvetica];
-  "70563904" -> "69316352" [color = red];
-  "69316352" [label = "expat-2.1.0", shape = box, fontname = Helvetica];
-  "70563520" [label = "attr-2.4.46", shape = box, fontname = Helvetica];
-  "70563520" -> "70563904" [color = red];
-  "70563520" -> "50717824" [color = red];
-  "57496320" [label = "gmp-6.0.0a", shape = box, fontname = Helvetica];
-  "57496320" -> "57498432" [color = red];
-  "57498432" [label = "m4-1.4.17", shape = box, fontname = Helvetica];
-  "69877504" [label = "libcap-2.24", shape = box, fontname = Helvetica];
-  "69877504" -> "50717824" [color = red];
-  "69877504" -> "70563520" [color = red];
+  "72851008" [label = "coreutils-8.25", shape = box, fontname = Helvetica];
+  "72851008" -> "49728512" [color = darkseagreen];
+  "72851008" -> "74872512" [color = darkseagreen];
+  "72851008" -> "53180864" [color = darkseagreen];
+  "72851008" -> "75199232" [color = darkseagreen];
+  "49728512" [label = "perl-5.24.0", shape = box, fontname = Helvetica];
+  "74872512" [label = "acl-2.2.52", shape = box, fontname = Helvetica];
+  "74872512" -> "74873280" [color = red];
+  "74872512" -> "49728512" [color = red];
+  "74872512" -> "74872704" [color = red];
+  "74873280" [label = "gettext-minimal-0.19.8.1", shape = box, fontname = Helvetica];
+  "74873280" -> "41550784" [color = cyan3];
+  "41550784" [label = "expat-2.2.0", shape = box, fontname = Helvetica];
+  "74872704" [label = "attr-2.4.47", shape = box, fontname = Helvetica];
+  "74872704" -> "74873280" [color = cyan3];
+  "74872704" -> "49728512" [color = cyan3];
+  "53180864" [label = "gmp-6.1.1", shape = box, fontname = Helvetica];
+  "53180864" -> "50262784" [color = darkgoldenrod];
+  "50262784" [label = "m4-1.4.17", shape = box, fontname = Helvetica];
+  "75199232" [label = "libcap-2.24", shape = box, fontname = Helvetica];
+  "75199232" -> "49728512" [color = blue];
+  "75199232" -> "74872704" [color = blue];
 
 }

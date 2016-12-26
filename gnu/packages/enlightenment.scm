@@ -197,7 +197,7 @@ Libraries with some extra bells and whistles.")
 (define-public enlightenment
   (package
     (name "enlightenment")
-    (version "0.21.4")
+    (version "0.21.5")
     (source (origin
               (method url-fetch)
               (uri
@@ -205,7 +205,7 @@ Libraries with some extra bells and whistles.")
                               name "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "085zn6vdy904fxa9krx7ljv61yg96b2xk56g0bx2lyq1d33sgl8f"))))
+                "1fslq70z4s6v9ipahnk8s5fgqnqq4njv4rlqv951r1bh1xk5lx7h"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-mount-eeze")))

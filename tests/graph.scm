@@ -57,7 +57,8 @@ edges."
     (define (return)
       (values (reverse nodes) (reverse edges)))
 
-    (values (graph-backend (const #t) (const #t)
+    (values (graph-backend "test" "This is the test backend."
+                           (const #t) (const #t)
                            record-node record-edge)
             return)))
 

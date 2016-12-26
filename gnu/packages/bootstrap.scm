@@ -287,7 +287,8 @@ $out/bin/guile --version~%"
 
 (define %bootstrap-base-urls
   ;; This is where the initial binaries come from.
-  '("http://alpha.gnu.org/gnu/guix/bootstrap"
+  '("ftp://alpha.gnu.org/gnu/guix/bootstrap"
+    "http://alpha.gnu.org/gnu/guix/bootstrap"
     "http://www.fdn.fr/~lcourtes/software/guix/packages"))
 
 (define %bootstrap-coreutils&co

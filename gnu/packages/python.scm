@@ -33,6 +33,7 @@
 ;;; Copyright © 2016 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2016 Thomas Danckaert <post@thomasdanckaert.be>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -715,6 +716,51 @@ certificate returned by the server to which a connection has been established,
 and verifies that it matches the intended target hostname.")
     (license license:psfl)))
 
+(define-public python-hdf4
+  (package
+   (name "python-hdf4")
+   (version "0.9")
+   (source
+    (origin
+      (method url-fetch)
+      (uri (pypi-uri name version))
+      (sha256
+       (base32
+        "1hjiyrxvxk9817qyqky3nar4y3fs4z8wxz0n884zzb5wi6skrjks"))))
+   (build-system python-build-system)
+   (native-inputs `(("nose" ,python-nose)))
+   (propagated-inputs `(("numpy" ,python-numpy)))
+   (inputs
+    `(("hdf4" ,hdf4)
+      ("libjpeg" ,libjpeg)
+      ("zlib" ,zlib)))
+   (arguments
+    `(#:phases
+      (modify-phases %standard-phases
+        (replace 'check
+          (lambda _
+            ;; The 'runexamples' script sets PYTHONPATH to CWD, then goes
+            ;; on to import numpy. Somehow this works on their CI system.
+            ;; Let's just manage PYTHONPATH here instead.
+            (substitute* "runexamples.sh"
+              (("export PYTHONPATH=.*") ""))
+            (setenv "PYTHONPATH"
+                    (string-append (getcwd) ":"
+                                   (getenv "PYTHONPATH")))
+            (and (zero? (system* "./runexamples.sh"))
+                 (zero? (system* "nosetests" "-v"))))))))
+   (home-page "https://github.com/fhs/python-hdf4")
+   (synopsis "Python interface to the NCSA HDF4 library")
+   (description
+    "Python-HDF4 is a python wrapper around the NCSA HDF version 4 library,
+which implements the SD (Scientific Dataset), VS (Vdata) and V (Vgroup) API’s.
+NetCDF files can also be read and modified.  Python-HDF4 is a fork of
+@url{http://hdfeos.org/software/pyhdf.php,pyhdf}.")
+   (license license:expat)))
+
+(define-public python2-hdf4
+  (package-with-python2 python-hdf4))
+
 (define-public python-h5py
   (package
     (name "python-h5py")
@@ -797,14 +843,13 @@ API for locking files.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://pypi.python.org/packages/source/m/mock/"
-                           "mock-" version ".tar.gz"))
+       (uri (pypi-uri "mock" version))
        (sha256
         (base32
          "0kzlsbki6q0awf89rc287f3aj8x431lrajf160a70z0ikhnxsfdq"))))
     (build-system python-build-system)
     (arguments '(#:test-target "check"))
-    (home-page "http://code.google.com/p/mock/")
+    (home-page "https://github.com/testing-cabal/mock")
     (synopsis "Python mocking and patching library for testing")
     (description
      "Mock is a library for testing in Python.  It allows you to replace parts
@@ -819,15 +864,14 @@ have been used.")
 (define-public python-setuptools
   (package
     (name "python-setuptools")
-    (version "18.3.1")
+    (version "31.0.0")
     (source
      (origin
       (method url-fetch)
-      (uri (string-append "https://pypi.python.org/packages/source/s/setuptools/setuptools-"
-                          version ".tar.gz"))
+      (uri (pypi-uri "setuptools" version))
       (sha256
        (base32
-        "0kc7rbav00ks6iaw14p38y81q12fx0lpkhgf5m97xc04f5r318ig"))
+        "0ypybh4hx3bv4vhg2dc74xpj1g56ggnaffm87k4abhwjwq6wq608"))
       (modules '((guix build utils)))
       (snippet
        '(begin
@@ -853,7 +897,12 @@ test hooks,
 project installation,
 platform-specific details,
 Python 3 support.")
-    (license license:psfl)))
+    ;; TODO: setuptools now bundles the following libraries:
+    ;; packaging, pyparsing, six and appdirs. How to unbundle?
+    (license (list license:psfl        ; setuptools itself
+                   license:expat       ; six, appdirs, pyparsing
+                   license:asl2.0      ; packaging is dual ASL2/BSD-2
+                   license:bsd-2))))
 
 (define-public python2-setuptools
   (package-with-python2 python-setuptools))
@@ -2728,16 +2777,14 @@ logging and tracing of the execution.")
 (define-public python-docutils
   (package
     (name "python-docutils")
-    (version "0.12")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append
-             "https://pypi.python.org/packages/source/d/docutils/docutils-"
-             version ".tar.gz"))
+       (uri (pypi-uri "docutils" version))
        (sha256
         (base32
-         "1ylnjnw1x4b2y7blr6x35ncdzn69k253kw4cdkv6asdb21w73ny7"))))
+         "1gkma47i609jfs7dssxn4y9vsz06qi0l5q41nws0zgkpnrghz33i"))))
     (build-system python-build-system)
     (arguments
      '(#:tests? #f)) ; no setup.py test command
@@ -2959,7 +3006,7 @@ and is very extensible.")
 (define-public python-scikit-learn
   (package
     (name "python-scikit-learn")
-    (version "0.16.1")
+    (version "0.18.1")
     (source
      (origin
        (method url-fetch)
@@ -2969,7 +3016,7 @@ and is very extensible.")
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
         (base32
-         "140skabifgc7lvvj873pnzlwx0ni6q8qkrsyad2ccjb3h8rxzkih"))))
+         "1hwswckdmd27f7k1jvwdc0m4mqrgxl2s245yq1scq34v124bjqgq"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -2977,21 +3024,12 @@ and is very extensible.")
         'check 'set-HOME
         ;; some tests require access to "$HOME"
         (lambda _ (setenv "HOME" "/tmp"))
-        ;; Tests can only be run after the library has been installed and not
-        ;; within the source directory.
-        (alist-cons-after
-         'install 'check
-         (lambda _
-           (with-directory-excursion "/tmp"
-             ;; With Python 3 one test of 3334 fails
-             ;; (sklearn.tests.test_common.test_transformers); see
-             ;; https://github.com/scikit-learn/scikit-learn/issues/3693
-             (system* "nosetests" "-v" "sklearn")))
-         (alist-delete 'check %standard-phases)))))
+        %standard-phases)))
     (inputs
      `(("openblas" ,openblas)))
     (native-inputs
-     `(("python-nose" ,python-nose)))
+     `(("python-nose" ,python-nose)
+       ("python-cython" ,python-cython)))
     (propagated-inputs
      `(("python-numpy" ,python-numpy)
        ("python-scipy" ,python-scipy)))
@@ -6421,14 +6459,14 @@ responses, rather than doing any computation.")
 (define-public python-cryptography-vectors
   (package
     (name "python-cryptography-vectors")
-    (version "1.6")
+    (version "1.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cryptography_vectors" version))
        (sha256
         (base32
-         "0xgn3yvlmv5rs92wgjj39qscr6s7mwbbsx7j683sfa6ijmyb1k01"))))
+         "1x2mz4wggja5ih45c6cw0kzyad4jr8avg327dawjr1gnpdq1psa7"))))
     (build-system python-build-system)
     (home-page "https://github.com/pyca/cryptography")
     (synopsis "Test vectors for the cryptography package")
@@ -6443,29 +6481,15 @@ responses, rather than doing any computation.")
 (define-public python-cryptography
   (package
     (name "python-cryptography")
-    (version "1.6")
+    (version "1.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cryptography" version))
        (sha256
         (base32
-         "0gwvmz6w5ml0bjbgmdiscsv5i948lrjd381z7h9qkz6kr398c3ad"))))
+         "0k6v7wq4h0yk9r0x0bl2x9fyrg4a6gj5qp4m9mgpk6m481yyygwm"))))
     (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'disable-failing-test
-           (lambda _
-             ;; This test is known to fail with OpenSSL >= 1.0.2i and older
-             ;; versions of python-cryptography:
-             ;; https://github.com/pyca/cryptography/issues/3196
-             ;; TODO: Try re-enabling the test when upgrading
-             ;; python-cryptography.
-             (substitute* "tests/hazmat/backends/test_openssl.py"
-               (("def test_numeric_string_x509_name_entry")
-                 "@pytest.mark.xfail\n    def test_numeric_string_x509_name_entry"))
-             #t)))))
     (inputs
      `(("openssl" ,openssl)))
     (propagated-inputs
@@ -11940,3 +11964,28 @@ network.")
 
 (define-public python2-argcomplete
   (package-with-python2 python-argcomplete))
+
+(define-public python-xopen
+  (package
+    (name "python-xopen")
+    (version "0.1.1")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "xopen" version))
+        (sha256
+          (base32
+           "1wx6mylzcsyhjl19ycb83qq6iqpmr927lz62njfsar6ldsj0qcni"))
+        (file-name (string-append name "-" version ".tar.gz"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/marcelm/xopen/")
+    (synopsis "Open compressed files transparently")
+    (description "This module provides an @code{xopen} function that works like
+Python's built-in @code{open} function, but can also deal with compressed files.
+Supported compression formats are gzip, bzip2 and, xz, and are automatically
+recognized by their file extensions.  The focus is on being as efficient as
+possible on all supported Python versions.")
+    (license license:expat)))
+
+(define-public python2-xopen
+  (package-with-python2 python-xopen))

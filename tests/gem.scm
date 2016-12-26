@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
+;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,13 +46,12 @@
 
 (test-assert "gem->guix-package"
   ;; Replace network resources with sample data.
-  (mock ((guix import utils) url-fetch
-         (lambda (url file-name)
+  (mock ((guix http-client) http-fetch
+         (lambda (url)
            (match url
              ("https://rubygems.org/api/v1/gems/foo.json"
-              (with-output-to-file file-name
-                (lambda ()
-                  (display test-json))))
+              (values (open-input-string test-json)
+                      (string-length test-json)))
              (_ (error "Unexpected URL: " url)))))
     (match (gem->guix-package "foo")
       (('package

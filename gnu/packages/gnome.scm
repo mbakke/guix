@@ -2648,9 +2648,7 @@ services for numerous locations.")
          "1rvqisrh3lridsb8rvm7spvncyq206ly0245zgpbm8swi5fhfjp8"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     `(;; Network manager not yet packaged.
-       #:configure-flags '("--disable-network-manager")
-       ;; Color management test can't reach the colord system service.
+     `(;; Color management test can't reach the colord system service.
        #:tests? #f))
     (native-inputs
      `(("pkg-config" ,pkg-config)
@@ -2679,7 +2677,8 @@ services for numerous locations.")
        ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
        ("libwacom" ,libwacom)
        ("librsvg" ,librsvg)
-       ("xf86-input-wacom" ,xf86-input-wacom)))
+       ("xf86-input-wacom" ,xf86-input-wacom)
+       ("network-manager" ,network-manager)))
     (home-page "http://www.gnome.org")
     (synopsis "GNOME settings daemon")
     (description
@@ -3867,7 +3866,7 @@ metadata in photo and video files of various formats.")
 (define-public shotwell
   (package
     (name "shotwell")
-    (version "0.25.0.1")
+    (version "0.25.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -3875,7 +3874,7 @@ metadata in photo and video files of various formats.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "19h0ckrgv0c6sj85m6ankyqkmy453ph9kq6zhf7ys2k5xsrrd776"))))
+                "1bih5hr3pvpkx3fck55bnhngn4fl92ryjizc34wb8pwigbkxnaj1"))))
     (build-system glib-or-gtk-build-system)
     (propagated-inputs
      `(("dconf" ,dconf)))
@@ -4399,7 +4398,19 @@ users.")
                                   "NetworkManager-" version ".tar.xz"))
               (sha256
                (base32
-                "016jc21mwjxvnfiblp5lji55sr8aq6w8a08fsjmqvnpnvm3y6r58"))))
+                "016jc21mwjxvnfiblp5lji55sr8aq6w8a08fsjmqvnpnvm3y6r58"))
+              (snippet
+              '(begin
+                 (use-modules (guix build utils))
+                 (substitute* "configure"
+                   ;; Replace libsystemd-login with libelogind.
+                   (("libsystemd-login") "libelogind"))
+                 (substitute* "src/devices/wwan/nm-modem-manager.c"
+                   (("systemd") "elogind"))
+                 (substitute* "src/nm-session-monitor.c"
+                   (("systemd") "elogind"))
+                 (substitute* "./src/nm-logging.c"
+                   (("systemd") "elogind"))))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc")) ; 8 MiB of gtk-doc HTML
@@ -4409,7 +4420,9 @@ users.")
              (doc      (assoc-ref %outputs "doc"))
              (dhclient (string-append (assoc-ref %build-inputs "isc-dhcp")
                                       "/sbin/dhclient")))
-         (list "--with-crypto=gnutls"
+         (list "--with-systemd-logind=yes" ;In GuixSD, this is provided by elogind.
+               "--with-consolekit=no"
+               "--with-crypto=gnutls"
                "--disable-config-plugin-ibft"
                "--sysconfdir=/etc"
                "--localstatedir=/var"
@@ -4474,7 +4487,8 @@ users.")
        ("polkit" ,polkit)
        ("ppp" ,ppp)
        ("readline" ,readline)
-       ("util-linux" ,util-linux)))
+       ("util-linux" ,util-linux)
+       ("elogind" ,elogind)))
     (synopsis "Network connection manager")
     (home-page "http://www.gnome.org/projects/NetworkManager/")
     (description

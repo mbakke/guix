@@ -24,18 +24,23 @@
   #:use-module ((ice-9 popen) #:select (open-pipe* close-pipe))
   #:use-module ((ice-9 rdelim) #:select (read-line))
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
   #:use-module (json)
   #:use-module (guix hash)
   #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix base32)
-  #:use-module ((guix download) #:select (download-to-store))
-  #:use-module (guix import utils)
+  #:use-module (guix ui)
+  #:use-module ((guix download) #:select (download-to-store url-fetch))
+  #:use-module ((guix import utils) #:select (factorize-uri
+                                              flatten assoc-ref*))
   #:use-module (guix import json)
   #:use-module (guix packages)
+  #:use-module (guix upstream)
   #:use-module (guix derivations)
   #:use-module (gnu packages perl)
-  #:export (cpan->guix-package))
+  #:export (cpan->guix-package
+            %cpan-updater))
 
 ;;; Commentary:
 ;;;
@@ -84,28 +89,49 @@
 module is distributed with 'Test::Simple', so (module->dist-name \"ok\") would
 return \"Test-Simple\""
   (assoc-ref (json-fetch (string-append "https://api.metacpan.org/module/"
-                                        module))
+                                        module
+                                        "?fields=distribution"))
              "distribution"))
 
-(define (cpan-fetch module)
+(define (package->upstream-name package)
+  "Return the CPAN name of PACKAGE."
+  (let* ((properties (package-properties package))
+         (upstream-name (and=> properties
+                               (cut assoc-ref <> 'upstream-name))))
+    (or upstream-name
+        (match (package-source package)
+          ((? origin? origin)
+           (match (origin-uri origin)
+             ((or (? string? url) (url _ ...))
+              (match (string-match (string-append "([^/]*)-v?[0-9\\.]+") url)
+                (#f #f)
+                (m (match:substring m 1))))
+             (_ #f)))
+          (_ #f)))))
+
+(define (cpan-fetch name)
   "Return an alist representation of the CPAN metadata for the perl module MODULE,
 or #f on failure.  MODULE should be e.g. \"Test::Script\""
   ;; This API always returns the latest release of the module.
-  (json-fetch (string-append "https://api.metacpan.org/release/"
-                             ;; XXX: The 'release' api requires the "release"
-                             ;; name of the package.  This substitution seems
-                             ;; reasonably consistent across packages.
-                             (module->name module))))
+  (json-fetch (string-append "https://api.metacpan.org/release/" name)))
 
 (define (cpan-home name)
   (string-append "http://search.cpan.org/dist/" name))
 
-(define (fix-source-url download-url)
-  "Return a new download URL based on DOWNLOAD-URL which now uses our mirrors,
-if the original's domain was metacpan."
-  (regexp-substitute/global #f "http[s]?://cpan.metacpan.org" download-url
+(define (cpan-source-url meta)
+  "Return the download URL for a module's source tarball."
+  (regexp-substitute/global #f "http[s]?://cpan.metacpan.org"
+                            (assoc-ref meta "download_url")
                             'pre "mirror://cpan" 'post))
 
+(define (cpan-version meta)
+  "Return the version number from META."
+  (match (assoc-ref meta "version")
+    ((? number? version)
+     ;; version is sometimes not quoted in the module json, so it gets
+     ;; imported into Guile as a number, so convert it to a string.
+     (number->string version))
+    (version version)))
 
 (define %corelist
   (delay
@@ -115,6 +141,31 @@ if the original's domain was metacpan."
            (core (string-append perl "/bin/corelist")))
       (and (access? core X_OK)
            core))))
+
+(define core-module?
+  (let ((perl-version (package-version perl))
+        (rx (make-regexp
+             (string-append "released with perl v?([0-9\\.]*)"
+                            "(.*and removed from v?([0-9\\.]*))?"))))
+    (lambda (name)
+      (define (version-between? lower version upper)
+        (and (version>=? version lower)
+             (or (not upper)
+                 (version>? upper version))))
+      (and (force %corelist)
+           (parameterize ((current-error-port (%make-void-port "w")))
+             (let* ((corelist (open-pipe* OPEN_READ (force %corelist) name)))
+               (let loop ()
+                 (let ((line (read-line corelist)))
+                   (if (eof-object? line)
+                       (begin (close-pipe corelist) #f)
+                       (or (and=> (regexp-exec rx line)
+                                  (lambda (m)
+                                    (let ((first (match:substring m 1))
+                                          (last  (match:substring m 3)))
+                                      (version-between?
+                                       first perl-version last))))
+                           (loop)))))))))))
 
 (define (cpan-module->sexp meta)
   "Return the `package' s-expression for a CPAN module from the metadata in
@@ -127,35 +178,8 @@ META."
         (string-downcase name)
         (string-append "perl-" (string-downcase name))))
 
-  (define version
-    (match (assoc-ref meta "version")
-      ((? number? vrs) (number->string vrs))
-      ((? string? vrs) vrs)))
-
-  (define core-module?
-    (let ((perl-version (package-version perl))
-          (rx (make-regexp
-               (string-append "released with perl v?([0-9\\.]*)"
-                              "(.*and removed from v?([0-9\\.]*))?"))))
-      (lambda (name)
-        (define (version-between? lower version upper)
-          (and (version>=? version lower)
-               (or (not upper)
-                   (version>? upper version))))
-        (and (force %corelist)
-             (parameterize ((current-error-port (%make-void-port "w")))
-               (let* ((corelist (open-pipe* OPEN_READ (force %corelist) name)))
-                 (let loop ()
-                   (let ((line (read-line corelist)))
-                     (if (eof-object? line)
-                         (begin (close-pipe corelist) #f)
-                         (or (and=> (regexp-exec rx line)
-                                    (lambda (m)
-                                      (let ((first (match:substring m 1))
-                                            (last  (match:substring m 3)))
-                                        (version-between?
-                                         first perl-version last))))
-                             (loop)))))))))))
+  (define version (cpan-version meta))
+  (define source-url (cpan-source-url meta))
 
   (define (convert-inputs phases)
     ;; Convert phase dependencies into a list of name/variable pairs.
@@ -193,8 +217,6 @@ META."
        (list (list guix-name
                    (list 'quasiquote inputs))))))
 
-  (define source-url (fix-source-url (assoc-ref meta "download_url")))
-
   (let ((tarball (with-store store
                    (download-to-store store source-url))))
     `(package
@@ -224,5 +246,61 @@ META."
 (define (cpan->guix-package module-name)
   "Fetch the metadata for PACKAGE-NAME from metacpan.org, and return the
 `package' s-expression corresponding to that package, or #f on failure."
-  (let ((module-meta (cpan-fetch module-name)))
+  (let ((module-meta (cpan-fetch (module->name module-name))))
     (and=> module-meta cpan-module->sexp)))
+
+(define (cpan-package? package)
+  "Return #t if PACKAGE is a package from CPAN."
+  (define cpan-url?
+    (let ((cpan-rx (make-regexp (string-append "("
+                                               "mirror://cpan" "|"
+                                               "https?://www.cpan.org" "|"
+                                               "https?://cpan.metacpan.org"
+                                               ")"))))
+      (lambda (url)
+        (regexp-exec cpan-rx url))))
+
+  (let ((source-url (and=> (package-source package) origin-uri))
+        (fetch-method (and=> (package-source package) origin-method)))
+    (and (eq? fetch-method url-fetch)
+         (match source-url
+           ((? string?)
+            (cpan-url? source-url))
+           ((source-url ...)
+            (any cpan-url? source-url))))))
+
+(define (latest-release package)
+  "Return an <upstream-source> for the latest release of PACKAGE."
+  (match (cpan-fetch (package->upstream-name package))
+    (#f #f)
+    (meta
+     (let ((core-inputs
+            (match (package-direct-inputs package)
+              (((_ inputs _ ...) ...)
+               (filter-map (match-lambda
+                             ((and (? package?)
+                                   (? cpan-package?)
+                                   (= package->upstream-name
+                                      (? core-module? name)))
+                              name)
+                             (else #f))
+                           inputs)))))
+       ;; Warn about inputs that are part of perl's core
+       (unless (null? core-inputs)
+         (for-each (lambda (module)
+                     (warning (_ "input '~a' of ~a is in Perl core~%")
+                              module (package-name package)))
+                   core-inputs)))
+     (let ((version (cpan-version meta))
+           (url (cpan-source-url meta)))
+       (upstream-source
+        (package (package-name package))
+        (version version)
+        (urls url))))))
+
+(define %cpan-updater
+  (upstream-updater
+   (name 'cpan)
+   (description "Updater for CPAN packages")
+   (pred cpan-package?)
+   (latest latest-release)))

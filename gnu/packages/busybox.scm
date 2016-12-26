@@ -30,7 +30,7 @@
 (define-public busybox
   (package
     (name "busybox")
-    (version "1.25.0")
+    (version "1.26.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -38,7 +38,7 @@
                     version ".tar.bz2"))
               (sha256
                (base32
-                "1z52mh6prhd6v47qryz4rvng5r1z0am6masrnigq06zfhmlf03ss"))))
+                "0k0g3hk58m99c2sfq97ngnixb2rv2wzyhv3z00lxaw78bqvjglis"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -64,14 +64,6 @@
            ;; true in guix build environment
            (substitute* "testsuite/pidof.tests"
                (("-s init") "-s $(cat /proc/1/comm)"))
-
-           (substitute* "testsuite/grep.tests"
-               ;; The subject of this test is buggy.  It is known by upstream (fixed in git)
-               ;; So mark it with SKIP_KNOWN_BUGS like the others.
-               ;; Presumably it wasn't known at the time of release ...
-               ;; (It is strange that they release software which they know to have bugs)
-               (("testing \"grep -w \\^str doesn't match str not at the beginning\"")
-               "test x\"$SKIP_KNOWN_BUGS\" = x\"\" && testing \"grep -w ^str doesn't match str not at the beginning\""))
 
            ;; This test cannot possibly pass.
            ;; It is trying to test that "which ls" returns "/bin/ls" when PATH is not set.

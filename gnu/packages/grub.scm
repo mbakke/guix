@@ -36,38 +36,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages ncurses)
-  #:use-module (gnu packages cdrom)
-  #:use-module (srfi srfi-1))
-
-(define qemu-for-tests
-  ;; Newer QEMU versions, such as 1.5.1, no longer support the 'shutdown'
-  ;; instruction.  This leads to test hangs, as reported at
-  ;; <https://bugs.launchpad.net/bugs/947597> and fixed at
-  ;; <http://bzr.savannah.gnu.org/lh/grub/trunk/grub/revision/4828>.
-  ;; Work around it by using an older QEMU.
-  (package (inherit qemu-minimal)
-    (version "1.3.1")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "http://wiki.qemu-project.org/download/qemu-"
-                                 version ".tar.bz2"))
-             (sha256
-              (base32
-               "1bqfrb5dlsxm8gxhkksz8qzi5fhj3xqhxyfwbqcphhcv1kpyfwip"))))
-
-    ;; With recent GLib versions, we get a test failure:
-    ;;   ERROR:tests/rtc-test.c:176:check_time: assertion failed (ABS(t - s) <= wiggle): (382597824 <= 2)
-    ;; Simply disable the tests.
-    (arguments `(#:tests? #f
-                 ,@(substitute-keyword-arguments (package-arguments qemu-minimal)
-                     ((#:phases phases)
-                      ;; We disable the tests so we also skip the phase disabling
-                      ;; the qga test, which fails due to changes in QEMU
-                      `(modify-phases ,phases
-                         (delete 'disable-test-qga))))))
-
-    ;; The manual fails to build with Texinfo 5.x.
-    (native-inputs (alist-delete "texinfo" (package-native-inputs qemu)))))
+  #:use-module (gnu packages cdrom))
 
 (define unifont
   ;; GNU Unifont, <http://gnu.org/s/unifont>.
@@ -151,7 +120,7 @@
        ;; Dependencies for the test suite.  The "real" QEMU is needed here,
        ;; because several targets are used.
        ("parted" ,parted)
-       ("qemu" ,qemu-for-tests)
+       ("qemu" ,qemu-minimal)
        ("xorriso" ,xorriso)))
     (home-page "https://www.gnu.org/software/grub/")
     (synopsis "GRand Unified Boot loader")
@@ -164,3 +133,29 @@ on the same computer; upon booting the computer, the user is presented with a
 menu to select one of the installed operating systems.")
     (license gpl3+)
     (properties '((cpe-name . "grub2")))))
+
+(define-public grub-efi
+  (package
+    (inherit grub)
+    (name "grub-efi")
+    (synopsis "GRand Unified Boot loader (UEFI version)")
+    (inputs
+     `(("efibootmgr" ,efibootmgr)
+       ,@(package-inputs grub)))
+    (arguments
+     `(;; TODO: Tests need a UEFI firmware for qemu. There is one at
+       ;; https://github.com/tianocore/edk2/tree/master/OvmfPkg .
+       ;; Search for 'OVMF' in "tests/util/grub-shell.in".
+       #:tests? #f
+       ,@(substitute-keyword-arguments (package-arguments grub)
+           ((#:configure-flags flags) `(cons* "--with-platform=efi"
+                                              ,flags))
+           ((#:phases phases)
+            `(modify-phases ,phases
+               (add-after 'patch-stuff 'use-absolute-efibootmgr-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "grub-core/osdep/unix/platform.c"
+                     (("efibootmgr")
+                      (string-append (assoc-ref inputs "efibootmgr")
+                                     "/sbin/efibootmgr")))
+                   #t)))))))))

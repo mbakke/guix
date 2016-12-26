@@ -277,6 +277,14 @@
                           (ungexp %bootstrap-guile)))))
     (list (gexp-inputs exp) '<> (gexp-native-inputs exp))))
 
+(test-equal "ungexp + ungexp-native, nested, special mixture"
+  `(() <> ((,coreutils "out")))
+
+  ;; (gexp-native-inputs exp) used to return '(), wrongfully.
+  (let* ((foo (gexp (foo (ungexp-native coreutils))))
+         (exp (gexp (bar (ungexp foo)))))
+    (list (gexp-inputs exp) '<> (gexp-native-inputs exp))))
+
 (test-assert "input list"
   (let ((exp   (gexp (display
                       '(ungexp (list %bootstrap-guile coreutils)))))
@@ -327,7 +335,8 @@
                  `(list ,@(cons 5 outputs))))))
 
 (test-assert "input list splicing + ungexp-native-splicing"
-  (let* ((inputs (list (gexp-input glibc "debug") %bootstrap-guile))
+  (let* ((inputs (list (gexp-input glibc "debug" #:native? #t)
+                       %bootstrap-guile))
          (exp    (gexp (list (ungexp-native-splicing (cons (+ 2 3) inputs))))))
     (and (lset= equal?
                 `((,glibc "debug") (,%bootstrap-guile "out"))

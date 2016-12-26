@@ -34,6 +34,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system python)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system cmake)
   #:use-module (gnu packages)
   #:use-module (gnu packages aidc)
   #:use-module (gnu packages autotools)
@@ -622,49 +623,98 @@ protocols.")
       (license license:gpl3+)
       (home-page "https://tox.chat"))))
 
+;; Some tox clients move to c-toxcore, which seems to be where all the
+;; recent development happens. It is run by the same developers as toxcore,
+;; forked into a group namespace.
+(define-public c-toxcore
+  (package
+    (name "c-toxcore")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/TokTok/c-toxcore/archive/v"
+                           version ".tar.gz"))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0dybpz44pi0zm8djppjna0r8yh5wvl3l885dv2f1wp5366bk59n3"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     `(("autoconf" ,autoconf)
+       ("automake" ,automake)
+       ("libtool" ,libtool)
+       ("check" ,check)
+       ("pkg-config" ,pkg-config)))
+    (inputs
+     `(("libsodium" ,libsodium)
+       ("opus" ,opus)
+       ("libvpx" ,libvpx)))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'autoconf
+           ;; The tarball source is not bootstrapped.
+           (lambda _
+             (zero? (system* "autoreconf" "-vfi")))))
+       #:tests? #f)) ; FIXME: Testsuite fails, needs internet connection.
+    (synopsis "Library for the Tox encrypted messenger protocol")
+    (description
+     "Official fork of the C library implementation of the Tox
+encrypted messenger protocol.")
+    (license license:gpl3+)
+    (home-page "https://tox.chat")))
+
 (define-public utox
   (package
    (name "utox")
-   (version "0.9.8")
+   (version "0.11.0")
    (source
     (origin
      (method url-fetch)
-     (uri (string-append "https://github.com/GrayHatter/uTox/archive/v"
+     (uri (string-append "https://github.com/uTox/uTox/archive/v"
                          version ".tar.gz"))
      (file-name (string-append name "-" version ".tar.gz"))
      (sha256
       (base32
-       "13hfqbwzcgvfbvf9yjm62aqsvxnpqppb50c88sys43m7022yqcsy"))))
-   (build-system gnu-build-system)
+       "15s4iwjk1s0kihjqn0f07c9618clbphpr827mds3xddkiwnjz37v"))))
+   (build-system cmake-build-system)
    (arguments
-    '(#:make-flags (list (string-append "PREFIX=" %output)
-                         "CC=gcc")
-      #:tests? #f ; No tests
+    '(#:tests? #f ; No test phase.
       #:phases
       (modify-phases %standard-phases
-        ;; No configure script
-        (delete 'configure))))
+        (add-after 'unpack 'fix-freetype-include
+          (lambda _
+            (substitute* "CMakeLists.txt"
+              (("/usr/include/freetype2")
+               (string-append (assoc-ref %build-inputs "freetype")
+                              "/include/freetype2")))))
+        (add-before 'install 'patch-cmake-find-utox
+          (lambda _
+            (substitute* "../build/cmake_install.cmake"
+              (("/uTox-0.11.0/utox")
+               "/build/utox")))))))
    (inputs
+    ;; TODO: Fix the file chooser dialog; which input does it need?
     `(("dbus" ,dbus)
       ("filteraudio" ,filteraudio)
       ("fontconfig" ,fontconfig)
       ("freetype" ,freetype)
       ("libsodium" ,libsodium)
-      ("libtoxcore" ,libtoxcore)
+      ("c-toxcore" ,c-toxcore)
       ("libvpx" ,libvpx)
       ("libx11" ,libx11)
       ("libxext" ,libxext)
       ("libxrender" ,libxrender)
       ("openal" ,openal)
       ("v4l-utils" ,v4l-utils)))
-   (native-inputs
-    `(("pkg-config" ,pkg-config)))
    (synopsis "Lightweight Tox client")
-   (description "A  lightweight Tox client.  Tox is a distributed and secure
+   (description
+    "Utox is a lightweight Tox client.  Tox is a distributed and secure
 instant messenger with audio and video chat capabilities.")
    (home-page "http://utox.org/")
    (license license:gpl3)))
- 
+
 (define-public qtox
   (package
     (name "qtox")

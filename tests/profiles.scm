@@ -195,7 +195,8 @@
       ((entry ->   (package->manifest-entry %bootstrap-guile))
        (guile      (package->derivation %bootstrap-guile))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '()))
+                                       #:hooks '()
+                                       #:locales? #f))
        (profile -> (derivation->output-path drv))
        (bindir ->  (string-append profile "/bin"))
        (_          (built-derivations (list drv))))
@@ -207,7 +208,8 @@
   (mlet* %store-monad
       ((entry ->   (package->manifest-entry packages:glibc "debug"))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '())))
+                                       #:hooks '()
+                                       #:locales? #f)))
     (return (derivation-inputs drv))))
 
 (test-assert "package->manifest-entry defaults to \"out\""
@@ -228,7 +230,8 @@
                       (package-native-search-paths packages:guile-2.0))))
        (entry ->   (package->manifest-entry guile))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '()))
+                                       #:hooks '()
+                                       #:locales? #f))
        (profile -> (derivation->output-path drv)))
     (mbegin %store-monad
       (built-derivations (list drv))
@@ -259,7 +262,8 @@
                       (package-native-search-paths packages:guile-2.0))))
        (entry ->   (package->manifest-entry guile))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '()))
+                                       #:hooks '()
+                                       #:locales? #f))
        (profile -> (derivation->output-path drv)))
     (mbegin %store-monad
       (built-derivations (list drv))
@@ -293,7 +297,8 @@
                               (display "foo!" port))))))))
        (entry ->   (package->manifest-entry thing))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '()))
+                                       #:hooks '()
+                                       #:locales? #f))
        (profile -> (derivation->output-path drv)))
     (mbegin %store-monad
       (built-derivations (list drv))
@@ -321,7 +326,8 @@
                               (display "foo!" port))))))))
        (entry ->   (package->manifest-entry thing))
        (drv        (profile-derivation (manifest (list entry))
-                                       #:hooks '()))
+                                       #:hooks '()
+                                       #:locales? #f))
        (profile -> (derivation->output-path drv)))
     (mbegin %store-monad
       (built-derivations (list drv))

@@ -4,6 +4,7 @@
 ;;; Copyright © 2014 Kevin Lemonnier <lemonnierk@ulrar.net>
 ;;; Copyright © 2015 Jeff Mickey <j@codemac.net>
 ;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2016 Stefan Reichör <stefan@xsteve.at>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -298,21 +299,21 @@ ksh, and tcsh.")
 (define-public xonsh
   (package
     (name "xonsh")
-    (version "0.4.7")
+    (version "0.5.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "xonsh" version))
         (sha256
           (base32
-            "04b0z41mxiwsp5rl21fzrixcdmx2kndjlh4gn3582qfga9hihf20"))
+            "1iml0mrjl2j3dsan5app6am77bd59s855p6yy6505ljdh552mv01"))
         (modules '((guix build utils)))
         (snippet
          `(begin
             ;; Delete bundled ply.
             (delete-file-recursively "xonsh/ply")
             (substitute* '("setup.py")
-              (("'xonsh\\.ply',") ""))
+              (("'xonsh\\.ply\\.ply',") ""))
             #t))))
     (build-system python-build-system)
     (arguments
@@ -326,8 +327,8 @@ ksh, and tcsh.")
     (synopsis "Python-ish shell")
     (description
      "Xonsh is a Python-ish, BASHwards-looking shell language and command
-prompt. The language is a superset of Python 3.4+ with additional shell
-primitives that you are used to from Bash and IPython. It works on all major
-systems including Linux, Mac OSX, and Windows. Xonsh is meant for the daily
+prompt.  The language is a superset of Python 3.4+ with additional shell
+primitives that you are used to from Bash and IPython.  It works on all major
+systems including Linux, Mac OSX, and Windows.  Xonsh is meant for the daily
 use of experts and novices alike.")
     (license bsd-2)))

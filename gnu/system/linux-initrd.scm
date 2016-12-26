@@ -29,6 +29,7 @@
                 #:select (derivation->output-path))
   #:use-module (guix modules)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages disk)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages guile)
   #:use-module ((gnu packages make-bootstrap)
@@ -193,6 +194,9 @@ loaded at boot time in the order in which they appear."
       ,@(if (find (file-system-type-predicate "9p") file-systems)
             virtio-9p-modules
             '())
+      ,@(if (find (file-system-type-predicate "vfat") file-systems)
+            '("nls_iso8859-1")
+            '())
       ,@(if volatile-root?
             '("fuse")
             '())
@@ -204,6 +208,11 @@ loaded at boot time in the order in which they appear."
                     (string-prefix? "ext" (file-system-type fs)))
                   file-systems)
             (list e2fsck/static)
+            '())
+      ,@(if (find (lambda (fs)
+                    (string-suffix? "fat" (file-system-type fs)))
+                  file-systems)
+            (list fatfsck/static)
             '())
       ,@(if volatile-root?
             (list unionfs-fuse/static)

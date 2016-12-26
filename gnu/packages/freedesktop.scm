@@ -85,14 +85,14 @@ freedesktop.org project.")
 (define-public libinput
   (package
     (name "libinput")
-    (version "1.5.1")
+    (version "1.5.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://freedesktop.org/software/libinput/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1n1dispg63z1qiy8c1af3l9c4a9dks8y7xasff8xcywnn0rkkxnl"))))
+                "1qx623nyr49sxv49ilb0j85skgk1dhkr82vd577ywyjf7d96q84i"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("cairo" ,cairo)

@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015, 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,6 +22,7 @@
   #:use-module (guix monads)
   #:use-module (guix records)
   #:use-module (guix sets)
+  #:use-module (rnrs io ports)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
   #:use-module (srfi srfi-26)
@@ -41,9 +43,13 @@
             node-transitive-edges
             node-reachable-count
 
+            %graph-backends
+            %d3js-backend
             %graphviz-backend
             graph-backend?
             graph-backend
+            graph-backend-name
+            graph-backend-description
 
             export-graph))
 
@@ -140,12 +146,14 @@ typically returned by 'node-edges' or 'node-back-edges'."
 ;;;
 
 (define-record-type <graph-backend>
-  (graph-backend prologue epilogue node edge)
+  (graph-backend name description prologue epilogue node edge)
   graph-backend?
-  (prologue graph-backend-prologue)
-  (epilogue graph-backend-epilogue)
-  (node     graph-backend-node)
-  (edge     graph-backend-edge))
+  (name         graph-backend-name)
+  (description  graph-backend-description)
+  (prologue     graph-backend-prologue)
+  (epilogue     graph-backend-epilogue)
+  (node         graph-backend-node)
+  (edge         graph-backend-edge))
 
 (define %colors
   ;; See colortbl.h in Graphviz.
@@ -170,8 +178,65 @@ typically returned by 'node-edges' or 'node-back-edges'."
           id1 id2 (pop-color id1)))
 
 (define %graphviz-backend
-  (graph-backend emit-prologue emit-epilogue
+  (graph-backend "graphviz"
+                 "Generate graph in DOT format for use with Graphviz."
+                 emit-prologue emit-epilogue
                  emit-node emit-edge))
+
+
+;;;
+;;; d3js export.
+;;;
+
+(define (emit-d3js-prologue name port)
+  (format port "\
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset=\"utf-8\">
+    <style>
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+}
+    </style>
+    <script type=\"text/javascript\" src=\"~a\"></script>
+  </head>
+  <body>
+    <script type=\"text/javascript\">
+var nodes = {},
+    nodeArray = [],
+    links = [];
+" (search-path %load-path "d3.v3.js")))
+
+(define (emit-d3js-epilogue port)
+  (format port "</script><script type=\"text/javascript\" src=\"~a\"></script></body></html>"
+          (search-path %load-path "graph.js")))
+
+(define (emit-d3js-node id label port)
+  (format port "\
+nodes[\"~a\"] = {\"id\": \"~a\", \"label\": \"~a\", \"index\": nodeArray.length};
+nodeArray.push(nodes[\"~a\"]);~%"
+          id id label id))
+
+(define (emit-d3js-edge id1 id2 port)
+  (format port "links.push({\"source\": \"~a\", \"target\": \"~a\"});~%"
+          id1 id2))
+
+(define %d3js-backend
+  (graph-backend "d3js"
+                 "Generate chord diagrams with d3js."
+                 emit-d3js-prologue emit-d3js-epilogue
+                 emit-d3js-node emit-d3js-edge))
+
+
+;;;
+;;; Shared.
+;;;
+
+(define %graph-backends
+  (list %graphviz-backend
+        %d3js-backend))
 
 (define* (export-graph sinks port
                        #:key
@@ -181,7 +246,7 @@ typically returned by 'node-edges' or 'node-back-edges'."
 given BACKEND.  Use NODE-TYPE to traverse the DAG.  When REVERSE-EDGES? is
 true, draw reverse arrows."
   (match backend
-    (($ <graph-backend> emit-prologue emit-epilogue emit-node emit-edge)
+    (($ <graph-backend> _ _ emit-prologue emit-epilogue emit-node emit-edge)
      (emit-prologue (node-type-name node-type) port)
 
      (match node-type

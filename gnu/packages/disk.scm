@@ -6,6 +6,7 @@
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
+;;; Copyright © 2016 Marius Bakke <mbakke@fastmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,6 +28,7 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages docbook)
@@ -196,6 +198,40 @@ to recover data more efficiently by only reading the necessary blocks.")
      "The dosfstools package includes the mkfs.fat and fsck.fat utilities,
 which respectively make and check MS-DOS FAT file systems.")
     (license license:gpl3+)))
+
+(define dosfstools/static
+  (static-package
+   (package (inherit dosfstools))))
+
+(define-public fatfsck/static
+  (package
+    (name "fatfsck-static")
+    (version (package-version dosfstools))
+    (build-system trivial-build-system)
+    (source #f)
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder
+       (begin
+         (use-modules (guix build utils))
+         (let ((src (string-append (assoc-ref %build-inputs "dosfstools")
+                                   "/sbin"))
+               (exe "fsck.fat")
+               (bin (string-append (assoc-ref %outputs "out") "/sbin")))
+           (mkdir-p bin)
+           (with-directory-excursion bin
+             (copy-file (string-append src "/" exe) exe)
+             (remove-store-references exe)
+             (chmod exe #o555)
+             ;; Add fsck.vfat symlink to match the Linux driver name.
+             (symlink exe "fsck.vfat")
+             #t)))))
+    (inputs `(("dosfstools" ,dosfstools/static)))
+    (home-page (package-home-page dosfstools))
+    (synopsis "Statically linked fsck.fat from dosfstools")
+    (description "This package provides a statically-linked @command{fsck.fat}
+and a @command{fsck.vfat} compatibility symlink for use in an initrd.")
+    (license (package-license dosfstools))))
 
 (define-public sdparm
   (package

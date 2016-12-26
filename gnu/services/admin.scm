@@ -58,8 +58,8 @@
 }
 "))
 
-(define (simple-rotation-config file)
-  (string-append file " {
+(define (simple-rotation-config files)
+  #~(string-append #$(string-join files ",") " {
         sharedscripts
 }
 "))
@@ -72,7 +72,8 @@
                            (display #$(syslog-rotation-config %rotated-files)
                                     port)
                            (display #$(simple-rotation-config
-                                       "/var/log/shepherd.log")
+                                       '("/var/log/shepherd.log"
+                                         "/var/log/guix-daemon.log"))
                                     port)))))))
 
 (define (default-jobs rottlog)

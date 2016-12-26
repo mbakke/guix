@@ -368,4 +368,4 @@ a subject.  You may use your email client or the @command{git
 send-email} command.  We prefer to get patches in plain text messages,
 either inline or as MIME attachments.  You are advised to pay attention if
 your email client changes anything like line breaks or indentation which
-could could potentially break the patches.
+could potentially break the patches.

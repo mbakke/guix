@@ -28,14 +28,19 @@
   #:use-module ((guix licenses) #:select (lgpl2.1+ gpl2 gpl2+ gpl3+))
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu packages acl)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages glib)
   #:use-module (gnu packages man)
+  #:use-module (gnu packages mp3)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages pkg-config)
@@ -328,12 +333,14 @@ from an audio CD.")
                    (parano (assoc-ref inputs "cdparanoia"))
                    (which  (assoc-ref inputs "which"))
                    (discid (assoc-ref inputs "cd-discid"))
+                   (flac   (assoc-ref inputs "flac"))
                    (out    (assoc-ref outputs "out")))
                (define (wrap file)
                  (wrap-program file
                                `("PATH" ":" prefix
                                  (,(string-append out "/bin:"
                                                   wget "/bin:"
+                                                  flac "/bin:"
                                                   which "/bin:"
                                                   vorbis "/bin:"
                                                   discid "/bin:"
@@ -349,6 +356,7 @@ from an audio CD.")
               ("cdparanoia" ,cdparanoia)
               ("cd-discid" ,cd-discid)
               ("vorbis-tools" ,vorbis-tools)
+              ("flac" ,flac)
 
               ;; A couple of Python and Perl scripts are included.
               ("python" ,python)
@@ -395,3 +403,56 @@ for bootable CD-ROMs.
 Image data is written to standard output by default and all other
 information is written to standard error.")
     (license gpl2+)))
+
+(define-public asunder
+  (package
+    (name "asunder")
+    (version "2.8")
+    (source (origin
+              (method url-fetch)
+              (uri
+               (string-append "http://www.littlesvr.ca/asunder/releases/asunder-"
+                              version
+                              ".tar.bz2"))
+              (sha256
+               (base32
+                "1nq9kd4rd4k2kibf57gdbm0zw2gxa234vvvdhxkm8g5bhx5h3iyq"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     '(#:out-of-source? #f
+       #:phases (modify-phases %standard-phases
+                  (add-after 'install 'wrap
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      (let ((program (string-append (assoc-ref outputs "out")
+                                                    "/bin/asunder")))
+                        (define (bin-directory input-name)
+                          (string-append (assoc-ref inputs input-name) "/bin"))
+                        (wrap-program program
+                          `("PATH" ":" prefix
+                            ,(map bin-directory (list "cdparanoia"
+                                                      "lame"
+                                                      "vorbis-tools"
+                                                      "flac"
+                                                      "opus-tools"
+                                                      "wavpack"))))))))))
+    (native-inputs `(("intltool" ,intltool)
+                     ("pkg-config" ,pkg-config)))
+    ;; TODO: Add the necessary packages for Musepack encoding.
+    (inputs `(("gtk+-2" ,gtk+-2)
+              ("glib" ,glib)
+              ("libcddb" ,libcddb)
+              ("cdparanoia" ,cdparanoia)
+              ("lame" ,lame)
+              ("vorbis-tools" ,vorbis-tools)
+              ("flac" ,flac)
+              ("opus-tools" ,opus-tools)
+              ("wavpack" ,wavpack)))
+    (home-page "http://www.littlesvr.ca/asunder/")
+    (synopsis "Graphical audio CD ripper and encoder")
+    (description
+     "Asunder is a graphical audio CD ripper and encoder.  It can save audio
+tracks as WAV, MP3, Ogg Vorbis, FLAC, Opus, Wavpack, and Musepack.  It can use
+CDDB to name and tag each track automatically, and it allows for each track to
+be by a different artist.  Asunder can encode to multiple formats in one
+session, and it can create M3U playlists.")
+    (license gpl2)))

@@ -227,14 +227,14 @@ semiconductors.")
 (define-public gsl
   (package
     (name "gsl")
-    (version "2.2.1")
+    (version "2.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gsl/gsl-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "095hp01d8lkqdvv0p1k25kvbisgfdmvx1rzpyc2i8kl2n33kvlhk"))
+                "1yxdzqjwmi2aid650fa9zyr8llw069x7lm489wx9nnfdi6vh09an"))
               (patches (search-patches "gsl-test-i686.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -425,40 +425,35 @@ singular value problems.")
                                 "See LICENSE in the distribution."))))
 
 (define-public gnuplot
-  ;; Gnuplot version 5.0.4 was updated in-place, resulting in a hash mismatch.
-  ;; This can be removed at the next version update.
-  (let ((upstream-version "5.0.4")
-        (guix-revision "1"))
-    (package
-      (name "gnuplot")
-      (version (string-append upstream-version "-" guix-revision))
-      (source
-       (origin
-        (method url-fetch)
-        (uri (string-append "mirror://sourceforge/gnuplot/gnuplot/"
-                            upstream-version "/gnuplot-"
-                            upstream-version ".tar.gz"))
-        (sha256
-         (base32
-          "07n3w12dkcxjnhsvsliaqnkhajhi818v6q8mkpmpbplbf92vh70m"))))
-      (build-system gnu-build-system)
-      (inputs `(("readline" ,readline)
-                ("cairo" ,cairo)
-                ("pango" ,pango)
-                ("gd" ,gd)))
-      (native-inputs `(("pkg-config" ,pkg-config)
-                       ("texlive" ,texlive-minimal)))
-      (home-page "http://www.gnuplot.info")
-      (synopsis "Command-line driven graphing utility")
-      (description "Gnuplot is a portable command-line driven graphing
+  (package
+    (name "gnuplot")
+    (version "5.0.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/gnuplot/gnuplot/"
+                                  version "/gnuplot-"
+                                  version ".tar.gz"))
+       (sha256
+        (base32
+         "0lr065qdlgss8lmy31l7hkmnk9fp4lvqq9qgb1f1209f36zy1wr5"))))
+    (build-system gnu-build-system)
+    (inputs `(("readline" ,readline)
+              ("cairo" ,cairo)
+              ("pango" ,pango)
+              ("gd" ,gd)))
+    (native-inputs `(("pkg-config" ,pkg-config)
+                     ("texlive" ,texlive-minimal)))
+    (home-page "http://www.gnuplot.info")
+    (synopsis "Command-line driven graphing utility")
+    (description "Gnuplot is a portable command-line driven graphing
 utility.  It was originally created to allow scientists and students to
 visualize mathematical functions and data interactively, but has grown to
 support many non-interactive uses such as web scripting.  It is also used as a
 plotting engine by third-party applications like Octave.")
-      ;;  X11 Style with the additional restriction that derived works may only be
-      ;;  distributed as patches to the original.
-      (license (license:fsf-free
-                "http://gnuplot.cvs.sourceforge.net/gnuplot/gnuplot/Copyright")))))
+    ;;  X11 Style with the additional restriction that derived works may only be
+    ;;  distributed as patches to the original.
+    (license (license:fsf-free
+              "http://gnuplot.cvs.sourceforge.net/gnuplot/gnuplot/Copyright"))))
 
 (define-public gctp
   (package
@@ -731,10 +726,12 @@ HDF5 file is encoded according to the HDF File Format Specification.")
        ("doxygen" ,doxygen)
        ("graphviz" ,graphviz)))
     (inputs
-     `(("hdf5" ,hdf5)
-       ("zlib" ,zlib)))
+     `(("hdf4" ,hdf4-alt)
+       ("hdf5" ,hdf5)
+       ("zlib" ,zlib)
+       ("libjpeg" ,libjpeg)))
     (arguments
-     `(#:configure-flags '("--enable-doxygen" "--enable-dot")
+     `(#:configure-flags '("--enable-doxygen" "--enable-dot" "--enable-hdf4")
        #:parallel-tests? #f))           ;various race conditions
     (home-page "http://www.unidata.ucar.edu/software/netcdf/")
     (synopsis "Library for scientific data")
@@ -1857,7 +1854,7 @@ to BMP, JPEG or PNG image formats.")
 (define-public maxima
   (package
     (name "maxima")
-    (version "5.38.1")
+    (version "5.39.0")
     (source
      (origin
        (method url-fetch)
@@ -1865,7 +1862,7 @@ to BMP, JPEG or PNG image formats.")
                            version "-source/" name "-" version ".tar.gz"))
        (sha256
         (base32
-         "1p6646rvq43hk09msyp0dk50cqpkh07mf4x0bc2fqisqmcv6b1hf"))
+         "1cvignn5y6qzrby6qb885yc8zdcdqdr1d50vcvc3gapw2f0gk3zm"))
        (patches (search-patches "maxima-defsystem-mkdir.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -1937,7 +1934,7 @@ point numbers.")
 (define-public wxmaxima
   (package
     (name "wxmaxima")
-    (version "16.04.2")
+    (version "16.12.0")
     (source
      (origin
        (method url-fetch)
@@ -1945,7 +1942,7 @@ point numbers.")
                            version "/" name "-" version ".tar.gz"))
        (sha256
         (base32
-         "1fpqzk1921isiqrpgpf433ldq41924qs9sy99fl1zn5661b2l73n"))))
+         "01kas9viqabw5id6crbhz8ahjimmv78gqzizs5hgnj9kngrgrm1h"))))
     (build-system gnu-build-system)
     (inputs
      `(("wxwidgets" ,wxwidgets)

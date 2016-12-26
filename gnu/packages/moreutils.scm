@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
 ;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,43 +30,42 @@
 (define-public moreutils
   (package
     (name "moreutils")
-    (version "0.58")
-    (source (origin
-              (method url-fetch)
-              (uri (list
-                     (string-append
-                       "mirror://debian/pool/main/m/moreutils/moreutils_"
-                       version ".orig.tar.gz")
-                     ;; The main Debian mirrors only hold the current packages
-                     (string-append
-                       "http://snapshot.debian.org/archive/debian/20160304T165744Z"
-                       "/pool/main/m/moreutils/moreutils_0.58.orig.tar.gz")))
-              (sha256
-               (base32
-                "02n00vqp6jxbxr5v3rdjxmzp6kxxjdkjgcclam6wrw8qamsbljww"))))
+    (version "0.59")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (list
+             (string-append
+              "mirror://debian/pool/main/m/moreutils/moreutils_"
+              version ".orig.tar.gz")
+             ;; The main Debian mirrors only hold the current packages.
+             (string-append
+              "http://snapshot.debian.org/archive/debian/20161223T212806Z"
+              "/pool/main/m/moreutils/moreutils_0.59.orig.tar.gz")))
+       (sha256
+        (base32
+         "1d6ik3j4lwp90vb93p7yv60k6vk2chz448d1z9xrmxvv371i33m4"))))
     (build-system gnu-build-system)
-    (inputs `(("perl" ,perl)
-              ("libxml2" ,libxml2)
-              ("libxslt" ,libxslt)
-              ("docbook-xml" ,docbook-xml-4.4)
-              ("docbook-xsl" ,docbook-xsl)))
+    ;; For building the manual pages.
+    (native-inputs
+     `(("docbook-xml" ,docbook-xml-4.4)
+       ("docbook-xsl" ,docbook-xsl)
+       ("libxml2" ,libxml2)
+       ("libxslt" ,libxslt)))
+    (inputs
+     `(("perl" ,perl)))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs #:allow-other-keys)
-             (use-modules (srfi srfi-1))
-             (substitute* "Makefile"
-               (("/usr/share/xml/.*/docbook.xsl")
-                (let* ((docbook-xsl (assoc-ref inputs "docbook-xsl"))
-                       (files (find-files docbook-xsl "^docbook\\.xsl$")))
-                  (find (lambda (file)
-                          (string-suffix? "/manpages/docbook.xsl" file))
-                        files)))))))
+         (delete 'configure))           ; no configure script
        #:make-flags
        (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
+             (string-append "DOCBOOKXSL="
+                            (assoc-ref %build-inputs "docbook-xsl") "/xml/xsl/"
+                            ,(package-name docbook-xsl) "-"
+                            ,(package-version docbook-xsl))
              "CC=gcc")))
-    (home-page "http://joeyh.name/code/moreutils/")
+    (home-page "https://joeyh.name/code/moreutils/")
     (synopsis "Miscellaneous general-purpose command-line tools")
     (description
      "Moreutils is a collection of general-purpose command-line tools to

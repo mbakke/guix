@@ -154,7 +154,7 @@ serialization.")
 (define-public jsoncpp
   (package
     (name "jsoncpp")
-    (version "1.7.7")
+    (version "1.8.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -163,7 +163,7 @@ serialization.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "15wg14480lrbrhc2myk9rwpwb2gzix9bk80p4y7gxg3zrzml0xh8"))))
+                "1g35ci93s03wph4kabi46iz42wgyfbn2763cklf15h7hrdi29ssx"))))
     (build-system cmake-build-system)
     (home-page "https://github.com/open-source-parsers/jsoncpp")
     (arguments

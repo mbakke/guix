@@ -151,7 +151,11 @@ the new package's version number from URI."
 
                ;; Use #:recursive? #t to allow for directories.
                (source (download-to-store store uri
-                                          #:recursive? #t))))))
+                                          #:recursive? #t))
+
+               ;; Override the replacement, otherwise '--with-source' would
+               ;; have no effect.
+               (replacement #f)))))
 
 
 ;;;

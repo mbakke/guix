@@ -51,14 +51,8 @@
 (define (pypi-fetch name)
   "Return an alist representation of the PyPI metadata for the package NAME,
 or #f on failure."
-  ;; XXX: We want to silence the download progress report, which is especially
-  ;; annoying for 'guix refresh', but we have to use a file port.
-  (call-with-output-file "/dev/null"
-    (lambda (null)
-      (with-error-to-port null
-        (lambda ()
-          (json-fetch (string-append "https://pypi.python.org/pypi/"
-                                     name "/json")))))))
+  (json-fetch (string-append "https://pypi.python.org/pypi/"
+                             name "/json")))
 
 ;; For packages found on PyPI that lack a source distribution.
 (define-condition-type &missing-source-error &error
@@ -309,7 +303,8 @@ VERSION, SOURCE-URL, HOME-PAGE, SYNOPSIS, DESCRIPTION, and LICENSE."
   "Return true if PACKAGE is a Python package from PyPI."
 
   (define (pypi-url? url)
-    (string-prefix? "https://pypi.python.org/" url))
+    (or (string-prefix? "https://pypi.python.org/" url)
+        (string-prefix? "https://pypi.io/packages" url)))
 
   (let ((source-url (and=> (package-source package) origin-uri))
         (fetch-method (and=> (package-source package) origin-method)))

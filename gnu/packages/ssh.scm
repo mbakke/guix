@@ -112,7 +112,7 @@ a server that supports the SSH-2 protocol.")
 (define-public openssh
   (package
    (name "openssh")
-   (version "7.3p1")
+   (version "7.4p1")
    (source (origin
             (method url-fetch)
             (uri (let ((tail (string-append name "-" version ".tar.gz")))
@@ -122,9 +122,8 @@ a server that supports the SSH-2 protocol.")
                                         tail)
                          (string-append "http://ftp2.fr.openbsd.org/pub/OpenBSD/OpenSSH/portable/"
                                         tail))))
-            (patches (search-patches "openssh-memory-exhaustion.patch"))
             (sha256 (base32
-                     "1k5y1wi29d47cgizbryxrhc1fbjsba2x8l5mqfa9b9nadnd9iyrz"))))
+                     "1l8r3x4fr2kb6xm95s7kjdif1wp6f94d4kljh4qjj9109shw87qv"))))
    (build-system gnu-build-system)
    (inputs `(("groff" ,groff)
              ("openssl" ,openssl)

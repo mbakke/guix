@@ -25,6 +25,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
+  #:use-module (gnu packages)
   #:use-module (gnu packages acl)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages attr)
@@ -50,7 +51,8 @@
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
-  #:use-module (gnu packages xorg))
+  #:use-module (gnu packages xorg)
+  #:use-module (srfi srfi-1))
 
 (define-public extra-cmake-modules
   (package
@@ -516,7 +518,8 @@ many more.")
                     name "-" version ".tar.xz"))
               (sha256
                (base32
-                "07mzb1xr8wyiid25p8kg6mjp6vq8ngvv1ikhq75zvd2cbax530c8"))))
+                "07mzb1xr8wyiid25p8kg6mjp6vq8ngvv1ikhq75zvd2cbax530c8"))
+              (patches (search-patches "kdbusaddons-kinit-file-name.patch"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("extra-cmake-modules" ,extra-cmake-modules)
@@ -524,10 +527,18 @@ many more.")
        ("qttools" ,qttools)))
     (inputs
      `(("qtbase" ,qtbase)
-       ("qtx11extras" ,qtx11extras)))
+       ("qtx11extras" ,qtx11extras)
+       ("kinit" ,kinit-bootstrap))) ;; kinit-bootstrap: kinit package which does not depend on kdbusaddons.
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-before
+          'configure 'patch-source
+          (lambda* (#:key inputs #:allow-other-keys)
+            ;; look for the kdeinit5 executable in kinit's store directory,
+            ;; instead of the current application's directory:
+            (substitute* "src/kdeinitinterface.cpp"
+              (("@SUBSTITUTEME@") (assoc-ref inputs "kinit")))))
          (replace 'check
            (lambda _
              (setenv "DBUS_FATAL_WARNINGS" "0")
@@ -2866,3 +2877,22 @@ setUrl, setUserAgent and call.")
 script engines.")
     ;; dual licensed
     (license (list license:gpl2+ license:lgpl2.1+))))
+
+;; This version of kdbusaddons does not use kinit as an input, and is used to
+;; build kinit-bootstrap, as well as bootstrap versions of all kinit
+;; dependencies which also rely on kdbusaddons.
+(define kdbusaddons-bootstrap
+  (package
+    (inherit kdbusaddons)
+    (source (origin
+              (inherit (package-source kdbusaddons))
+              (patches '())))
+    (inputs (alist-delete "kinit" (package-inputs kdbusaddons)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments kdbusaddons)
+       ((#:phases phases)
+        `(modify-phases ,phases
+           (delete 'patch-source)))))))
+
+(define kinit-bootstrap
+  ((package-input-rewriting `((,kdbusaddons . ,kdbusaddons-bootstrap))) kinit))

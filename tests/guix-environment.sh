@@ -25,7 +25,8 @@ set -e
 guix environment --version
 
 tmpdir="t-guix-environment-$$"
-trap 'rm -r "$tmpdir"' EXIT
+gcroot="t-guix-environment-gc-root-$$"
+trap 'rm -r "$tmpdir"; rm -f "$gcroot"' EXIT
 
 mkdir "$tmpdir"
 
@@ -60,6 +61,20 @@ fi
 # Make sure 'GUIX_ENVIRONMENT' points to the profile.
 guix environment --bootstrap --ad-hoc guile-bootstrap --pure \
      -- "$SHELL" -c 'test -f "$GUIX_ENVIRONMENT/bin/guile"'
+
+# Make sure '-r' works as expected.
+rm -f "$gcroot"
+expected="`guix environment --bootstrap --ad-hoc guile-bootstrap \
+             -- "$SHELL" -c 'echo $GUIX_ENVIRONMENT'`"
+guix environment --bootstrap -r "$gcroot" --ad-hoc guile-bootstrap \
+     -- guile -c 1
+test `readlink "$gcroot"` = "$expected"
+
+# Make sure '-r' is idempotent.
+guix environment --bootstrap -r "$gcroot" --ad-hoc guile-bootstrap \
+     -- guile -c 1
+test `readlink "$gcroot"` = "$expected"
+
 
 case "`uname -m`" in
     x86_64)

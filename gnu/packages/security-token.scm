@@ -93,15 +93,15 @@ the low-level development kit for the Yubico YubiKey authentication device.")
 (define-public pcsc-lite
   (package
     (name "pcsc-lite")
-    (version "1.8.18")
+    (version "1.8.19")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "https://alioth.debian.org/frs/download.php/file/4179/"
+                    "https://alioth.debian.org/frs/download.php/file/4198/"
                     "pcsc-lite-" version ".tar.bz2"))
               (sha256
                (base32
-                "0189s10xsgcmdvc2sixakncwlv47cg6by6m9vdm038gn32q34bdj"))))
+                "0h23gh1sfpwvd1975j4zqp2b34r9krj1mki4nj1qjcnidpn2apmn"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-usbdropdir=/var/lib/pcsc/drivers")))

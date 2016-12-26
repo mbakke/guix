@@ -22,6 +22,7 @@
   #:use-module (guix base32)
   #:use-module ((guix build download) #:prefix build:)
   #:use-module (guix hash)
+  #:use-module (guix http-client)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
@@ -35,6 +36,10 @@
 
             url-fetch
             guix-hash-url
+
+            maybe-inputs
+            maybe-native-inputs
+            package->definition
 
             spdx-string->license
             license->symbol
@@ -205,3 +210,32 @@ into a proper sentence and by using two spaces between sentences."
     ;; Use double spacing between sentences
     (regexp-substitute/global #f "\\. \\b"
                               cleaned 'pre ".  " 'post)))
+
+(define (package-names->package-inputs names)
+  (map (lambda (input)
+         (list input (list 'unquote (string->symbol input))))
+       names))
+
+(define (maybe-inputs package-names)
+  "Given a list of PACKAGE-NAMES, tries to generate the 'inputs' field of a
+package definition."
+  (match (package-names->package-inputs package-names)
+    (()
+     '())
+    ((package-inputs ...)
+     `((inputs (,'quasiquote ,package-inputs))))))
+
+(define (maybe-native-inputs package-names)
+  "Given a list of PACKAGE-NAMES, tries to generate the 'inputs' field of a
+package definition."
+  (match (package-names->package-inputs package-names)
+    (()
+     '())
+    ((package-inputs ...)
+     `((native-inputs (,'quasiquote ,package-inputs))))))
+
+(define (package->definition guix-package)
+  (match guix-package
+    (('package ('name (? string? name)) _ ...)
+     `(define-public ,(string->symbol name)
+        ,guix-package))))

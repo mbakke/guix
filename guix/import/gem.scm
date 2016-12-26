@@ -38,14 +38,8 @@
 (define (rubygems-fetch name)
   "Return an alist representation of the RubyGems metadata for the package NAME,
 or #f on failure."
-  ;; XXX: We want to silence the download progress report, which is especially
-  ;; annoying for 'guix refresh', but we have to use a file port.
-  (call-with-output-file "/dev/null"
-    (lambda (null)
-      (with-error-to-port null
-        (lambda ()
-          (json-fetch
-           (string-append "https://rubygems.org/api/v1/gems/" name ".json")))))))
+  (json-fetch
+   (string-append "https://rubygems.org/api/v1/gems/" name ".json")))
 
 (define (ruby-package-name name)
   "Given the NAME of a package on RubyGems, return a Guix-compliant name for

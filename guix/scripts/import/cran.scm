@@ -26,6 +26,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-37)
+  #:use-module (srfi srfi-41)
   #:use-module (ice-9 match)
   #:use-module (ice-9 format)
   #:export (guix-import-cran))
@@ -63,6 +64,9 @@ Import and convert the CRAN package for PACKAGE-NAME.\n"))
                  (lambda (opt name arg result)
                    (alist-cons 'repo (string->symbol arg)
                                (alist-delete 'repo result))))
+         (option '(#\r "recursive") #f #f
+                 (lambda (opt name arg result)
+                   (alist-cons 'recursive #t result)))
          %standard-import-options))
 
 
@@ -88,12 +92,22 @@ Import and convert the CRAN package for PACKAGE-NAME.\n"))
                            (reverse opts))))
     (match args
       ((package-name)
-       (let ((sexp (cran->guix-package package-name
-                                       (or (assoc-ref opts 'repo) 'cran))))
-         (unless sexp
-           (leave (_ "failed to download description for package '~a'~%")
-                  package-name))
-         sexp))
+       (if (assoc-ref opts 'recursive)
+           ;; Recursive import
+           (map (match-lambda
+                  ((and ('package ('name name) . rest) pkg)
+                   `(define-public ,(string->symbol name)
+                      ,pkg))
+                  (_ #f))
+                (stream->list (recursive-import package-name
+                                                (or (assoc-ref opts 'repo) 'cran))))
+           ;; Single import
+           (let ((sexp (cran->guix-package package-name
+                                           (or (assoc-ref opts 'repo) 'cran))))
+             (unless sexp
+               (leave (_ "failed to download description for package '~a'~%")
+                      package-name))
+             sexp)))
       (()
        (leave (_ "too few arguments~%")))
       ((many ...)

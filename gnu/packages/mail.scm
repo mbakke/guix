@@ -103,53 +103,54 @@
 (define-public mailutils
   (package
     (name "mailutils")
-    (version "3.0")
+    (version "3.1.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/mailutils/mailutils-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "0h7cx4cd3niycx7pl0p2358cx2smwm5sb3l9bpb8czkdl6v115c8"))))
+               "1dpylyg79avi7brpkcmzaq7bqqkz45flp0ws6f2c8b1gyz4hdnzm"))))
     (build-system gnu-build-system)
     (arguments
-     '(;; TODO: Add `--with-sql'.
-       #:phases (alist-cons-before
-                 'build 'pre-build
-                 (lambda _
-                   ;; Use the right file name for `cat'.
-                   (substitute* "testsuite/lib/mailutils.exp"
-                     (("/bin/cat")
-                      (which "cat")))
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'pre-build
+           (lambda _
+             ;; Use the right file name for `cat'.
+             (substitute* "testsuite/lib/mailutils.exp"
+               (("/bin/cat")
+                (which "cat")))
 
-                   ;; Tests try to invoke 'maidag' such that it looks up the
-                   ;; 'root' user, which does not exist in the build
-                   ;; environment.
-                   (substitute* "maidag/tests/testsuite"
-                     (("root <")         "nobody <")
-                     (("spool/root")     "spool/nobody")
-                     (("root@localhost") "nobody@localhost"))
+             ;; Tests try to invoke 'maidag' such that it looks up the
+             ;; 'root' user, which does not exist in the build
+             ;; environment.
+             (substitute* "maidag/tests/testsuite"
+               (("root <")         "nobody <")
+               (("spool/root")     "spool/nobody")
+               (("root@localhost") "nobody@localhost"))
 
-                   ;; The 'pipeact.at' tests generate a shell script; make
-                   ;; sure it uses the right shell.
-                   (substitute* '("sieve/tests/testsuite"
-                                  "mh/tests/testsuite")
-                     (("#! /bin/sh")
-                      (string-append "#!" (which "sh"))))
+             ;; The 'pipeact.at' tests generate a shell script; make
+             ;; sure it uses the right shell.
+             (substitute* '("sieve/tests/testsuite"
+                            "mh/tests/testsuite")
+               (("#! /bin/sh")
+                (string-append "#!" (which "sh"))))
 
-                   (substitute* "mh/tests/testsuite"
-                     (("moreproc: /bin/cat")
-                      (string-append "moreproc: " (which "cat"))))
+             (substitute* "mh/tests/testsuite"
+               (("moreproc: /bin/cat")
+                (string-append "moreproc: " (which "cat"))))
 
-                   ;; XXX: The comsatd tests rely on being able to open
-                   ;; /dev/tty, but that gives ENODEV in the build
-                   ;; environment.  Thus, ignore test failures here.
-                   (substitute* "comsat/tests/Makefile.in"
-                     (("\\$\\(SHELL\\) \\$\\(TESTSUITE\\)" all)
-                      (string-append "-" all)))
+             ;; XXX: The comsatd tests rely on being able to open
+             ;; /dev/tty, but that gives ENODEV in the build
+             ;; environment.  Thus, ignore test failures here.
+             (substitute* "comsat/tests/Makefile.in"
+               (("\\$\\(SHELL\\) \\$\\(TESTSUITE\\)" all)
+                (string-append "-" all)))
 
-                   #t)
-                 %standard-phases)
+             #t)))
+       ;; TODO: Add `--with-sql'.
+       #:configure-flags '("--sysconfdir=/etc")
        #:parallel-tests? #f))
     (inputs
      `(("dejagnu" ,dejagnu)
@@ -158,15 +159,11 @@
        ("guile" ,guile-2.0)
        ("gnutls" ,gnutls)
        ("ncurses" ,ncurses)
-
-       ;; With Readline 6.3, examples/pop3client.c fails to build because it
-       ;; uses the now undefined 'CPPFunction' type.
-       ("readline" ,readline-6.2)
-
+       ("readline" ,readline)
        ("linux-pam" ,linux-pam)
        ("libltdl" ,libltdl)
        ("gdbm" ,gdbm)))
-    (home-page "http://www.gnu.org/software/mailutils/")
+    (home-page "https://www.gnu.org/software/mailutils/")
     (synopsis "Utilities and library for reading and serving mail")
     (description
      "GNU Mailutils is a collection of programs for managing, viewing and
@@ -214,14 +211,14 @@ aliasing facilities to work just as they would on normal mail.")
 (define-public mutt
   (package
     (name "mutt")
-    (version "1.7.1")
+    (version "1.7.2")
     (source (origin
              (method url-fetch)
              (uri (string-append "ftp://ftp.mutt.org/pub/mutt/mutt-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "1pyns0xw52s4yma1a93pdcl4dirs55q2m1hd7w1r11nlhf7giip9"))
+               "1yazrl82s9fxmamnlvwmsxhwrxnwv6kwakgfmawda8ndhwb50lqm"))
              (patches (search-patches "mutt-store-references.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -308,13 +305,14 @@ Extension (MIME).")
                 "1d56n2m9inm8gnzm88aa27xl2a7sp7aff3484vmflpqkinjqf0p1"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases (alist-cons-before
-                 'check 'pre-check
-                 (lambda _
-                   (substitute* "src/tests/t.frame"
-                     (("GREP=/bin/grep")
-                      (string-append "GREP=" (which "grep") "\n"))))
-                 %standard-phases)))
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'pre-check
+           (lambda _
+             (substitute* "src/tests/t.frame"
+               (("GREP=/bin/grep")
+                (string-append "GREP=" (which "grep") "\n")))
+             #t)))))
     (native-inputs `(("flex" ,flex)))
     (inputs `(("bdb" ,bdb)))
     (home-page "http://bogofilter.sourceforge.net/")
@@ -537,14 +535,14 @@ invoking @command{notifymuch} from the post-new hook.")
 (define-public notmuch
   (package
     (name "notmuch")
-    (version "0.23.3")
+    (version "0.23.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://notmuchmail.org/releases/notmuch-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "10hqjnl5aavf9clfmx3y832jyz58fplmc3f58pip9dq30b7sap8g"))))
+                "0fs5crf8v3jghc8jnm61cv7wxhclcg88hi5894d8fma9kkixcv8h"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags (list "V=1") ; Verbose test output.
@@ -675,7 +673,7 @@ and search library.")
 (define-public getmail
   (package
     (name "getmail")
-    (version "4.49.0")
+    (version "4.52.0")
     (source
      (origin
        (method url-fetch)
@@ -683,7 +681,7 @@ and search library.")
                            name "-" version ".tar.gz"))
        (sha256
         (base32
-         "1m0yzxd05fklwbmjj1n2q4sx397c1j5qi9a0r5fv3h8pplz4lv0w"))))
+         "0pzplrlxwbxydvfw4kkwn60l40hk1h5sxawaa6pi0k75c220k4ni"))))
     (build-system python-build-system)
     (arguments
      `(#:tests? #f ; no tests
@@ -799,7 +797,7 @@ which can add many functionalities to the base client.")
 (define-public msmtp
   (package
     (name "msmtp")
-    (version "1.6.5")
+    (version "1.6.6")
     (source
      (origin
        (method url-fetch)
@@ -807,7 +805,7 @@ which can add many functionalities to the base client.")
                            "/msmtp-" version ".tar.xz"))
        (sha256
         (base32
-         "01jh9ba49bih8zsh40myw6qq1ll210q1vw0jg865vrn7jc3dd83n"))))
+         "0ppvww0sb09bnsrpqnvlrn8vx231r24xn2iiwpy020mxc8gxn5fs"))))
     (build-system gnu-build-system)
     (inputs
      `(("libidn" ,libidn)
@@ -845,7 +843,7 @@ delivery.")
 (define-public exim
   (package
     (name "exim")
-    (version "4.87")
+    (version "4.87.1")
     (source
      (origin
        (method url-fetch)
@@ -855,7 +853,7 @@ delivery.")
                                  version ".tar.bz2")))
        (sha256
         (base32
-         "1jbxn13shq90kpn0s73qpjnx5xm8jrpwhcwwgqw5s6sdzw6iwsbl"))))
+         "050m2gjzpc6vyik458h1j0vi8bxplkzjsyndkyd2y394i569kdyl"))))
     (build-system gnu-build-system)
     (inputs
      `(("bdb" ,bdb)

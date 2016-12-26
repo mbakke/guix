@@ -716,7 +716,7 @@ within a single process.")
 (define-public xcape
   (package
     (name "xcape")
-    (version "1.1")
+    (version "1.2")
     (source
       (origin
         (method url-fetch)
@@ -725,7 +725,7 @@ within a single process.")
         (file-name (string-append name "-" version ".tar.gz"))
         (sha256
           (base32
-            "0jkdiaxc6sryrbibdgi2y1c48n4l9xyazhxr16l6h4ibddx95bk9"))))
+            "0898zc3vwxia00h9kfknpf7jygxgwggrx8v5mxc31w4lzn2dhzm2"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f ; no check target
@@ -1027,7 +1027,7 @@ actions, a built-in clock, a battery monitor and a system tray.")
 (define-public xcb-util-xrm
   (package
     (name "xcb-util-xrm")
-    (version "1.0")
+    (version "1.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1035,7 +1035,7 @@ actions, a built-in clock, a battery monitor and a system tray.")
                     "/download/v" version "/xcb-util-xrm-" version ".tar.bz2"))
               (sha256
                (base32
-                "1h5vxwpd37dqfw9yj1l4zd9c5dj30r3g0szgysr6kd7xrqgaq04l"))
+                "0vbqhag51i0njc8d5fc8c6aa12496cwrc3s6s7sa5kfc17cwhppp"))
               (modules '((guix build utils)))
               (snippet
                ;; Drop bundled m4.

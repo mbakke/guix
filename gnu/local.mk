@@ -321,6 +321,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/rsync.scm			\
   %D%/packages/ruby.scm				\
   %D%/packages/rush.scm				\
+  %D%/packages/rust.scm				\
   %D%/packages/samba.scm			\
   %D%/packages/sawfish.scm			\
   %D%/packages/scanner.scm			\
@@ -450,6 +451,7 @@ GNU_SYSTEM_MODULES =				\
 						\
   %D%/tests.scm					\
   %D%/tests/base.scm				\
+  %D%/tests/nfs.scm				\
   %D%/tests/install.scm				\
   %D%/tests/mail.scm				\
   %D%/tests/ssh.scm
@@ -508,8 +510,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/crda-optional-gcrypt.patch		\
   %D%/packages/patches/crossmap-allow-system-pysam.patch	\
   %D%/packages/patches/csound-header-ordering.patch		\
-  %D%/packages/patches/cssc-gets-undeclared.patch               \
-  %D%/packages/patches/cssc-missing-include.patch               \
   %D%/packages/patches/clucene-contribs-lib.patch               \
   %D%/packages/patches/cursynth-wave-rand.patch			\
   %D%/packages/patches/cyrus-sasl-CVE-2013-4122.patch		\
@@ -588,6 +588,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gmp-faulty-test.patch			\
   %D%/packages/patches/gnome-tweak-tool-search-paths.patch	\
   %D%/packages/patches/gnucash-price-quotes-perl.patch		\
+  %D%/packages/patches/gnupg-test-segfault-on-32bit-arch.patch	\
   %D%/packages/patches/gobject-introspection-absolute-shlib-path.patch \
   %D%/packages/patches/gobject-introspection-cc.patch		\
   %D%/packages/patches/gobject-introspection-girepository.patch	\
@@ -639,6 +640,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
   %D%/packages/patches/jbig2dec-ignore-testtest.patch		\
   %D%/packages/patches/jq-CVE-2015-8863.patch			\
+  %D%/packages/patches/kdbusaddons-kinit-file-name.patch	\
   %D%/packages/patches/khmer-use-libraries.patch                \
   %D%/packages/patches/kmod-module-directory.patch		\
   %D%/packages/patches/kobodeluxe-paths.patch			\
@@ -679,6 +681,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libtool-skip-tests2.patch		\
   %D%/packages/patches/libunwind-CVE-2015-3239.patch		\
   %D%/packages/patches/libupnp-CVE-2016-6255.patch		\
+  %D%/packages/patches/libupnp-CVE-2016-8863.patch		\
   %D%/packages/patches/libvpx-CVE-2016-2818.patch		\
   %D%/packages/patches/libwebp-CVE-2016-9085.patch		\
   %D%/packages/patches/libwmf-CAN-2004-0941.patch		\
@@ -693,6 +696,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/libwmf-CVE-2015-0848+CVE-2015-4588.patch	\
   %D%/packages/patches/libwmf-CVE-2015-4695.patch		\
   %D%/packages/patches/libwmf-CVE-2015-4696.patch		\
+  %D%/packages/patches/libxml2-CVE-2016-4658.patch		\
+  %D%/packages/patches/libxml2-CVE-2016-5131.patch		\
   %D%/packages/patches/libxslt-generated-ids.patch		\
   %D%/packages/patches/libxslt-CVE-2016-4738.patch		\
   %D%/packages/patches/linux-pam-no-setfsuid.patch		\
@@ -745,14 +750,12 @@ dist_patch_DATA =						\
   %D%/packages/patches/ocaml-CVE-2015-8869.patch		\
   %D%/packages/patches/ocaml-findlib-make-install.patch	\
   %D%/packages/patches/ola-readdir-r.patch			\
-  %D%/packages/patches/onionshare-fix-install-paths.patch		\
   %D%/packages/patches/openexr-missing-samples.patch		\
   %D%/packages/patches/openjpeg-CVE-2016-5157.patch		\
   %D%/packages/patches/openjpeg-CVE-2016-7163.patch		\
   %D%/packages/patches/openjpeg-CVE-2016-9850-CVE-2016-9851.patch		\
   %D%/packages/patches/openjpeg-use-after-free-fix.patch	\
   %D%/packages/patches/openocd-nrf52.patch			\
-  %D%/packages/patches/openssh-memory-exhaustion.patch		\
   %D%/packages/patches/openssl-runpath.patch			\
   %D%/packages/patches/openssl-1.1.0-c-rehash-in.patch		\
   %D%/packages/patches/openssl-c-rehash-in.patch		\
@@ -819,9 +822,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-paste-remove-website-test.patch	\
   %D%/packages/patches/python-paste-remove-timing-test.patch	\
   %D%/packages/patches/python2-pygobject-2-gi-info-type-error-domain.patch \
-  %D%/packages/patches/qemu-CVE-2016-8576.patch			\
-  %D%/packages/patches/qemu-CVE-2016-8577.patch			\
-  %D%/packages/patches/qemu-CVE-2016-8578.patch			\
   %D%/packages/patches/qt4-ldflags.patch			\
   %D%/packages/patches/quickswitch-fix-dmenu-check.patch	\
   %D%/packages/patches/rapicorn-isnan.patch			\

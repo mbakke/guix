@@ -1245,6 +1245,83 @@ and stored in memory.")
     (description "This package provides a modern list API library for Emacs.")
     (license license:gpl3+)))
 
+(define-public emacs-bui
+  (package
+    (name "emacs-bui")
+    (version "1.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://github.com/alezost/bui.el/archive/v"
+                    version ".tar.gz"))
+              (file-name (string-append name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0vsh1v99xxm6hhqp0vg9fbs230kawa7xb5dnd8fidf3vwm622aqh"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     `(("dash" ,emacs-dash)))
+    (home-page "https://github.com/alezost/bui.el")
+    (synopsis "Buffer interface library for Emacs")
+    (description
+     "BUI (Buffer User Interface) is a library for making @code{list} and
+@code{info} interfaces to display an arbitrary data of the same
+type, for example: packages, buffers, files, etc.")
+    (license license:gpl3+)))
+
+(define-public emacs-guix
+  (package
+    (name "emacs-guix")
+    (version "0.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/alezost/guix.el"
+                                  "/releases/download/v" version
+                                  "/emacs-guix-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0h168597am5vcix149l27g876v4f5yqwx8v0s9mmsdva1qqcq5s5"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags
+       (let ((guix        (assoc-ref %build-inputs "guix"))
+             (geiser      (assoc-ref %build-inputs "geiser"))
+             (dash        (assoc-ref %build-inputs "dash"))
+             (bui         (assoc-ref %build-inputs "bui"))
+             (magit-popup (assoc-ref %build-inputs "magit-popup"))
+             (site-lisp   "/share/emacs/site-lisp"))
+         (list (string-append "--with-guix-site-dir="
+                              guix "/share/guile/site/2.0")
+               (string-append "--with-geiser-lispdir=" geiser site-lisp)
+               (string-append "--with-dash-lispdir="
+                              dash site-lisp "/guix.d/dash-"
+                              ,(package-version emacs-dash))
+               (string-append "--with-bui-lispdir="
+                              bui site-lisp "/guix.d/bui-"
+                              ,(package-version emacs-bui))
+               (string-append "--with-popup-lispdir="
+                              magit-popup site-lisp "/guix.d/magit-popup-"
+                              ,(package-version emacs-magit-popup))))))
+    (native-inputs
+     `(("pkg-config" ,pkg-config)
+       ("emacs" ,emacs-minimal)))
+    (inputs
+     `(("guile" ,guile-2.0)
+       ("guix" ,guix)))
+    (propagated-inputs
+     `(("geiser" ,geiser)
+       ("dash" ,emacs-dash)
+       ("bui" ,emacs-bui)
+       ("magit-popup" ,emacs-magit-popup)))
+    (home-page "https://github.com/alezost/guix.el")
+    (synopsis "Emacs interface for GNU Guix")
+    (description
+     "Emacs-Guix provides a visual interface, tools and features for the
+GNU Guix package manager.  Particularly, it allows you to do various
+package management tasks from Emacs.  To begin with, run @code{M-x
+guix-help} command.")
+    (license license:gpl3+)))
+
 (define-public emacs-d-mode
   (package
     (name "emacs-d-mode")
@@ -3189,14 +3266,14 @@ passive voice.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "20161118")
+    (version "20161214")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://elpa.gnu.org/packages/org-"
                                   version ".tar"))
               (sha256
                (base32
-                "1w9g8r08kaiw9f4fjsj0hbffzq85rj734j5lxvbaafbnz7dbklk1"))))
+                "0pa9d0l6axif5wlzi7lvxl0fpjwwvc79cy9d37z7md4hxyjdvwzm"))))
     (build-system emacs-build-system)
     (home-page "http://orgmode.org/")
     (synopsis "Outline-based notes management and organizer")

@@ -669,41 +669,34 @@ references; otherwise, return only non-native references."
                    result)
            result))
       (($ <gexp-input> (? gexp? exp) _ #f)
-       (if native?
-           (append (gexp-inputs exp #:native? #t)
-                   result)
-           (append (gexp-inputs exp)
-                   result)))
+       (append (gexp-inputs exp #:native? native?)
+               result))
       (($ <gexp-input> (? string? str))
        (if (direct-store-path? str)
            (cons `(,str) result)
            result))
-      (($ <gexp-input> (? struct? thing) output)
-       (if (lookup-compiler thing)
+      (($ <gexp-input> (? struct? thing) output n?)
+       (if (and (eqv? n? native?) (lookup-compiler thing))
            ;; THING is a derivation, or a package, or an origin, etc.
            (cons `(,thing ,output) result)
            result))
       (($ <gexp-input> (lst ...) output n?)
-       (fold-right add-reference-inputs result
-                   ;; XXX: For now, automatically convert LST to a list of
-                   ;; gexp-inputs.
-                   (map (match-lambda
-                         ((? gexp-input? x) x)
-                         (x (%gexp-input x "out" (or n? native?))))
-                        lst)))
+       (if (eqv? native? n?)
+           (fold-right add-reference-inputs result
+                       ;; XXX: For now, automatically convert LST to a list of
+                       ;; gexp-inputs.
+                       (map (match-lambda
+                              ((? gexp-input? x) x)
+                              (x (%gexp-input x "out" (or n? native?))))
+                            lst))
+           result))
       (_
        ;; Ignore references to other kinds of objects.
        result)))
 
-  (define (native-input? x)
-    (and (gexp-input? x)
-         (gexp-input-native? x)))
-
   (fold-right add-reference-inputs
               '()
-              (if native?
-                  (filter native-input? (gexp-references exp))
-                  (remove native-input? (gexp-references exp)))))
+              (gexp-references exp)))
 
 (define gexp-native-inputs
   (cut gexp-inputs <> #:native? #t))

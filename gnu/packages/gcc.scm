@@ -364,14 +364,14 @@ Go.  It also includes runtime support libraries for these languages.")
 (define-public gcc-6
   (package
     (inherit gcc-5)
-    (version "6.2.0")
+    (version "6.3.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gcc/gcc-"
                                   version "/gcc-" version ".tar.bz2"))
               (sha256
                (base32
-                "1idpf43988v1a6i8lw9ak1r7igcfg1bm5kn011iydlr2qygmhi4r"))
+                "17xjz30jb65hcf714vn9gcxvrrji8j20xm7n33qg1ywhyzryfsph"))
               (patches (search-patches "gcc-strmov-store-file-names.patch"
                                        "gcc-5.0-libvtv-runpath.patch"))))))
 

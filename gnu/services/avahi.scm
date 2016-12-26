@@ -107,7 +107,7 @@
            (requirement '(dbus-system networking))
 
            (start #~(make-forkexec-constructor
-                     (list (string-append #$avahi "/sbin/avahi-daemon")
+                     (list #$(file-append avahi "/sbin/avahi-daemon")
                            "--daemonize"
                            #$@(if debug? #~("--debug") #~())
                            "-f" #$config)
