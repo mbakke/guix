@@ -186,10 +186,6 @@ in the Mozilla clients.")
 (define-public nss
   (package
     (name "nss")
-    ;; FIXME: NSS 3.27.2 fails its tests on armhf. At least some of the test
-    ;; failures appear to be caused by test certificates that have expired.
-    ;; Search the test suite output for 'PayPalEE.cert' for an example:
-    ;; <https://hydra.gnu.org/build/1712083>
     (version "3.27.1")
     (source (origin
               (method url-fetch)
