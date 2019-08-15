@@ -737,6 +737,34 @@ another XPath engine to find the matching elements in an XML or HTML document.")
 (define-public python2-cssselect
   (package-with-python2 python-cssselect))
 
+(define-public python-databricks-cli
+  (package
+    (name "python-databricks-cli")
+    (version "0.8.7")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "databricks-cli" version))
+              (sha256
+               (base32
+                "14dciywrf37l6zg19q93byvhcmhb66c4kphvibid0j7mairj0d8r"))))
+    (build-system python-build-system)
+    (arguments
+     `(;; FIXME: Tests are missing from PyPI archive.
+       #:tests? #f))
+    (propagated-inputs
+     `(("python-click" ,python-click)
+       ("python-configparser" ,python-configparser)
+       ("python-requests" ,python-requests)
+       ("python-six" ,python-six)
+       ("python-tabulate" ,python-tabulate)))
+    (home-page "https://github.com/databricks/databricks-cli")
+    (synopsis "Command line interface for Databricks")
+    (description
+     "The Databricks Command Line Interface is a tool which provides an easy
+to use interface to the Databricks platform.  The CLI is built on top of the
+Databricks REST APIs.")
+    (license license:asl2.0)))
+
 (define-public python-openid-cla
   (package
     (name "python-openid-cla")
