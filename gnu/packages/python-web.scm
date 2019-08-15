@@ -421,6 +421,29 @@ both of which are installed automatically if you install this library.")
 (define-public python2-flask-babel
   (package-with-python2 python-flask-babel))
 
+(define-public python-gunicorn
+  (package
+    (name "python-gunicorn")
+    (version "19.9.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "gunicorn" version))
+              (sha256
+               (base32
+                "1wzlf4xmn6qjirh5w81l6i6kqjnab1n1qqkh7zsj1yb6gh4n49ps"))))
+    (build-system python-build-system)
+    (arguments
+     `(;; FIXME: Tests require special versions of coverage and pytest.
+       #:tests? #f))
+    (home-page "https://gunicorn.org/")
+    (synopsis "WSGI HTTP Server")
+    (description
+     "Gunicorn (‘Green Unicorn’) is a Python WSGI HTTP Server.  It is a
+pre-fork worker model ported from Ruby’s Unicorn project.  The Gunicorn
+server is broadly compatible with various web frameworks, simply implemented,
+light on server resource usage, and fairly speedy.")
+    (license license:expat)))
+
 (define-public python-html5lib
   (package
     (name "python-html5lib")
