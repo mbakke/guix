@@ -1887,13 +1887,13 @@ Python.")
 (define-public python-responses
   (package
     (name "python-responses")
-    (version "0.5.1")
+    (version "0.10.6")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "responses" version))
               (sha256
                (base32
-                "1spcfxixyk9k7pk82jm6zqkwk031s95lh8q0mz7539jrb7269bcc"))))
+                "147pacwkkqy3qf3hr33fnl1xbzgw0zsm3qppvvy9qhq8h069qbah"))))
     (build-system python-build-system)
     (arguments
      `(;; Test suite is not distributed:
