@@ -6824,6 +6824,26 @@ should be stored on various operating systems.")
 (define-public python2-appdirs
   (package-with-python2 python-appdirs))
 
+(define-public python-gorilla
+  (package
+    (name "python-gorilla")
+    (version "0.3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "gorilla" version))
+              (sha256
+               (base32
+                "0b40blcp6fih4nvqbilra4qw1dfccv1ahjmr41ac4d9rjadqkcpy"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/christophercrouzet/gorilla")
+    (synopsis "Convenient monkey patching with Python")
+    (description
+     "Gorilla is a Python library that provides a convenient approach to
+monkey patching.  Monkey patching is the process of modifying module and
+class attributes at runtime with the purpose of replacing or extending
+third-party code.")
+    (license license:expat)))
+
 (define-public python-llfuse
   (package
     (name "python-llfuse")
