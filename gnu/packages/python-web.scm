@@ -520,6 +520,34 @@ C, yielding parse times that can be a thirtieth of the html5lib parse times.")
 (define-public python2-html5-parser
   (package-with-python2 python-html5-parser))
 
+(define-public python-minio
+  (package
+    (name "python-minio")
+    (version "4.0.20")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "minio" version))
+              (sha256
+               (base32
+                "03z96iri7xl74p76blz72x09bjwh4qx2y6jxzv10vjssp4mx6499"))))
+    (build-system python-build-system)
+    (native-inputs
+     `(("python-faker" ,python-faker)
+       ("python-mock" ,python-mock)
+       ("python-nose" ,python-nose)))
+    (propagated-inputs
+     `(("python-certifi" ,python-certifi)
+       ("python-dateutil" ,python-dateutil)
+       ("python-future" ,python-future)
+       ("python-pytz" ,python-pytz)
+       ("python-urllib3" ,python-urllib3)))
+    (home-page "https://github.com/minio/minio-py")
+    (synopsis "MinIO Client SDK for Python")
+    (description
+     "The MinIO Python Client SDK provides simple APIs to access any Amazon S3
+compatible object storage server.")
+    (license license:asl2.0)))
+
 (define-public python-pycurl
   (package
     (name "python-pycurl")
