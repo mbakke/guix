@@ -52,6 +52,7 @@
   #:use-module (gnu packages cran)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
+  #:use-module (gnu packages docker)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages graphviz)
@@ -73,7 +74,9 @@
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -353,6 +356,54 @@ networks) based on simulation of (stochastic) flow in graphs.")
      "This package provides OCaml bindings for the MCL graph clustering
 algorithm.")
     (license license:gpl3)))
+
+(define-public mlflow
+  (package
+    (name "mlflow")
+    (version "1.2.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "mlflow" version))
+              (sha256
+               (base32
+                "13jckipp5k67yd1iga6jiwwpds6d35k69lvqnfgw7ds55bz7n5q7"))))
+    (build-system python-build-system)
+    (arguments
+     `(;; FIXME: Tests require Protobuf >= 3.6.0.
+       #:tests? #f))
+    (propagated-inputs
+     `(("python-alembic" ,python-alembic)
+       ("python-click" ,python-click)
+       ("python-cloudpickle" ,python-cloudpickle)
+       ("python-databricks-cli" ,python-databricks-cli)
+       ("python-dateutil" ,python-dateutil)
+       ("python-docker" ,python-docker-py)
+       ("python-entrypoints" ,python-entrypoints)
+       ("python-flask" ,python-flask)
+       ("python-gitpython" ,python-gitpython)
+       ("python-gorilla" ,python-gorilla)
+       ("python-gunicorn" ,python-gunicorn)
+       ("python-numpy" ,python-numpy)
+       ("python-pandas" ,python-pandas)
+       ("python-protobuf" ,python-protobuf)
+       ("python-pyyaml" ,python-pyyaml)
+       ("python-querystring-parser" ,python-querystring-parser)
+       ("python-requests" ,python-requests)
+       ("python-simplejson" ,python-simplejson)
+       ("python-six" ,python-six)
+       ("python-sqlalchemy" ,python-sqlalchemy)
+       ("python-sqlparse" ,python-sqlparse)
+       ("python-waitress" ,python-waitress)))
+    (home-page "https://mlflow.org/")
+    (synopsis "Manage machine learning workflows")
+    (description
+     "MLflow is a platform to streamline machine learning development,
+including tracking experiments, packaging code into reproducible runs, and
+sharing and deploying models.  MLflow offers a set of lightweight APIs that
+can used with any existing machine learning application or library (TensorFlow,
+PyTorch, XGBoost, etc), wherever you currently run ML code (e.g. in notebooks,
+standalone applications or the cloud).")
+    (license license:asl2.0)))
 
 (define-public randomjungle
   (package
