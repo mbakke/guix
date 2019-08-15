@@ -357,6 +357,40 @@ networks) based on simulation of (stochastic) flow in graphs.")
 algorithm.")
     (license license:gpl3)))
 
+(define-public python-mflux-ai
+  (package
+    (name "python-mflux-ai")
+    (version "0.2.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "mflux-ai" version))
+              (sha256
+               (base32
+                "19c5p87h24hxjwydqa7c24wv7mavj6qdh19hw66a0s68ix66d5xg"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda _
+                      (setenv "PYTHONPATH"
+                              (string-append "./build/lib:"
+                                             (or (getenv "PYTHONPATH") "")))
+                      (invoke "pytest" "-vv"))))))
+    (native-inputs
+     `(("python-pytest" ,python-pytest)
+       ("python-pytest-runner" ,python-pytest-runner)
+       ("python-responses" ,python-responses)))
+    (propagated-inputs
+     `(("python-joblib" ,python-joblib)
+       ("python-minio" ,python-minio)
+       ("python-requests" ,python-requests)))
+    (home-page "https://github.com/AIAScience/mflux-ai-python")
+    (synopsis "Python library for mflux.ai")
+    (description
+     "This package provides a Python interface to the mflux.ai server.")
+    ;; XXX: The library has no license information yet.
+    (license license:expat)))
+
 (define-public mlflow
   (package
     (name "mlflow")
