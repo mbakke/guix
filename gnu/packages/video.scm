@@ -1906,6 +1906,55 @@ audio/video codec library.")
                  "--enable-static"))))
      (inputs '()))))
 
+;; The Chromium fork of ffmpeg, with some incompatible changes.
+(define-public ffmpeg/chromium
+  ;; Take the commit from third_party/ffmpeg/chromium/patches/README.
+  (let ((revision "0")
+        (commit "b71ecd02b47939e530e620d9d0d101463db0f688"))
+    (hidden-package
+     (package
+       (inherit ffmpeg-5)
+       (name "ffmpeg-chromium")
+       (version (git-version "5.1" revision commit))
+       (source (origin
+                 (method git-fetch)
+                 (uri (git-reference
+                       (url "https://chromium.googlesource.com/chromium\
+/third_party/ffmpeg")
+                       (commit commit)))
+                 (file-name (git-file-name "ffmpeg" version))
+                 (sha256
+                  (base32
+                   "0y5c1khdwggpnhj6arif6j5k61wx6f5cw4q07dd4w0jnc0wkqmkv"))))
+       (arguments
+        (substitute-keyword-arguments (package-arguments ffmpeg-5)
+          ((#:phases phases #~%standard-phases)
+           #~(modify-phases #$phases
+               (add-after 'unpack 'use-system-opus
+                 (lambda _
+                   (substitute* '("libavcodec/libopus.c"
+                                  "libavcodec/libopusdec.c"
+                                  "libavcodec/libopusenc.c")
+                     (("<(opus.*)\\.h>" all include)
+                      (string-append "<opus/" include ".h>")))
+                   ;; Undo part of b4d337e66827f3c et.al to link system opus.
+                   (substitute* "configure"
+                     (("# Chromium uses a built in copy of libopus")
+                      "# Enable system libopus (reverting below section).
+enabled libopus && {
+  enabled libopus_decoder && {
+     require_pkg_config libopus opus opus_multistream.h \
+opus_multistream_decoder_create
+  }
+  enabled libopus_encoder && {
+    require_pkg_config libopus opus opus_multistream.h \
+opus_multistream_surround_encoder_create
+  }
+}
+# Chromium uses a built in copy of libopus"))
+                   ))))))
+       ))))
+
 (define-public ffmpegthumbnailer
   (package
     (name "ffmpegthumbnailer")

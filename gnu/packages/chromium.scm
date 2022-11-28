@@ -360,25 +360,14 @@
          "system/zlib.patch"
          "system/openjpeg.patch")))
 
-(define (arch-patch revision name hash)
-  (origin
-    (method url-fetch)
-    (uri (string-append "https://raw.githubusercontent.com/archlinux"
-                        "/svntogit-packages/" revision "/trunk/" name))
-    (sha256 (base32 hash))))
+(define %arch-patches
+  '())
+
+(define %gcc-patches
+  '())
 
 (define %reverse-patches
-  (list
-   ;; These patches revert changes that require an unreleased ffmpeg.
-   (arch-patch %arch-revision "REVERT-roll-src-third_party-ffmpeg-m102.patch"
-               "0i7crn6fcwq09kd6a4smqnffaldyv61lmv2p0drcnpfrwalmkprh")
-   (arch-patch %arch-revision "REVERT-roll-src-third_party-ffmpeg-m106.patch"
-               "0li10cvxnppmmmsc7w77b1s7z02s5bzd39zsal9x768708fx64jc")))
-
-(define %arch-patches
-  (list
-   (arch-patch %arch-revision "disable-GlobalMediaControlsCastStartStop.patch"
-               "00m361ka38d60zpbss7qnfw80vcwnip2pjcz3wf46wd2sqi1nfvz")))
+  '())
 
 (define %guix-patches
   (list (local-file
@@ -387,9 +376,6 @@
         (local-file
          (assume-valid-file-name
           (search-patch "ungoogled-chromium-RUNPATH.patch")))
-        (local-file
-         (assume-valid-file-name
-          (search-patch "ungoogled-chromium-ffmpeg-compat.patch")))
         (local-file
          (assume-valid-file-name
           (search-patch "ungoogled-chromium-system-ffmpeg.patch")))
@@ -899,7 +885,7 @@
            dbus
            expat
            flac
-           ffmpeg-4
+           ffmpeg/chromium
            fontconfig
            fp16
            freetype
