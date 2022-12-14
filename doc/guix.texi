@@ -34065,6 +34065,10 @@ To override a setting, you must use the configuration type for that service:
 @item @code{file-storage-paths} (default: @code{'()})
 List of allowed directories for file storage backend.
 
+@item @code{hooks} (default: @code{#f})
+When set, this should be a file-like object containing a directory with
+@url{https://docs.ganeti.org/docs/ganeti/3.0/html/hooks.html,cluster execution hooks}.
+
 @item @code{os} (default: @code{%default-ganeti-os})
 List of @code{<ganeti-os>} records.
 @end table
