@@ -1082,6 +1082,17 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public linux-libre-source          linux-libre-6.0-source)
 (define-public linux-libre                 linux-libre-6.0)
 
+(define-public linux-libre-virtual
+  (package
+    (inherit linux-libre)
+    (name "linux-libre-virtual")
+    (native-inputs
+     (modify-inputs (package-native-inputs linux-libre)
+       (replace "kconfig" (search-auxiliary-file
+                           "linux-libre/6.0-x86_64-virtual.conf"))))
+    (synopsis "Linux-Libre optimized for running inside a virtual machine")
+    (supported-systems '("x86_64-linux"))))
+
 (define-public linux-libre-documentation
   (package
     (inherit linux-libre)
